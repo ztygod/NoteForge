@@ -1,0 +1,63 @@
+src/noteforge/cli/__init__.py
+  s_b741a5b9e3e873::t_b022f3a5c93244 1
+src/noteforge/cli/app.py
+  s_b741a5b9e3e873::t_973603c171acac 41-42,46
+  s_b741a5b9e3e873::t_ff637ec49837b4 2-6,8-10,12-28,30-31,33-36,38,40,47-49,51
+  s_b741a5b9e3e873::t_b022f3a5c93244 1,11,29,32,37,50
+  s_b741a5b9e3e873::t_1f8cf6a16c6f9e 39,43-45
+  s_b741a5b9e3e873::t_c2d68d3d6da6a7 7
+.python-version
+  s_b741a5b9e3e873::t_3d4201d6d19d93 1
+src/noteforge/core/__init__.py
+  s_b741a5b9e3e873::t_b022f3a5c93244 1
+pyproject.toml
+  s_b741a5b9e3e873::t_3d4201d6d19d93 6
+  s_b741a5b9e3e873::t_ff637ec49837b4 4,7-21
+  s_b741a5b9e3e873::t_c74e107cb7bc50 1-3
+  s_b741a5b9e3e873::t_b6dd16ae821ba7 5
+tests/collector/test_inspection.py
+  s_b741a5b9e3e873::t_715e595f8eabc6 14,43-44,50
+  s_b741a5b9e3e873::t_1f8cf6a16c6f9e 1-2,4-13,15,29-42,45-49,54-70
+  s_b741a5b9e3e873::t_973603c171acac 3,16-28,51-53
+tests/collector/test_youtube_inspection.py
+  s_b741a5b9e3e873::t_5b4cc91160d165 1-60
+src/noteforge/collector/inspection.py
+  s_b741a5b9e3e873::t_973603c171acac 66,70,96,151
+  s_b741a5b9e3e873::t_69575bfd6c41d1 1-16
+  s_b741a5b9e3e873::t_3d4201d6d19d93 19,24-33,39-41
+  s_b741a5b9e3e873::t_1f8cf6a16c6f9e 20,45-46,59-65,67-69,71-81,90-92,98-101,149
+  s_b741a5b9e3e873::t_5b4cc91160d165 47-58,108-146
+  s_b741a5b9e3e873::t_f3ab76821019b0 17-18
+  s_b741a5b9e3e873::t_3af2faf01e1d8c 21-23
+  s_b741a5b9e3e873::t_4e99920c3f4358 34-38
+  s_b741a5b9e3e873::t_873f9077019cb3 42-44
+  s_b741a5b9e3e873::t_32d00b27d1431f 82-84,87-89
+  s_b741a5b9e3e873::t_1a27ede4a1aff1 93-95
+  s_b741a5b9e3e873::t_85a76c14dd94af 97
+  s_b741a5b9e3e873::t_37669d70261e02 102-107
+  s_b741a5b9e3e873::t_5d5298bd2904dc 147-148
+  s_b741a5b9e3e873::t_a55d7bbf367c5e 150
+tests/cli/test_app.py
+  s_b741a5b9e3e873::t_ff637ec49837b4 1-5,7-37,45-51
+  s_b741a5b9e3e873::t_1f8cf6a16c6f9e 42
+  s_b741a5b9e3e873::t_973603c171acac 38-41,43-44,52-54
+  s_b741a5b9e3e873::t_04d1eccb1155d1 6
+uv.lock
+  s_b741a5b9e3e873::t_daa5493f1d239b 1-150
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "1ed50638bd2e263f727ec1b4d9b73c19a6ceaf37",
+  "prompts": {},
+  "sessions": {
+    "s_b741a5b9e3e873": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f83d8-9bfe-7261-ac41-62d74e19cb10",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
