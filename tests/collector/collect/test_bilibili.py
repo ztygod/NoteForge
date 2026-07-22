@@ -1,11 +1,17 @@
 from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 from noteforge.collector.collect.base import Collector
 from noteforge.collector.collect.bilibili import (
     BilibiliCollector,
     get_bilibili_video_info,
+)
+from noteforge.exceptions import (
+    InvalidCollectionResponseError,
+    RemoteCollectionError,
+    RiskControlError,
 )
 
 
@@ -63,6 +69,16 @@ def test_get_bilibili_video_info_parses_nested_response() -> None:
     request.assert_called_once_with(
         "https://api.bilibili.com/x/web-interface/view",
         params={"bvid": "BV1CkArz1E4o"},
+        headers={
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Referer": "https://www.bilibili.com/",
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/131.0.0.0 Safari/537.36"
+            ),
+        },
         timeout=10,
     )
     response.raise_for_status.assert_called_once_with()
@@ -73,7 +89,7 @@ def test_get_bilibili_video_info_parses_nested_response() -> None:
     assert result.data.subtitle[0].lan == "zh-CN"
 
 
-def test_get_bilibili_video_info_preserves_api_error() -> None:
+def test_get_bilibili_video_info_raises_api_error() -> None:
     response = Mock()
     response.json.return_value = {
         "code": -400,
@@ -85,10 +101,8 @@ def test_get_bilibili_video_info_preserves_api_error() -> None:
     with patch(
         "noteforge.collector.collect.bilibili.requests.get", return_value=response
     ):
-        result = get_bilibili_video_info("invalid")
-
-    assert result.code == -400
-    assert result.data is None
+        with pytest.raises(RemoteCollectionError, match="-400.*请求错误"):
+            get_bilibili_video_info("invalid")
 
 
 def test_get_bilibili_video_info_rejects_non_object_response() -> None:
@@ -100,6 +114,21 @@ def test_get_bilibili_video_info_rejects_non_object_response() -> None:
             "noteforge.collector.collect.bilibili.requests.get",
             return_value=response,
         ),
-        pytest.raises(ValueError, match="non-object"),
+        pytest.raises(InvalidCollectionResponseError, match="格式异常"),
+    ):
+        get_bilibili_video_info("BV1CkArz1E4o")
+
+
+def test_get_bilibili_video_info_translates_risk_control_error() -> None:
+    response = Mock()
+    response.status_code = 412
+    response.raise_for_status.side_effect = requests.HTTPError(response=response)
+
+    with (
+        patch(
+            "noteforge.collector.collect.bilibili.requests.get",
+            return_value=response,
+        ),
+        pytest.raises(RiskControlError, match="HTTP 412"),
     ):
         get_bilibili_video_info("BV1CkArz1E4o")

@@ -5,6 +5,7 @@ from typer.testing import CliRunner
 from noteforge.cli.app import app
 from noteforge.collector import inspection
 from noteforge.collector.collect import bilibili
+from noteforge.exceptions import RiskControlError
 
 
 runner = CliRunner()
@@ -83,3 +84,21 @@ def test_inspect_does_not_collect_unknown_platform(monkeypatch) -> None:
     assert result.exit_code == 0
     assert "平台：unknown" in result.stdout
     assert '"collection": null' in result.stdout
+
+
+def test_inspect_displays_collection_error_without_traceback(monkeypatch) -> None:
+    def fake_collect(
+        self: bilibili.BilibiliCollector, source_id: str
+    ) -> bilibili.BilibiliCollectorResult:
+        raise RiskControlError("B站拒绝了本次请求（HTTP 412）。")
+
+    monkeypatch.setattr(bilibili.BilibiliCollector, "collect", fake_collect)
+
+    result = runner.invoke(
+        app,
+        ["inspect", "https://www.bilibili.com/video/BV1CkArz1E4o"],
+    )
+
+    assert result.exit_code == 1
+    assert "采集失败：B站拒绝了本次请求（HTTP 412）。" in result.output
+    assert "Traceback" not in result.output

@@ -8,6 +8,7 @@ import typer
 
 from noteforge.collector import inspection
 from noteforge.collector.collect import bilibili
+from noteforge.exceptions import CollectionError
 
 
 app = typer.Typer(
@@ -48,16 +49,22 @@ def inspect(
     if inspect_result.page_number is not None:
         typer.echo(f"分 P：{inspect_result.page_number}")
 
-    output = {"inspection": asdict(inspect_result), "collection": None}
+    output = {"inspection": asdict(inspect_result), "video_collection_result": None}
 
+
+    # 目前只实现了B站视频信息采集，其他平台暂不支持远程采集。
     if (
         inspect_result.platform is inspection.InspectionPlatform.BILIBILI
         and inspect_result.source_id is not None
     ):
-        collect_result = bilibili.BilibiliCollector().collect(
-            inspect_result.source_id
-        )
-        output["collection"] = asdict(collect_result)
+        try:
+            collect_result = bilibili.BilibiliCollector().collect(
+                inspect_result.source_id
+            )
+        except CollectionError as error:
+            typer.secho(f"采集失败：{error}", fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=1) from error
+        output["video_collection_result"] = asdict(collect_result)
 
     typer.echo("结构化数据：")
     typer.echo(json.dumps(output, ensure_ascii=False, indent=2))

@@ -10,9 +10,26 @@ from typing import Any, Mapping
 import requests
 
 from noteforge.collector.collect.base import Collector
+from noteforge.exceptions import (
+    InvalidCollectionResponseError,
+    RemoteCollectionError,
+    RiskControlError,
+)
 
 _VIDEO_INFO_URL = "https://api.bilibili.com/x/web-interface/view"
 _REQUEST_TIMEOUT_SECONDS = 10
+
+# 模拟浏览器请求头，避开b站风控
+_REQUEST_HEADERS = {
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "Referer": "https://www.bilibili.com/",
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/131.0.0.0 Safari/537.36"
+    ),
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,16 +235,52 @@ class BilibiliCollector(Collector[BilibiliCollectorResult]):
     def collect(self, source_id: str) -> BilibiliCollectorResult:
         """根据 BV 号采集B站视频信息。"""
 
-        response = requests.get(
-            _VIDEO_INFO_URL,
-            params={"bvid": source_id},
-            timeout=_REQUEST_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        payload = response.json()
+        try:
+            response = requests.get(
+                _VIDEO_INFO_URL,
+                params={"bvid": source_id},
+                headers=_REQUEST_HEADERS,
+                timeout=_REQUEST_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as error:
+            status_code = (
+                error.response.status_code
+                if error.response is not None
+                else None
+            )
+            if status_code == 412:
+                raise RiskControlError(
+                    "B站拒绝了本次请求（HTTP 412），请稍后重试或更换网络。"
+                ) from error
+            raise RemoteCollectionError(
+                f"B站接口请求失败（HTTP {status_code or '未知'}）。"
+            ) from error
+        except requests.Timeout as error:
+            raise RemoteCollectionError("连接B站超时，请稍后重试。") from error
+        except requests.ConnectionError as error:
+            raise RemoteCollectionError(
+                "无法连接B站，请检查网络后重试。"
+            ) from error
+        except requests.RequestException as error:
+            raise RemoteCollectionError("请求B站接口失败，请稍后重试。") from error
+
+        try:
+            payload = response.json()
+        except requests.JSONDecodeError as error:
+            raise InvalidCollectionResponseError(
+                "B站返回了无法解析的响应。"
+            ) from error
+
         if not isinstance(payload, dict):
-            raise ValueError("Bilibili API returned a non-object response")
-        return BilibiliCollectorResult.from_mapping(payload)
+            raise InvalidCollectionResponseError("B站返回了格式异常的响应。")
+
+        result = BilibiliCollectorResult.from_mapping(payload)
+        if result.code != 0:
+            raise RemoteCollectionError(
+                f"B站接口返回错误（{result.code}）：{result.message or '未知错误'}"
+            )
+        return result
 
 
 def get_bilibili_video_info(bvid: str) -> BilibiliCollectorResult:
