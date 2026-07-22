@@ -1,0 +1,48 @@
+src/noteforge/collector/collect/bilibili.py
+  s_44deb051f0cd16::t_02247685b7177d 1,22-28,36-54,62-71,79-92,99-120,122-129,187-192,194-201,234-244
+  s_44deb051f0cd16::t_5da40d1e4c8497 7-8,14-20,31-34,57-60,75-77,95-97,121,130-133,135-185,193,204-211,225,233,245
+  s_44deb051f0cd16::t_169fc7b6527a92 12-13,212-224,226-230,246
+  s_44deb051f0cd16::t_a4c166232f5360 4-6
+  s_44deb051f0cd16::t_f3b40dc59cb246 9-11
+  s_44deb051f0cd16::t_89af78c1adfa97 29
+  s_44deb051f0cd16::t_316d12ef4ec7c6 35
+  s_44deb051f0cd16::t_97066297c7ac0d 55-56
+  s_44deb051f0cd16::t_6f67bd142cac22 61
+  s_44deb051f0cd16::t_387c1c6d8779ac 72-74
+  s_44deb051f0cd16::t_4f16ccc8e6556e 78
+  s_44deb051f0cd16::t_fa18107c0c4250 93-94
+  s_44deb051f0cd16::t_393d19d153f323 98
+  s_44deb051f0cd16::t_d74777a9961c38 134
+  s_44deb051f0cd16::t_4eef0b748355f9 186
+  s_44deb051f0cd16::t_3e25473c26ee00 202-203
+  s_44deb051f0cd16::t_1916ae1a2d3cfc 231-232
+  s_44deb051f0cd16::t_bc7d2fe50fc3e5 3
+src/noteforge/cli/app.py
+  s_44deb051f0cd16::t_169fc7b6527a92 3,5,10,42-63
+tests/collector/collect/test_bilibili.py
+  s_44deb051f0cd16::t_169fc7b6527a92 1-105
+src/noteforge/collector/collect/base.py
+  s_44deb051f0cd16::t_169fc7b6527a92 1-16
+tests/cli/test_app.py
+  s_44deb051f0cd16::t_169fc7b6527a92 7,49-61,65,69-85
+.gitignore
+  s_44deb051f0cd16::t_b7b7c9882624ca 4
+src/noteforge/core/__init__.py
+  s_44deb051f0cd16::t_69a02a28e75c1f 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "ee28d04fb91994da96083a5cda184a4cc768cf30",
+  "prompts": {},
+  "sessions": {
+    "s_44deb051f0cd16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f88fe-8fea-79a3-a940-76692d503473",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
