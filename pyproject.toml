@@ -5,6 +5,7 @@ description = "Generate structured study notes from public course videos"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "requests>=2.34.2",
     "typer>=0.12,<1",
 ]
 
