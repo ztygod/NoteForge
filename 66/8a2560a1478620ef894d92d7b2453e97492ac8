@@ -1,0 +1,31 @@
+src/noteforge/collector/collect/bilibili.py
+  s_44deb051f0cd16::t_5a23b9977b8639 13-17,22-33,238-246,252-274,276-283
+  s_44deb051f0cd16::t_b3695520c73361 247-251
+tests/cli/test_app.py
+  s_44deb051f0cd16::t_5a23b9977b8639 8,87-104
+src/noteforge/exceptions/__init__.py
+  s_44deb051f0cd16::t_5a23b9977b8639 1-15
+tests/collector/collect/test_bilibili.py
+  s_44deb051f0cd16::t_5a23b9977b8639 4,11-15,72-81,92,104-105,117-132
+src/noteforge/exceptions/collect.py
+  s_44deb051f0cd16::t_5a23b9977b8639 1-17
+src/noteforge/cli/app.py
+  s_44deb051f0cd16::t_5a23b9977b8639 11,52,54-55,60-66
+  s_44deb051f0cd16::t_9e90368caddaef 67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "668a2560a1478620ef894d92d7b2453e97492ac8",
+  "prompts": {},
+  "sessions": {
+    "s_44deb051f0cd16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f88fe-8fea-79a3-a940-76692d503473",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
