@@ -1,1 +1,1 @@
-"""NoteForge 应用用例。"""
+"""NoteForge 应用用例"""

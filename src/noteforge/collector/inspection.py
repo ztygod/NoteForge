@@ -20,7 +20,20 @@ from enum import StrEnum
 import re
 from urllib.parse import parse_qs, urlparse
 
-
+_BILIBILI_HOSTS = {"bilibili.com", "www.bilibili.com"}
+_BVID_PATTERN = re.compile(r"BV[0-9A-Za-z]{10}")
+_YOUTUBE_HOSTS = {
+    "m.youtube.com",
+    "music.youtube.com",
+    "www.youtube.com",
+    "youtube.com",
+}
+_YOUTUBE_EMBED_HOSTS = {
+    "www.youtube-nocookie.com",
+    "youtube-nocookie.com",
+}
+_YOUTUBE_SHORT_HOSTS = {"www.youtu.be", "youtu.be"}
+_YOUTUBE_VIDEO_ID_PATTERN = re.compile(r"[0-9A-Za-z_-]{11}")
 class InspectionPlatform(StrEnum):
     """支持检查的视频来源平台"""
 
@@ -40,23 +53,6 @@ class InspectionResult:
     normalized_source: str | None = None
     page_number: int | None = None
     requires_remote_resolution: bool = False
-
-
-_BILIBILI_HOSTS = {"bilibili.com", "www.bilibili.com"}
-_BVID_PATTERN = re.compile(r"BV[0-9A-Za-z]{10}")
-_YOUTUBE_HOSTS = {
-    "m.youtube.com",
-    "music.youtube.com",
-    "www.youtube.com",
-    "youtube.com",
-}
-_YOUTUBE_EMBED_HOSTS = {
-    "www.youtube-nocookie.com",
-    "youtube-nocookie.com",
-}
-_YOUTUBE_SHORT_HOSTS = {"www.youtu.be", "youtu.be"}
-_YOUTUBE_VIDEO_ID_PATTERN = re.compile(r"[0-9A-Za-z_-]{11}")
-
 
 def inspect_source(source: str) -> InspectionResult:
     """本地识别视频来源，不执行任何远程请求"""
