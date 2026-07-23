@@ -1,0 +1,69 @@
+src/noteforge/collector/inspection.py
+  s_9d273adb77d9fb::t_7e1c8759049a0c 37-38
+  s_9d273adb77d9fb::t_ddfdca0e0d6d7e 59
+src/noteforge/cli/app.py
+  s_9d273adb77d9fb::t_4d85d08da18617 43-45,65-66,68
+  s_9d273adb77d9fb::t_7838102688b9da 62
+  s_9d273adb77d9fb::t_be3936a432a924 41
+  s_9d273adb77d9fb::t_c7f5a723fe2361 9
+  s_9d273adb77d9fb::t_485c18dc435aa6 42
+pyproject.toml
+  s_9d273adb77d9fb::t_04db8f57ddc080 9
+tests/cli/test_app.py
+  s_9d273adb77d9fb::t_7e1c8759049a0c 7,61,63,107,122
+  s_9d273adb77d9fb::t_be3936a432a924 53
+  s_9d273adb77d9fb::t_c7f5a723fe2361 6
+  s_9d273adb77d9fb::t_fbbc7d369c34d9 37,51-52,54-58,81-89,96
+  s_9d273adb77d9fb::t_0d29d05c19739a 60,62,64-76,92-95,100-101,106,116,121
+src/noteforge/collector/base.py
+  s_9d273adb77d9fb::t_c7f5a723fe2361 14-15
+src/noteforge/collector/bilibili.py
+  s_9d273adb77d9fb::t_be3936a432a924 98
+  s_9d273adb77d9fb::t_04db8f57ddc080 4,24-25
+  s_9d273adb77d9fb::t_e66ef1afa8b5b3 26-38
+  s_9d273adb77d9fb::t_4d85d08da18617 68-72,99-100,103-106,109
+  s_9d273adb77d9fb::t_c7f5a723fe2361 1-3,5-23,39-67,73-97,101-102,107-108,110-122
+src/noteforge/collector/models.py
+  s_9d273adb77d9fb::t_f8b04cf19666da 32-33,36-37,40-41,44-45,48-49,52-53,56-57,60-61,64-65,68-69,72-73,76-77,80-81
+  s_9d273adb77d9fb::t_c7f5a723fe2361 1,6,9-15,18-20,23-25,29-30,34,42,46,50,54,58,62,66,70,74,78,82,84-86,88-89,92-104
+src/noteforge/exceptions/collect.py
+  s_9d273adb77d9fb::t_7838102688b9da 16-27
+src/noteforge/exceptions/__init__.py
+  s_9d273adb77d9fb::t_7838102688b9da 6,9-10,16,19-20
+tests/collector/test_bilibili.py
+  s_44deb051f0cd16::t_5da40d1e4c8497 91,145,150
+  s_9d273adb77d9fb::t_be3936a432a924 70
+  s_9d273adb77d9fb::t_c7f5a723fe2361 5,7-8,13,15,18-19,22-47,53-54,57-68,85-90,92,105-110,114-115,117,119-144,146,148,151-153,157-158,160,162-164
+  s_9d273adb77d9fb::t_04db8f57ddc080 4,69
+  s_9d273adb77d9fb::t_e66ef1afa8b5b3 71-75
+  s_9d273adb77d9fb::t_4d85d08da18617 93-94,97-102
+src/noteforge/collector/__init__.py
+  s_9d273adb77d9fb::t_d3fbd13dd31a6b 1,3-4
+  s_9d273adb77d9fb::t_7e1c8759049a0c 2
+uv.lock
+  s_9d273adb77d9fb::t_74d3e88c824e46 24-25,27-30,32-118,131-132,134-139,141-160,199,210,234-242,313-317
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "7286c898e259e2b54ce01b2f1605eb76f3984bff",
+  "prompts": {},
+  "sessions": {
+    "s_44deb051f0cd16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f88fe-8fea-79a3-a940-76692d503473",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    },
+    "s_9d273adb77d9fb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e14-1908-7ce2-bbe9-2fff79dfc18d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
