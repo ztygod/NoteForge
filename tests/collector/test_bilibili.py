@@ -83,11 +83,11 @@ def test_get_bilibili_video_info_maps_metadata_without_exposing_raw_data() -> No
         },
     }
     downloader.extract_info.assert_called_once_with(SOURCE, download=False)
-    assert result.id == "BV1CkArz1E4o"
-    assert result.title == "测试视频"
-    assert result.uploader == "UP主"
-    assert result.like_count == 7
-    assert not hasattr(result, "formats")
+    assert result.metadata.id == "BV1CkArz1E4o"
+    assert result.metadata.title == "测试视频"
+    assert result.metadata.uploader == "UP主"
+    assert result.metadata.like_count == 7
+    assert not hasattr(result.metadata, "formats")
 
 
 def test_collector_can_load_browser_cookies() -> None:
@@ -100,6 +100,68 @@ def test_collector_can_load_browser_cookies() -> None:
         BilibiliCollector(cookies_from_browser="chrome").collect(SOURCE)
 
     assert youtube_dl.call_args.args[0]["cookiesfrombrowser"] == ("chrome",)
+
+
+def test_collector_parses_manual_and_automatic_subtitle_tracks() -> None:
+    info = INFO | {
+        "subtitles": {
+            "zh-CN": [
+                {
+                    "ext": "vtt",
+                    "url": "https://example.com/manual.vtt",
+                    "name": "中文",
+                }
+            ]
+        },
+        "automatic_captions": {
+            "en": [
+                {
+                    "ext": "srt",
+                    "url": "https://example.com/automatic.srt",
+                }
+            ]
+        },
+    }
+    downloader = _downloader_returning(info)
+
+    with patch(
+        "noteforge.collector.bilibili.yt_dlp.YoutubeDL",
+        return_value=downloader,
+    ):
+        result = BilibiliCollector().collect(SOURCE)
+
+    assert result.metadata.title == "测试视频"
+    assert len(result.subtitle_tracks) == 2
+    assert result.subtitle_tracks[0].language == "zh-CN"
+    assert result.subtitle_tracks[0].name == "中文"
+    assert result.subtitle_tracks[0].is_automatic is False
+    assert result.subtitle_tracks[1].language == "en"
+    assert result.subtitle_tracks[1].is_automatic is True
+
+
+def test_collector_skips_malformed_subtitle_entries() -> None:
+    info = INFO | {
+        "subtitles": {
+            "": [{"ext": "vtt", "url": "https://example.com/empty.vtt"}],
+            "zh": [
+                None,
+                {"ext": "vtt"},
+                {"url": "https://example.com/no-extension"},
+                {"ext": "vtt", "url": "https://example.com/valid.vtt"},
+            ],
+            "en": "not-a-list",
+        }
+    }
+    downloader = _downloader_returning(info)
+
+    with patch(
+        "noteforge.collector.bilibili.yt_dlp.YoutubeDL",
+        return_value=downloader,
+    ):
+        result = BilibiliCollector().collect(SOURCE)
+
+    assert len(result.subtitle_tracks) == 1
+    assert result.subtitle_tracks[0].url.endswith("valid.vtt")
 
 
 @pytest.mark.parametrize("missing_field", ["id", "title", "webpage_url"])

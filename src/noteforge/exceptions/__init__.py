@@ -9,13 +9,25 @@ from noteforge.exceptions.collect import (
     UnsupportedSourceError,
     VideoUnavailableError,
 )
+from noteforge.exceptions.subtitle import (
+    InvalidSubtitleResponseError,
+    SubtitleDownloadError,
+    SubtitleError,
+    SubtitleNotFoundError,
+    SubtitleParseError,
+)
 
 __all__ = [
     "CollectionError",
     "InvalidCollectionResponseError",
     "LoginRequiredError",
+    "InvalidSubtitleResponseError",
     "RemoteCollectionError",
     "RiskControlError",
     "UnsupportedSourceError",
     "VideoUnavailableError",
+    "SubtitleDownloadError",
+    "SubtitleError",
+    "SubtitleNotFoundError",
+    "SubtitleParseError",
 ]

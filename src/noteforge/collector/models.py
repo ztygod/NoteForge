@@ -1,9 +1,14 @@
 """采集流程使用的 NoteForge 自有数据模型。"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from noteforge.exceptions import InvalidCollectionResponseError
+
+if TYPE_CHECKING:
+    from noteforge.subtitle.models import Transcript
 
 
 def _required_string(payload: Mapping[str, Any], field: str) -> str:
@@ -103,3 +108,24 @@ class VideoMetadata:
             extractor=_optional_string(payload, "extractor"),
             extractor_key=_optional_string(payload, "extractor_key"),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class SubtitleTrack:
+    """视频平台提供的一种字幕语言和文件格式。"""
+
+    language: str
+    extension: str
+    url: str
+    name: str | None = None
+    is_automatic: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class VideoCollectionResult:
+    """视频元数据以及可选的结构化字幕处理结果。"""
+
+    metadata: VideoMetadata
+    subtitle_tracks: tuple[SubtitleTrack, ...]
+    selected_subtitle: SubtitleTrack | None = None
+    transcript: Transcript | None = None
