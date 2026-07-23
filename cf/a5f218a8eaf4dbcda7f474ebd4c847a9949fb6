@@ -1,0 +1,32 @@
+src/noteforge/collector/models.py
+  s_9d273adb77d9fb::t_9b46a40f1415e6 117-118,120-122,124-127,129-131,133-135,143-144,146-148,150-153,155-158
+src/noteforge/collector/bilibili.py
+  s_9d273adb77d9fb::t_0d4a26d9744142 212
+  s_9d273adb77d9fb::t_1f46a4ba865141 246
+  s_9d273adb77d9fb::t_5326fd9c7386c3 245
+src/noteforge/cli/app.py
+  s_9d273adb77d9fb::t_bb3848ac30015c 20-21,30-47,49
+tests/subtitle/test_downloader.py
+  s_9d273adb77d9fb::t_1f46a4ba865141 53-54
+tests/cli/test_app.py
+  s_9d273adb77d9fb::t_9fb0695eb8608d 180,183-185
+  s_9d273adb77d9fb::t_bb3848ac30015c 112,199-203,205
+src/noteforge/collector/ytdlp.py
+  s_9d273adb77d9fb::t_7ec525f66c69c8 29-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "cfa5f218a8eaf4dbcda7f474ebd4c847a9949fb6",
+  "prompts": {},
+  "sessions": {
+    "s_9d273adb77d9fb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e14-1908-7ce2-bbe9-2fff79dfc18d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
