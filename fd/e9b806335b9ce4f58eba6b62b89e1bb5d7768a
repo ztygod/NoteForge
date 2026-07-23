@@ -1,0 +1,31 @@
+src/noteforge/subtitle/parser.py
+  s_9d273adb77d9fb::t_4795873a099860 15,21-27,38-43,45,52,57-73,83,113-122,128,145-216,218-228
+tests/subtitle/test_parser.py
+  s_9d273adb77d9fb::t_76cfc495f67c8a 8-12,15-22,27-28,125-187
+src/noteforge/collector/bilibili.py
+  s_9d273adb77d9fb::t_4795873a099860 28
+  s_9d273adb77d9fb::t_fa582998460fb1 60-68,83-86,211
+  s_9d273adb77d9fb::t_ad15e6d86092ef 212-214
+tests/collector/test_bilibili.py
+  s_9d273adb77d9fb::t_fa582998460fb1 73-74,171-185
+  s_9d273adb77d9fb::t_ee6e72f5e35680 1,22,186-233
+  s_9d273adb77d9fb::t_ceec72579f4dca 234-236
+.gitignore
+  s_9d273adb77d9fb::t_7a388fde2b462e 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "fde9b806335b9ce4f58eba6b62b89e1bb5d7768a",
+  "prompts": {},
+  "sessions": {
+    "s_9d273adb77d9fb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e14-1908-7ce2-bbe9-2fff79dfc18d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
