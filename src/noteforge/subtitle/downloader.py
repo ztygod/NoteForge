@@ -54,11 +54,11 @@ class YtDlpSubtitleDownloader:
         options = build_ytdlp_options(self._cookies_from_browser)
         options.update(
             {
-                "skip_download": True,
-                "writesubtitles": True,
-                "writeautomaticsub": True,
+                # 只请求选择器确定的语言，避免下载无关字幕。
                 "subtitleslangs": [track.language],
+                # 优先保持选择器确定的格式，缺失时由 yt-dlp 回退。
                 "subtitlesformat": f"{track.extension}/best",
+                # 字幕文件统一写入已按平台和视频隔离的缓存目录。
                 "outtmpl": {
                     "default": str(target_dir / "subtitle.%(ext)s"),
                     "subtitle": str(target_dir / "subtitle.%(ext)s"),

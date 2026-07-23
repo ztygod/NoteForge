@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -18,6 +19,7 @@ from noteforge.exceptions import (
     UnsupportedSourceError,
     VideoUnavailableError,
 )
+from noteforge.subtitle.models import SubtitleFile
 
 SOURCE = "https://www.bilibili.com/video/BV1CkArz1E4o?p=2"
 INFO = {
@@ -68,6 +70,8 @@ def test_get_bilibili_video_info_maps_metadata_without_exposing_raw_data() -> No
         "noplaylist": True,
         "impersonate": ImpersonateTarget(client="chrome"),
         "cookiesfrombrowser": ("chrome",),
+        "writesubtitles": True,
+        "writeautomaticsub": True,
         "http_headers": {
             "Accept": (
                 "text/html,application/xhtml+xml,application/xml;q=0.9,"
@@ -162,6 +166,80 @@ def test_collector_skips_malformed_subtitle_entries() -> None:
 
     assert len(result.subtitle_tracks) == 1
     assert result.subtitle_tracks[0].url.endswith("valid.vtt")
+
+
+def test_collector_discovers_bilibili_inline_ai_subtitle() -> None:
+    info = INFO | {
+        "subtitles": {
+            "ai-zh": [
+                {
+                    "ext": "srt",
+                    "data": "1\n00:00:00,000 --> 00:00:01,000\n大家好\n",
+                }
+            ]
+        }
+    }
+    downloader = _downloader_returning(info)
+
+    with patch(
+        "noteforge.collector.bilibili.yt_dlp.YoutubeDL",
+        return_value=downloader,
+    ):
+        result = BilibiliCollector().collect(SOURCE)
+
+    assert len(result.subtitle_tracks) == 1
+    assert result.subtitle_tracks[0].language == "ai-zh"
+    assert result.subtitle_tracks[0].extension == "srt"
+    assert result.subtitle_tracks[0].is_automatic is True
+    assert result.subtitle_tracks[0].url.startswith("yt-dlp-inline://")
+
+
+def test_get_bilibili_video_info_parses_selected_srt(
+    tmp_path: Path,
+) -> None:
+    info = INFO | {
+        "subtitles": {
+            "ai-zh": [
+                {
+                    "ext": "srt",
+                    "data": "1\n00:00:00,000 --> 00:00:01,000\n大家好\n",
+                }
+            ]
+        }
+    }
+    downloader = _downloader_returning(info)
+    subtitle_path = tmp_path / "subtitle.srt"
+    subtitle_path.write_text(
+        "1\n00:00:00,000 --> 00:00:01,000\n大家好\n",
+        encoding="utf-8",
+    )
+
+    with (
+        patch(
+            "noteforge.collector.bilibili.yt_dlp.YoutubeDL",
+            return_value=downloader,
+        ),
+        patch(
+            "noteforge.collector.bilibili."
+            "YtDlpSubtitleDownloader.download",
+            return_value=SubtitleFile(
+                path=subtitle_path,
+                language="ai-zh",
+                extension="srt",
+                is_automatic=True,
+            ),
+        ),
+    ):
+        result = get_bilibili_video_info(
+            SOURCE,
+            subtitle_output_dir=tmp_path,
+        )
+
+    assert result.selected_subtitle is not None
+    assert result.selected_subtitle.extension == "srt"
+    assert result.transcript is not None
+    assert result.transcript.source == "automatic_subtitle"
+    assert result.transcript.segments[0].text == "大家好"
 
 
 @pytest.mark.parametrize("missing_field", ["id", "title", "webpage_url"])

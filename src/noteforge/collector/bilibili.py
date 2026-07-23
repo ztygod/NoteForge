@@ -25,7 +25,7 @@ from noteforge.exceptions import (
 )
 from noteforge.subtitle.downloader import YtDlpSubtitleDownloader
 from noteforge.subtitle.normalizer import TranscriptNormalizer
-from noteforge.subtitle.parser import VttSubtitleParser
+from noteforge.subtitle.parser import parse_subtitle
 from noteforge.subtitle.selector import (
     DEFAULT_LANGUAGE_PRIORITY,
     SubtitleSelector,
@@ -57,6 +57,15 @@ def _parse_subtitle_tracks(
                 continue
             url = subtitle_format.get("url")
             extension = subtitle_format.get("ext")
+            inline_data = subtitle_format.get("data")
+            if (
+                (not isinstance(url, str) or not url.strip())
+                and isinstance(inline_data, str)
+                and inline_data
+            ):
+                # Bilibili 的 AI 字幕由 yt-dlp 转成内联 SRT；只保留不含
+                # 正文的内部引用，实际下载仍交给 yt-dlp 再次提取。
+                url = f"yt-dlp-inline://{language}/{extension}"
             if (
                 not isinstance(url, str)
                 or not url.strip()
@@ -71,7 +80,10 @@ def _parse_subtitle_tracks(
                     extension=extension.lower(),
                     url=url,
                     name=name if isinstance(name, str) else None,
-                    is_automatic=is_automatic,
+                    is_automatic=(
+                        is_automatic
+                        or language.casefold().startswith("ai-")
+                    ),
                 )
             )
     return tuple(tracks)
@@ -196,6 +208,10 @@ def get_bilibili_video_info(
     ).select(collection.subtitle_tracks)
     if selected_track is None:
         return collection
+    if selected_track.extension.casefold() not in {"vtt", "srt"}:
+        # 仍返回发现和选择结果，避免把“存在但暂不支持解析”的字幕
+        # 误报成没有字幕。
+        return replace(collection, selected_subtitle=selected_track)
 
     page_suffix = f"_p{page_number}" if page_number is not None else ""
     subtitle_file = YtDlpSubtitleDownloader(
@@ -208,7 +224,7 @@ def get_bilibili_video_info(
         platform="bilibili",
     )
     transcript = TranscriptNormalizer().normalize(
-        VttSubtitleParser().parse(subtitle_file)
+        parse_subtitle(subtitle_file)
     )
     return replace(
         collection,
