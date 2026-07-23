@@ -34,6 +34,8 @@ _YOUTUBE_EMBED_HOSTS = {
 }
 _YOUTUBE_SHORT_HOSTS = {"www.youtu.be", "youtu.be"}
 _YOUTUBE_VIDEO_ID_PATTERN = re.compile(r"[0-9A-Za-z_-]{11}")
+
+
 class InspectionPlatform(StrEnum):
     """支持检查的视频来源平台"""
 
@@ -53,6 +55,7 @@ class InspectionResult:
     normalized_source: str | None = None
     page_number: int | None = None
     requires_remote_resolution: bool = False
+
 
 def inspect_source(source: str) -> InspectionResult:
     """本地识别视频来源，不执行任何远程请求"""
