@@ -6,8 +6,7 @@ import json
 
 import typer
 
-from noteforge.collector import inspection
-from noteforge.collector.collect import bilibili
+from noteforge.collector import bilibili, inspection
 from noteforge.exceptions import CollectionError
 
 
@@ -39,6 +38,11 @@ def cli(
 @app.command()
 def inspect(
     url: str = typer.Argument(..., help="需要检查的公开课视频链接。"),
+    cookies_from_browser: str = typer.Option(
+        "chrome", # 默认为谷歌浏览器
+        "--cookies-from-browser",
+        help="从指定浏览器读取 Cookie，例如 chrome、edge、firefox 或 safari。",
+    ),
 ) -> None:
     """检查视频链接，采集视频信息并输出结构化调试数据。"""
     inspect_result = inspection.inspect_source(url)
@@ -55,12 +59,13 @@ def inspect(
     # 目前只实现了B站视频信息采集，其他平台暂不支持远程采集。
     if (
         inspect_result.platform is inspection.InspectionPlatform.BILIBILI
-        and inspect_result.source_id is not None
+        and inspect_result.normalized_source is not None
     ):
         try:
-            collect_result = bilibili.BilibiliCollector().collect(
-                inspect_result.source_id
+            collector = bilibili.BilibiliCollector(
+                cookies_from_browser=cookies_from_browser
             )
+            collect_result = collector.collect(inspect_result.normalized_source)
         except CollectionError as error:
             typer.secho(f"采集失败：{error}", fg=typer.colors.RED, err=True)
             raise typer.Exit(code=1) from error

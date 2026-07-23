@@ -11,6 +11,5 @@ class Collector(ABC, Generic[CollectResultT]):
     """不同视频平台采集器必须实现的统一行为。"""
 
     @abstractmethod
-    def collect(self, source_id: str) -> CollectResultT:
-        """根据平台内的视频 ID 采集结构化视频信息。"""
-
+    def collect(self, source: str) -> CollectResultT:
+        """根据完整视频 URL 采集结构化视频信息。"""

@@ -3,13 +3,19 @@
 from noteforge.exceptions.collect import (
     CollectionError,
     InvalidCollectionResponseError,
+    LoginRequiredError,
     RemoteCollectionError,
     RiskControlError,
+    UnsupportedSourceError,
+    VideoUnavailableError,
 )
 
 __all__ = [
     "CollectionError",
     "InvalidCollectionResponseError",
+    "LoginRequiredError",
     "RemoteCollectionError",
     "RiskControlError",
+    "UnsupportedSourceError",
+    "VideoUnavailableError",
 ]
