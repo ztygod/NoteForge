@@ -167,18 +167,14 @@ class BilibiliCollector(Collector[VideoCollectionResult]):
     def __init__(
         self,
         cookies_from_browser: str | None = "chrome",
-        *,
-        discover_subtitles: bool = True,
     ) -> None:
         self._cookies_from_browser = cookies_from_browser
-        self._discover_subtitles = discover_subtitles
 
     def collect(self, source: str) -> VideoCollectionResult:
         """采集视频元数据并发现字幕轨道，不下载任何文件。"""
 
         options = build_ytdlp_options(
             self._cookies_from_browser,
-            request_subtitles=self._discover_subtitles,
             http_headers=_BILIBILI_HTTP_HEADERS,
         )
 
@@ -197,13 +193,11 @@ def get_bilibili_video_info(
     source: str,
     *,
     cookies_from_browser: str | None = "chrome",
-    discover_subtitles: bool = True,
 ) -> VideoCollectionResult:
     """查询 B站视频元数据和可用字幕轨道，不下载任何文件。"""
 
     return BilibiliCollector(
         cookies_from_browser=cookies_from_browser,
-        discover_subtitles=discover_subtitles,
     ).collect(source)
 
 
@@ -211,21 +205,18 @@ def collect_bilibili_video(
     source: str,
     *,
     cookies_from_browser: str | None = "chrome",
-    include_subtitles: bool = True,
     subtitle_language: str | None = None,
     subtitle_output_dir: Path = Path(".cache/noteforge/subtitles"),
     page_number: int | None = None,
 ) -> VideoCollectionResult:
-    """执行 B站视频采集，并按需下载和结构化解析字幕。"""
+    """执行 B站视频采集，并下载和结构化解析最佳字幕。"""
 
     collection = get_bilibili_video_info(
-        source,
+        source=source,
         cookies_from_browser=cookies_from_browser,
-        discover_subtitles=include_subtitles,
     )
-    if not include_subtitles:
-        return collection
 
+    # 根据用户指定的字幕语言优先级，构建最终的语言优先级列表。
     preferred_languages = DEFAULT_LANGUAGE_PRIORITY
     if subtitle_language:
         preferred_languages = (subtitle_language,) + tuple(
@@ -234,6 +225,7 @@ def collect_bilibili_video(
             if language.casefold() != subtitle_language.casefold()
         )
 
+    # 根据语言、人工/自动类型和格式优先级选择字幕轨道。
     selected_track = SubtitleSelector(
         preferred_languages=preferred_languages
     ).select(collection.subtitle_tracks)
@@ -245,16 +237,18 @@ def collect_bilibili_video(
         return replace(collection, selected_subtitle=selected_track)
 
     page_suffix = f"_p{page_number}" if page_number is not None else ""
+    # 下载字幕文件，返回本地路径；若 yt-dlp 解析失败则抛出异常。
     subtitle_file = YtDlpSubtitleDownloader(
         cookies_from_browser=cookies_from_browser,
         http_headers=_BILIBILI_HTTP_HEADERS,
     ).download(
-        source,
-        selected_track,
+        source=source,
+        track=selected_track,
         output_dir=subtitle_output_dir,
         video_id=f"{collection.metadata.id}{page_suffix}",
         platform="bilibili",
     )
+    # 解析和清洗字幕，返回结构化结果。
     transcript = TranscriptNormalizer().normalize(
         parse_subtitle(subtitle_file)
     )

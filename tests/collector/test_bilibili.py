@@ -98,24 +98,6 @@ def test_collector_can_load_browser_cookies() -> None:
     assert youtube_dl.call_args.args[0]["cookiesfrombrowser"] == ("chrome",)
 
 
-def test_get_video_info_without_subtitles_skips_subtitle_request() -> None:
-    downloader = _downloader_returning(INFO)
-
-    with patch(
-        "noteforge.collector.bilibili.yt_dlp.YoutubeDL",
-        return_value=downloader,
-    ) as youtube_dl:
-        result = get_bilibili_video_info(
-            SOURCE,
-            discover_subtitles=False,
-        )
-
-    options = youtube_dl.call_args.args[0]
-    assert "writesubtitles" not in options
-    assert "writeautomaticsub" not in options
-    assert result.subtitle_tracks == ()
-
-
 def test_collector_parses_manual_and_automatic_subtitle_tracks() -> None:
     info = INFO | {
         "subtitles": {

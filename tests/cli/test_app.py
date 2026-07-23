@@ -57,8 +57,6 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
     def fake_init(
         self: bilibili.BilibiliCollector,
         cookies_from_browser: str | None = "chrome",
-        *,
-        discover_subtitles: bool = True,
     ) -> None:
         received_browsers.append(cookies_from_browser)
 
@@ -111,6 +109,7 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
     assert '"video_collection_result": {' in result.stdout
     assert '"id": "BV1test"' in result.stdout
     assert '"available_track_count": 0' in result.stdout
+    assert '"subtitle_tracks": []' in result.stdout
 
 
 def test_inspect_does_not_collect_unknown_platform(monkeypatch) -> None:
@@ -178,12 +177,12 @@ def test_inspect_outputs_subtitle_preview(monkeypatch, tmp_path) -> None:
         encoding="utf-8",
     )
 
-    def fake_download(self, url, selected_track, **kwargs):
+    def fake_download(self, source, track, **kwargs):
         return SubtitleFile(
             path=subtitle_path,
-            language=selected_track.language,
-            extension=selected_track.extension,
-            is_automatic=selected_track.is_automatic,
+            language=track.language,
+            extension=track.extension,
+            is_automatic=track.is_automatic,
         )
 
     monkeypatch.setattr(bilibili.BilibiliCollector, "collect", fake_collect)
@@ -197,6 +196,11 @@ def test_inspect_outputs_subtitle_preview(monkeypatch, tmp_path) -> None:
 
     assert result.exit_code == 0
     assert '"available_track_count": 1' in result.stdout
-    assert '"selected_language": "zh-CN"' in result.stdout
+    assert '"selected_subtitle": {' in result.stdout
+    assert '"language": "zh-CN"' in result.stdout
+    assert '"extension": "vtt"' in result.stdout
+    assert '"transcript": {' in result.stdout
+    assert '"source": "manual_subtitle"' in result.stdout
     assert '"segment_count": 1' in result.stdout
+    assert '"preview_limit": 5' in result.stdout
     assert '"text": "大家好"' in result.stdout
