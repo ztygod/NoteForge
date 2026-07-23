@@ -57,6 +57,8 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
     def fake_init(
         self: bilibili.BilibiliCollector,
         cookies_from_browser: str | None = "chrome",
+        *,
+        discover_subtitles: bool = True,
     ) -> None:
         received_browsers.append(cookies_from_browser)
 

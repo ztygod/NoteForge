@@ -27,8 +27,14 @@ def _safe_path_component(value: str) -> str:
 class YtDlpSubtitleDownloader:
     """只下载字幕，不下载视频或音频。"""
 
-    def __init__(self, cookies_from_browser: str | None = "chrome") -> None:
+    def __init__(
+        self,
+        cookies_from_browser: str | None = "chrome",
+        *,
+        http_headers: Mapping[str, str] | None = None,
+    ) -> None:
         self._cookies_from_browser = cookies_from_browser
+        self._http_headers = http_headers
 
     def download(
         self,
@@ -51,7 +57,11 @@ class YtDlpSubtitleDownloader:
                 f"无法创建字幕缓存目录：{target_dir}"
             ) from error
 
-        options = build_ytdlp_options(self._cookies_from_browser)
+        options = build_ytdlp_options(
+            self._cookies_from_browser,
+            request_subtitles=True,
+            http_headers=self._http_headers,
+        )
         options.update(
             {
                 # 只请求选择器确定的语言，避免下载无关字幕。

@@ -101,7 +101,7 @@ def inspect(
         and inspect_result.normalized_source is not None
     ):
         try:
-            collection = bilibili.get_bilibili_video_info(
+            collection = bilibili.collect_bilibili_video(
                 inspect_result.normalized_source,
                 cookies_from_browser=cookies_from_browser,
                 include_subtitles=not no_subtitle,

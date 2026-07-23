@@ -1,32 +1,17 @@
 """yt-dlp 采集器共用配置。"""
 
+from collections.abc import Mapping
 from typing import Any
 
 from yt_dlp.networking.impersonate import ImpersonateTarget
 
-_HTTP_HEADERS = {
-    # 声明能够接收浏览器页面常见的内容类型，降低被平台识别为脚本的概率。
-    "Accept": (
-        "text/html,application/xhtml+xml,application/xml;q=0.9,"
-        "image/avif,image/webp,image/apng,*/*;q=0.8"
-    ),
-    # 优先请求中文内容，并为平台的地区和语言判断提供浏览器特征。
-    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-    # B站部分接口会校验来源页面。
-    "Referer": "https://www.bilibili.com/",
-    # 使用常见桌面浏览器标识，避免默认 Python User-Agent 触发风控。
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/131.0.0.0 Safari/537.36"
-    ),
-}
-
-
 def build_ytdlp_options(
     cookies_from_browser: str | None = "chrome",
+    *,
+    request_subtitles: bool,
+    http_headers: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
-    """构造元数据和字幕下载共用的安全配置。"""
+    """构造跨平台的 yt-dlp 基础配置。"""
 
     options: dict[str, Any] = {
         # 禁止下载视频和音频；字幕下载阶段也必须始终保持为 True。
@@ -39,16 +24,17 @@ def build_ytdlp_options(
         "ignoreconfig": True,
         # 每次只处理传入 URL 对应的视频或分 P，不展开合集和播放列表。
         "noplaylist": True,
-        # B站会校验 TLS/HTTP 客户端指纹，仅修改 User-Agent 仍可能触发 412。
+        # 使用 curl-cffi 同时模拟 TLS 指纹和配套浏览器请求头。
+        # 不手写 Accept/User-Agent，避免与实际模拟的 Chrome 版本冲突。
         "impersonate": ImpersonateTarget(client="chrome"),
-        # 为元数据查询和字幕请求提供一致的浏览器请求头。
-        "http_headers": dict(_HTTP_HEADERS),
-        # 通知平台提取器查询人工字幕信息。
-        # collect() 使用 download=False，因此这里只发现字幕，不会写文件。
-        "writesubtitles": True,
-        # 同时查询自动生成字幕，例如 B站的 ai-zh 和 ai-en。
-        "writeautomaticsub": True,
     }
+    if request_subtitles:
+        # 通知平台提取器查询人工字幕和自动字幕。
+        options["writesubtitles"] = True
+        options["writeautomaticsub"] = True
+    if http_headers:
+        # 平台专属 Header 由调用方提供，避免通用配置绑定 Bilibili。
+        options["http_headers"] = dict(http_headers)
     if cookies_from_browser:
         # 读取指定浏览器 Cookie，用于登录字幕和降低 B站 412 风控概率。
         options["cookiesfrombrowser"] = (cookies_from_browser,)

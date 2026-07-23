@@ -8,6 +8,7 @@ from yt_dlp.utils import DownloadError
 from noteforge.collector.base import Collector
 from noteforge.collector.bilibili import (
     BilibiliCollector,
+    collect_bilibili_video,
     get_bilibili_video_info,
 )
 from noteforge.exceptions import (
@@ -73,17 +74,8 @@ def test_get_bilibili_video_info_maps_metadata_without_exposing_raw_data() -> No
         "writesubtitles": True,
         "writeautomaticsub": True,
         "http_headers": {
-            "Accept": (
-                "text/html,application/xhtml+xml,application/xml;q=0.9,"
-                "image/avif,image/webp,image/apng,*/*;q=0.8"
-            ),
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
             "Referer": "https://www.bilibili.com/",
-            "User-Agent": (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/131.0.0.0 Safari/537.36"
-            ),
         },
     }
     downloader.extract_info.assert_called_once_with(SOURCE, download=False)
@@ -104,6 +96,24 @@ def test_collector_can_load_browser_cookies() -> None:
         BilibiliCollector(cookies_from_browser="chrome").collect(SOURCE)
 
     assert youtube_dl.call_args.args[0]["cookiesfrombrowser"] == ("chrome",)
+
+
+def test_get_video_info_without_subtitles_skips_subtitle_request() -> None:
+    downloader = _downloader_returning(INFO)
+
+    with patch(
+        "noteforge.collector.bilibili.yt_dlp.YoutubeDL",
+        return_value=downloader,
+    ) as youtube_dl:
+        result = get_bilibili_video_info(
+            SOURCE,
+            discover_subtitles=False,
+        )
+
+    options = youtube_dl.call_args.args[0]
+    assert "writesubtitles" not in options
+    assert "writeautomaticsub" not in options
+    assert result.subtitle_tracks == ()
 
 
 def test_collector_parses_manual_and_automatic_subtitle_tracks() -> None:
@@ -194,7 +204,7 @@ def test_collector_discovers_bilibili_inline_ai_subtitle() -> None:
     assert result.subtitle_tracks[0].url.startswith("yt-dlp-inline://")
 
 
-def test_get_bilibili_video_info_parses_selected_srt(
+def test_collect_bilibili_video_parses_selected_srt(
     tmp_path: Path,
 ) -> None:
     info = INFO | {
@@ -230,7 +240,7 @@ def test_get_bilibili_video_info_parses_selected_srt(
             ),
         ),
     ):
-        result = get_bilibili_video_info(
+        result = collect_bilibili_video(
             SOURCE,
             subtitle_output_dir=tmp_path,
         )

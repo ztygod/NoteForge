@@ -31,6 +31,11 @@ from noteforge.subtitle.selector import (
     SubtitleSelector,
 )
 
+_BILIBILI_HTTP_HEADERS = {
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "Referer": "https://www.bilibili.com/",
+}
+
 # 保留平台结果类型名，实际结构使用统一采集结果。
 BilibiliCollectorResult = VideoCollectionResult
 
@@ -159,13 +164,23 @@ def _translate_download_error(error: DownloadError) -> CollectionError:
 class BilibiliCollector(Collector[VideoCollectionResult]):
     """B站视频信息采集器。"""
 
-    def __init__(self, cookies_from_browser: str | None = "chrome") -> None:
+    def __init__(
+        self,
+        cookies_from_browser: str | None = "chrome",
+        *,
+        discover_subtitles: bool = True,
+    ) -> None:
         self._cookies_from_browser = cookies_from_browser
+        self._discover_subtitles = discover_subtitles
 
     def collect(self, source: str) -> VideoCollectionResult:
         """采集视频元数据并发现字幕轨道，不下载任何文件。"""
 
-        options = build_ytdlp_options(self._cookies_from_browser)
+        options = build_ytdlp_options(
+            self._cookies_from_browser,
+            request_subtitles=self._discover_subtitles,
+            http_headers=_BILIBILI_HTTP_HEADERS,
+        )
 
         try:
             with yt_dlp.YoutubeDL(options) as downloader:
@@ -182,16 +197,32 @@ def get_bilibili_video_info(
     source: str,
     *,
     cookies_from_browser: str | None = "chrome",
+    discover_subtitles: bool = True,
+) -> VideoCollectionResult:
+    """查询 B站视频元数据和可用字幕轨道，不下载任何文件。"""
+
+    return BilibiliCollector(
+        cookies_from_browser=cookies_from_browser,
+        discover_subtitles=discover_subtitles,
+    ).collect(source)
+
+
+def collect_bilibili_video(
+    source: str,
+    *,
+    cookies_from_browser: str | None = "chrome",
     include_subtitles: bool = True,
     subtitle_language: str | None = None,
     subtitle_output_dir: Path = Path(".cache/noteforge/subtitles"),
     page_number: int | None = None,
 ) -> VideoCollectionResult:
-    """采集 B站视频信息，并按需完成字幕选择、下载、解析和清洗。"""
+    """执行 B站视频采集，并按需下载和结构化解析字幕。"""
 
-    collection = BilibiliCollector(
-        cookies_from_browser=cookies_from_browser
-    ).collect(source)
+    collection = get_bilibili_video_info(
+        source,
+        cookies_from_browser=cookies_from_browser,
+        discover_subtitles=include_subtitles,
+    )
     if not include_subtitles:
         return collection
 
@@ -215,7 +246,8 @@ def get_bilibili_video_info(
 
     page_suffix = f"_p{page_number}" if page_number is not None else ""
     subtitle_file = YtDlpSubtitleDownloader(
-        cookies_from_browser=cookies_from_browser
+        cookies_from_browser=cookies_from_browser,
+        http_headers=_BILIBILI_HTTP_HEADERS,
     ).download(
         source,
         selected_track,
