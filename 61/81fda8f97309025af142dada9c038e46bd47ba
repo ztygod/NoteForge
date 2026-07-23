@@ -1,0 +1,66 @@
+tests/collector/test_bilibili.py
+  s_9d273adb77d9fb::t_f7d4b0ffa36602 105-166
+  s_9d273adb77d9fb::t_5f0b75116e16fb 86-90
+src/noteforge/subtitle/downloader.py
+  s_9d273adb77d9fb::t_25756d3e2229e5 1-46,53-115
+  s_9d273adb77d9fb::t_92f4178f219e59 47-52
+src/noteforge/exceptions/__init__.py
+  s_9d273adb77d9fb::t_bf0d4877f76bdc 12-18,24,29-32
+src/noteforge/subtitle/__init__.py
+  s_9d273adb77d9fb::t_bf0d4877f76bdc 1
+src/noteforge/cli/app.py
+  s_9d273adb77d9fb::t_5f0b75116e16fb 106
+  s_9d273adb77d9fb::t_0ead00812aac32 6,12,63,67-81,92-96,115-116
+  s_9d273adb77d9fb::t_a77abc5dfbca6c 11,21-37,104-105,107-110,112,117
+  s_9d273adb77d9fb::t_bc3a1b461f2518 38-39
+tests/cli/test_app.py
+  s_9d273adb77d9fb::t_f7d4b0ffa36602 67,69-85,117,132
+  s_9d273adb77d9fb::t_24859d01858a8b 111
+  s_9d273adb77d9fb::t_cf6539b507b973 7-11,13-14,145-147,149,151-200
+  s_9d273adb77d9fb::t_2c8ba1259298c8 148,150
+tests/subtitle/test_parser.py
+  s_9d273adb77d9fb::t_cf6539b507b973 101
+  s_9d273adb77d9fb::t_5918d2838d1272 1-100,102-114
+src/noteforge/subtitle/parser.py
+  s_9d273adb77d9fb::t_346ea3f0579e75 1-120
+src/noteforge/collector/models.py
+  s_9d273adb77d9fb::t_4d43365f86fcea 111-125,127-129
+  s_9d273adb77d9fb::t_c8eab8fcc1dd4d 3-4,6,10-11,126,130-131
+  s_9d273adb77d9fb::t_ff9e2b33d9ca0e 12
+src/noteforge/collector/bilibili.py
+  s_9d273adb77d9fb::t_25756d3e2229e5 17,156
+  s_9d273adb77d9fb::t_24859d01858a8b 34-35
+  s_9d273adb77d9fb::t_4d43365f86fcea 3,6-7,12-16,36-95,147,153-154,166
+  s_9d273adb77d9fb::t_c0ba63cdf86512 4-5,26-32,169-192,194-217
+  s_9d273adb77d9fb::t_e3785e1dbce81d 167-168
+tests/subtitle/test_selector.py
+  s_9d273adb77d9fb::t_5918d2838d1272 1-58
+src/noteforge/subtitle/models.py
+  s_9d273adb77d9fb::t_bf0d4877f76bdc 1-32
+tests/subtitle/test_downloader.py
+  s_9d273adb77d9fb::t_5918d2838d1272 1-135
+src/noteforge/subtitle/selector.py
+  s_9d273adb77d9fb::t_bf0d4877f76bdc 1-59
+src/noteforge/exceptions/subtitle.py
+  s_9d273adb77d9fb::t_bf0d4877f76bdc 1-21
+src/noteforge/collector/ytdlp.py
+  s_9d273adb77d9fb::t_25756d3e2229e5 1-39
+src/noteforge/subtitle/normalizer.py
+  s_9d273adb77d9fb::t_346ea3f0579e75 1-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "6181fda8f97309025af142dada9c038e46bd47ba",
+  "prompts": {},
+  "sessions": {
+    "s_9d273adb77d9fb": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f8e14-1908-7ce2-bbe9-2fff79dfc18d",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
