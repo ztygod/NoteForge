@@ -17,6 +17,8 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
+_SUBTITLE_PREVIEW_LIMIT = 5
+
 
 def _subtitle_debug_output(
     collection: VideoCollectionResult,
@@ -25,14 +27,26 @@ def _subtitle_debug_output(
     transcript = collection.transcript
     return {
         "available_track_count": len(collection.subtitle_tracks),
-        "selected_language": selected.language if selected else None,
-        "selected_format": selected.extension if selected else None,
-        "automatic": selected.is_automatic if selected else None,
-        "segment_count": len(transcript.segments) if transcript else 0,
-        "preview": (
-            [asdict(segment) for segment in transcript.segments[:5]]
+        "subtitle_tracks": [
+            asdict(track)
+            for track in collection.subtitle_tracks
+        ],
+        "selected_subtitle": asdict(selected) if selected else None,
+        "transcript": (
+            {
+                "language": transcript.language,
+                "source": transcript.source,
+                "segment_count": len(transcript.segments),
+                "preview_limit": _SUBTITLE_PREVIEW_LIMIT,
+                "preview": [
+                    asdict(segment)
+                    for segment in transcript.segments[
+                        :_SUBTITLE_PREVIEW_LIMIT
+                    ]
+                ],
+            }
             if transcript
-            else []
+            else None
         ),
     }
 
@@ -74,20 +88,9 @@ def inspect(
         "--subtitle-output-dir",
         help="字幕缓存根目录。",
     ),
-    no_subtitle: bool = typer.Option(
-        False,
-        "--no-subtitle",
-        help="只采集视频元数据，不下载或解析字幕。",
-    ),
 ) -> None:
     """检查视频链接，采集视频信息并输出结构化调试数据。"""
     inspect_result = inspection.inspect_source(url)
-
-    typer.echo(f"平台：{inspect_result.platform.value}")
-    if inspect_result.source_id is not None:
-        typer.echo(f"视频 ID：{inspect_result.source_id}")
-    if inspect_result.page_number is not None:
-        typer.echo(f"分 P：{inspect_result.page_number}")
 
     output = {
         "inspection": asdict(inspect_result),
@@ -102,9 +105,8 @@ def inspect(
     ):
         try:
             collection = bilibili.collect_bilibili_video(
-                inspect_result.normalized_source,
+                source=inspect_result.normalized_source,
                 cookies_from_browser=cookies_from_browser,
-                include_subtitles=not no_subtitle,
                 subtitle_language=subtitle_language,
                 subtitle_output_dir=subtitle_output_dir,
                 page_number=inspect_result.page_number,
@@ -113,8 +115,7 @@ def inspect(
             typer.secho(f"采集失败：{error}", fg=typer.colors.RED, err=True)
             raise typer.Exit(code=1) from error
         output["video_collection_result"] = asdict(collection.metadata)
-        if not no_subtitle:
-            output["subtitle"] = _subtitle_debug_output(collection)
+        output["subtitle"] = _subtitle_debug_output(collection)
 
     typer.echo("结构化数据：")
     typer.echo(json.dumps(output, ensure_ascii=False, indent=2))

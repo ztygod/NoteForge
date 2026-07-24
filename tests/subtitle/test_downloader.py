@@ -50,8 +50,8 @@ def test_downloads_only_subtitle_and_reads_requested_filepath(
         result = YtDlpSubtitleDownloader(
             cookies_from_browser="chrome"
         ).download(
-            SOURCE,
-            TRACK,
+            source=SOURCE,
+            track=TRACK,
             output_dir=tmp_path,
             video_id="BV1test_p1",
             platform="bilibili",

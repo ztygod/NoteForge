@@ -8,7 +8,6 @@ from yt_dlp.networking.impersonate import ImpersonateTarget
 def build_ytdlp_options(
     cookies_from_browser: str | None = "chrome",
     *,
-    request_subtitles: bool,
     http_headers: Mapping[str, str] | None = None,
 ) -> dict[str, Any]:
     """构造跨平台的 yt-dlp 基础配置。"""
@@ -17,7 +16,7 @@ def build_ytdlp_options(
         # 禁止下载视频和音频；字幕下载阶段也必须始终保持为 True。
         "skip_download": True,
         # 不输出 yt-dlp 的常规进度信息，由 NoteForge 统一负责用户输出。
-        "quiet": True,
+        "quiet": False,
         # 不直接打印 yt-dlp 警告，避免污染 CLI 的结构化输出。
         "no_warnings": True,
         # 忽略用户目录中的 yt-dlp 配置，保证程序行为可预测。
@@ -27,11 +26,10 @@ def build_ytdlp_options(
         # 使用 curl-cffi 同时模拟 TLS 指纹和配套浏览器请求头。
         # 不手写 Accept/User-Agent，避免与实际模拟的 Chrome 版本冲突。
         "impersonate": ImpersonateTarget(client="chrome"),
+        # 所有 NoteForge 采集流程都需要查询人工字幕和自动字幕。
+        "writesubtitles": True,
+        "writeautomaticsub": True,
     }
-    if request_subtitles:
-        # 通知平台提取器查询人工字幕和自动字幕。
-        options["writesubtitles"] = True
-        options["writeautomaticsub"] = True
     if http_headers:
         # 平台专属 Header 由调用方提供，避免通用配置绑定 Bilibili。
         options["http_headers"] = dict(http_headers)

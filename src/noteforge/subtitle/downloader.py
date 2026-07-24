@@ -59,7 +59,6 @@ class YtDlpSubtitleDownloader:
 
         options = build_ytdlp_options(
             self._cookies_from_browser,
-            request_subtitles=True,
             http_headers=self._http_headers,
         )
         options.update(

@@ -114,10 +114,25 @@ class VideoMetadata:
 class SubtitleTrack:
     """视频平台提供的一种字幕语言和文件格式。"""
 
+    # 字幕语言代码，通常使用平台或 yt-dlp 返回的语言标识。
+    # 示例："zh-CN"、"ai-zh"、"en-US"
     language: str
+
+    # 字幕文件扩展名，不包含开头的点。
+    # 示例："vtt"、"srt"
     extension: str
+
+    # 字幕资源地址；对于 yt-dlp 返回的内联字幕，使用内部资源引用。
+    # 示例："https://example.com/subtitle.vtt"
+    # 示例："yt-dlp-inline://ai-zh/srt"
     url: str
+
+    # 字幕轨道的显示名称；来源平台未提供时为 None。
+    # 示例："中文（简体）"
     name: str | None = None
+
+    # 是否为平台自动生成的字幕。
+    # 示例：B站的 "ai-zh" 字幕为 True，人工上传字幕为 False。
     is_automatic: bool = False
 
 
@@ -125,7 +140,20 @@ class SubtitleTrack:
 class VideoCollectionResult:
     """视频元数据以及可选的结构化字幕处理结果。"""
 
+    # NoteForge 结构化视频元数据。
+    # 示例：VideoMetadata(id="BV1gxgD69E1a", title="测试视频", ...)
     metadata: VideoMetadata
+
+    # 远程采集阶段发现的全部合法字幕轨道；没有字幕时为空元组。
+    # 示例：(SubtitleTrack(language="ai-zh", extension="srt", ...),)
     subtitle_tracks: tuple[SubtitleTrack, ...]
+
+    # 根据语言、人工/自动类型和格式优先级选中的字幕轨道。
+    # 尚未选择或没有可用字幕时为 None。
+    # 示例：SubtitleTrack(language="zh-CN", extension="vtt", ...)
     selected_subtitle: SubtitleTrack | None = None
+
+    # 下载、解析并清洗后的结构化字幕。
+    # 未处理字幕、没有字幕或所选格式暂不支持时为 None。
+    # 示例：Transcript(language="ai-zh", segments=(...), source="automatic_subtitle")
     transcript: Transcript | None = None
