@@ -78,7 +78,7 @@ class TranscriptChunker:
 def segment_to_raw_chunk(segment: TranscriptSegment) -> RawChunk:
     """便捷函数：转换单个字幕片段。"""
 
-    return RawChunk.from_segment(segment)
+    return TranscriptChunker().chunk_segment(segment)
 
 
 def transcript_to_raw_chunks(transcript: Transcript) -> tuple[RawChunk, ...]:

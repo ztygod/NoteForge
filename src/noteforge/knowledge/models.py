@@ -20,6 +20,7 @@ class Concept:
 class KnowledgeChunk:
     id: str
     video_id: str
+    video_title: str
 
     start_time: float
     end_time: float
