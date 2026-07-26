@@ -1,0 +1,1 @@
+"""负责 ``SemanticChunk`` 到 ``KnowledgeChunk`` 的转换。"""
