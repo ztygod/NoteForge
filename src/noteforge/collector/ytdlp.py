@@ -15,8 +15,8 @@ def build_ytdlp_options(
     options: dict[str, Any] = {
         # 禁止下载视频和音频；字幕下载阶段也必须始终保持为 True。
         "skip_download": True,
-        # 不输出 yt-dlp 的常规进度信息，由 NoteForge 统一负责用户输出。
-        "quiet": False,
+        # 禁止 yt-dlp 直接输出进度，由 NoteForge 统一负责用户输出。
+        "quiet": True,
         # 不直接打印 yt-dlp 警告，避免污染 CLI 的结构化输出。
         "no_warnings": True,
         # 忽略用户目录中的 yt-dlp 配置，保证程序行为可预测。

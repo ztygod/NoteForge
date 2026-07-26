@@ -1,7 +1,9 @@
 """视频信息采集过程中可向用户安全展示的异常。"""
 
+from noteforge.exceptions.base import NoteForgeError
 
-class CollectionError(Exception):
+
+class CollectionError(NoteForgeError):
     """采集失败的基础异常。"""
 
 
