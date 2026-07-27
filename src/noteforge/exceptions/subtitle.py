@@ -1,7 +1,9 @@
 """字幕选择、下载和解析过程中可安全展示的异常。"""
 
+from noteforge.exceptions.base import NoteForgeError
 
-class SubtitleError(Exception):
+
+class SubtitleError(NoteForgeError):
     """字幕处理失败的基础异常。"""
 
 

@@ -117,6 +117,12 @@ def inspect(
         output["video_collection_result"] = asdict(collection.metadata)
         output["subtitle"] = _subtitle_debug_output(collection)
 
+    # 简要摘要便于人类阅读，后面的 JSON 保留给脚本和调试工具消费。
+    typer.echo(f"平台：{inspect_result.platform.value}")
+    if inspect_result.source_id is not None:
+        typer.echo(f"视频 ID：{inspect_result.source_id}")
+    if inspect_result.page_number is not None:
+        typer.echo(f"分 P：{inspect_result.page_number}")
     typer.echo("结构化数据：")
     typer.echo(json.dumps(output, ensure_ascii=False, indent=2))
 
