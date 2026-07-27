@@ -4,10 +4,12 @@ import pytest
 
 from noteforge.knowledge.chunker import RawChunk
 from noteforge.knowledge.models import Concept, Evidence, KnowledgeChunk
+from noteforge.knowledge.preprocessor import PreprocessedChunk
 from noteforge.knowledge.prompts import (
     BasePrompt,
     ChunkAnalysisPrompt,
     ConceptExtractionPrompt,
+    SemanticAnalysisPrompt,
 )
 
 
@@ -77,3 +79,29 @@ def test_concept_extraction_prompt_serializes_existing_evidence() -> None:
         "text": "原始字幕",
         "timestamp": 12.5,
     }
+
+
+def test_semantic_analysis_prompt_assigns_stable_indexes() -> None:
+    raw_chunks = (
+        RawChunk(0.66, 5.2, "闭包能够访问外层变量。"),
+        RawChunk(5.2, 10.14, "这里给出一个闭包示例。"),
+    )
+    chunks = tuple(
+        PreprocessedChunk(
+            start_time=chunk.start_time,
+            end_time=chunk.end_time,
+            text=chunk.text,
+            source_chunks=(chunk,),
+        )
+        for chunk in raw_chunks
+    )
+
+    system_message, user_message = (
+        SemanticAnalysisPrompt().build_for_chunks(chunks)
+    )
+
+    assert '"source_indexes"' in system_message.content
+    assert "不返回时间、原始文本或来源对象" in system_message.content
+    assert "[0]\n时间：0.660 - 5.200" in user_message.content
+    assert "[1]\n时间：5.200 - 10.140" in user_message.content
+    assert "闭包能够访问外层变量。" in user_message.content
