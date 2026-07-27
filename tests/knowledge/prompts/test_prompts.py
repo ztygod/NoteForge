@@ -9,8 +9,10 @@ from noteforge.knowledge.prompts import (
     BasePrompt,
     ChunkAnalysisPrompt,
     ConceptExtractionPrompt,
+    KnowledgeExtractionPrompt,
     SemanticAnalysisPrompt,
 )
+from noteforge.knowledge.semantic import SemanticChunk, SemanticChunkType
 
 
 class ExamplePrompt(BasePrompt):
@@ -105,3 +107,33 @@ def test_semantic_analysis_prompt_assigns_stable_indexes() -> None:
     assert "[0]\n时间：0.660 - 5.200" in user_message.content
     assert "[1]\n时间：5.200 - 10.140" in user_message.content
     assert "闭包能够访问外层变量。" in user_message.content
+
+
+def test_knowledge_extraction_prompt_contains_semantic_context() -> None:
+    raw = RawChunk(12.4, 26.8, "闭包能够访问定义作用域中的变量。")
+    preprocessed = PreprocessedChunk(12.4, 26.8, raw.text, (raw,))
+    chunk = SemanticChunk(
+        start_time=12.4,
+        end_time=26.8,
+        text=raw.text,
+        topic="闭包的定义",
+        summary="解释闭包如何保留词法作用域中的变量",
+        chunk_type=SemanticChunkType.DEFINITION,
+        importance=0.91,
+        source_chunks=(preprocessed,),
+    )
+
+    system_message, user_message = (
+        KnowledgeExtractionPrompt().build_for_chunks(
+            (chunk,),
+            start_index=3,
+        )
+    )
+
+    assert '"knowledge_points"' in system_message.content
+    assert "不要求覆盖全部输入索引" in system_message.content
+    assert "[3]\n时间：12.400 - 26.800" in user_message.content
+    assert "主题：闭包的定义" in user_message.content
+    assert "类型：definition" in user_message.content
+    assert "重要程度：0.910" in user_message.content
+    assert f"正文：\n{raw.text}" in user_message.content

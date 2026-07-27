@@ -17,6 +17,7 @@ from noteforge.exceptions.llm import (
     LLMRequestError,
     LLMTimeoutError,
 )
+from noteforge.exceptions.knowledge import KnowledgeExtractionError
 from noteforge.exceptions.semantic import SemanticAnalysisError
 from noteforge.exceptions.subtitle import (
     InvalidSubtitleResponseError,
@@ -29,6 +30,7 @@ from noteforge.exceptions.subtitle import (
 __all__ = [
     "CollectionError",
     "InvalidCollectionResponseError",
+    "KnowledgeExtractionError",
     "LLMConfigurationError",
     "LLMError",
     "LLMJSONDecodeError",
