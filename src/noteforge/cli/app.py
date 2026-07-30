@@ -1,5 +1,6 @@
 """NoteForge 命令行入口。"""
 
+import asyncio
 from dataclasses import asdict
 from importlib.metadata import version
 import json
@@ -9,7 +10,9 @@ import typer
 
 from noteforge.collector import bilibili, inspection
 from noteforge.collector.models import VideoCollectionResult
-from noteforge.exceptions import CollectionError, SubtitleError
+from noteforge.core import NoteGenerationPipeline
+from noteforge.exceptions import CollectionError, NoteForgeError, SubtitleError
+from noteforge.llm import create_llm_client
 
 
 app = typer.Typer(
@@ -125,6 +128,51 @@ def inspect(
         typer.echo(f"分 P：{inspect_result.page_number}")
     typer.echo("结构化数据：")
     typer.echo(json.dumps(output, ensure_ascii=False, indent=2))
+
+
+@app.command()
+def generate(
+    source: str = typer.Argument(..., help="需要生成学习笔记的视频 URL。"),
+    output: Path = typer.Option(
+        Path("output/note.md"),
+        "--output",
+        "-o",
+        help="生成的 Markdown 文件路径。",
+    ),
+    cookies_from_browser: str | None = typer.Option(
+        "chrome",
+        "--cookies-from-browser",
+        help="从指定浏览器读取 Cookie；传入空字符串可禁用。",
+    ),
+    subtitle_language: str | None = typer.Option(
+        None,
+        "--subtitle-language",
+        help="优先选择的字幕语言。",
+    ),
+    subtitle_output_dir: Path = typer.Option(
+        Path(".cache/noteforge/subtitles"),
+        "--subtitle-output-dir",
+        help="字幕缓存根目录。",
+    ),
+) -> None:
+    """从视频字幕生成 Markdown 学习笔记。"""
+
+    try:
+        client = create_llm_client()
+        pipeline = NoteGenerationPipeline.from_llm_client(client)
+        written_path = asyncio.run(
+            pipeline.run(
+                source,
+                output,
+                cookies_from_browser=cookies_from_browser or None,
+                subtitle_language=subtitle_language,
+                subtitle_output_dir=subtitle_output_dir,
+            )
+        )
+    except NoteForgeError as error:
+        typer.secho(f"生成失败：{error}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1) from error
+    typer.echo(f"学习笔记已生成：{written_path}")
 
 
 def main() -> None:

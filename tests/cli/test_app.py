@@ -10,6 +10,7 @@ from noteforge.collector.models import (
     VideoMetadata,
 )
 from noteforge.exceptions import RiskControlError
+from noteforge.core import NoteGenerationPipeline
 from noteforge.subtitle.downloader import YtDlpSubtitleDownloader
 from noteforge.subtitle.models import SubtitleFile
 
@@ -22,6 +23,7 @@ def test_help_lists_inspect_command() -> None:
 
     assert result.exit_code == 0
     assert "inspect" in result.stdout
+    assert "generate" in result.stdout
 
 
 def test_version() -> None:
@@ -29,6 +31,50 @@ def test_version() -> None:
 
     assert result.exit_code == 0
     assert result.stdout.strip() == version("noteforge")
+
+
+def test_generate_runs_pipeline_and_writes_output(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    output_path = tmp_path / "notes" / "note.md"
+    received = []
+
+    class FakePipeline:
+        async def run(self, source, output, **options):
+            received.append((source, output, options))
+            output.parent.mkdir(parents=True)
+            output.write_text("# 已生成\n", encoding="utf-8")
+            return output
+
+    monkeypatch.setattr(
+        "noteforge.cli.app.create_llm_client",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        NoteGenerationPipeline,
+        "from_llm_client",
+        classmethod(lambda cls, client: FakePipeline()),
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "https://www.bilibili.com/video/BV1CkArz1E4o",
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    assert output_path.read_text(encoding="utf-8") == "# 已生成\n"
+    assert received[0][0] == (
+        "https://www.bilibili.com/video/BV1CkArz1E4o"
+    )
+    assert received[0][1] == output_path
+    assert "学习笔记已生成" in result.stdout
 
 
 def test_inspect_requires_url() -> None:
