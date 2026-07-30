@@ -14,7 +14,7 @@
 
 [Quick start](#quick-start) · [Configuration](#llm-configuration) · [Usage](#usage) · [Troubleshooting](#troubleshooting) · [Development](#development)
 
-**English** · [简体中文](README.zh-CN.md)
+**English** · [简体中文](https://github.com/ztygod/NoteForge/blob/main/README.zh-CN.md)
 
 </div>
 
@@ -73,27 +73,28 @@ local model that follows JSON-output instructions reliably.
 
 ## Quick start
 
-### 1. Install
+### 1. Install the command
 
 ```bash
-git clone https://github.com/ztygod/NoteForge.git
-cd noteforge
-uv sync
+uv tool install noteforge-cli
 ```
 
 Confirm the CLI is ready:
 
 ```bash
-uv run noteforge --version
-uv run noteforge --help
+noteforge --version
+noteforge --help
 ```
+
+If your shell cannot find the command after installation, run
+`uv tool update-shell`, restart the terminal, and try again.
 
 ### 2. Configure an LLM
 
 Start the interactive setup:
 
 ```bash
-uv run noteforge configure
+noteforge configure
 ```
 
 For the default local Ollama setup, accept `ollama`, then prepare the suggested
@@ -115,7 +116,7 @@ hidden. You may also copy and edit `.env.example`; see
 ### 3. Inspect a video before generating
 
 ```bash
-uv run noteforge inspect \
+noteforge inspect \
   "https://www.bilibili.com/video/BVxxxxxxxxxx" \
   --cookies-from-browser chrome
 ```
@@ -126,7 +127,7 @@ Check that the JSON output contains a non-null `selected_subtitle` and
 ### 4. Generate notes
 
 ```bash
-uv run noteforge generate \
+noteforge generate \
   "https://www.bilibili.com/video/BVxxxxxxxxxx" \
   --output output/note.md \
   --cookies-from-browser chrome
@@ -146,7 +147,7 @@ precedence over `.env`.
 Run the setup again whenever you want to change providers or models:
 
 ```bash
-uv run noteforge configure
+noteforge configure
 ```
 
 When `generate` detects missing configuration in an interactive terminal, it
@@ -204,7 +205,7 @@ Never commit `.env` or a real API key. `.env` is ignored by Git.
 Use `inspect` to validate collection and subtitle access without calling an LLM:
 
 ```bash
-uv run noteforge inspect VIDEO_URL [OPTIONS]
+noteforge inspect VIDEO_URL [OPTIONS]
 ```
 
 Useful options:
@@ -218,35 +219,35 @@ Useful options:
 To try a public video without browser cookies:
 
 ```bash
-uv run noteforge inspect VIDEO_URL --cookies-from-browser ""
+noteforge inspect VIDEO_URL --cookies-from-browser ""
 ```
 
 ### Generate
 
 ```bash
-uv run noteforge generate VIDEO_URL [OPTIONS]
+noteforge generate VIDEO_URL [OPTIONS]
 ```
 
 Examples:
 
 ```bash
 # Prefer Simplified Chinese subtitles
-uv run noteforge generate VIDEO_URL \
+noteforge generate VIDEO_URL \
   --subtitle-language zh-Hans \
   --output output/course-note.md
 
 # Generate notes for part 2 of a multi-part video
-uv run noteforge generate \
+noteforge generate \
   "https://www.bilibili.com/video/BVxxxxxxxxxx?p=2" \
   --output output/part-2.md
 
 # Do not read browser cookies
-uv run noteforge generate VIDEO_URL \
+noteforge generate VIDEO_URL \
   --cookies-from-browser "" \
   --output output/note.md
 ```
 
-Run `uv run noteforge COMMAND --help` for the complete option reference.
+Run `noteforge COMMAND --help` for the complete option reference.
 
 ---
 
@@ -257,7 +258,7 @@ Run `uv run noteforge COMMAND --help` for the complete option reference.
 Run the interactive configuration:
 
 ```bash
-uv run noteforge configure
+noteforge configure
 ```
 
 ### Browser-cookie errors
@@ -266,13 +267,13 @@ Use the name of a browser installed on this machine and make sure it has a signe
 Bilibili session:
 
 ```bash
-uv run noteforge inspect VIDEO_URL --cookies-from-browser firefox
+noteforge inspect VIDEO_URL --cookies-from-browser firefox
 ```
 
 For a public video, retry without cookies:
 
 ```bash
-uv run noteforge inspect VIDEO_URL --cookies-from-browser ""
+noteforge inspect VIDEO_URL --cookies-from-browser ""
 ```
 
 Close the browser temporarily if its cookie database is locked.
@@ -307,10 +308,51 @@ NOTEFORGE_LLM_TIMEOUT_SECONDS=180
 ## Development
 
 ```bash
+git clone https://github.com/ztygod/NoteForge.git
+cd NoteForge
 uv sync --group dev
 uv run pytest -q
 uv build
 ```
+
+Release installation, upgrade, and removal:
+
+```bash
+uv tool install noteforge-cli
+uv tool upgrade noteforge-cli
+uv tool uninstall noteforge-cli
+```
+
+### Publishing a release
+
+The `noteforge` name is already owned by another project on PyPI. This project is
+therefore distributed as `noteforge-cli` while continuing to expose the
+`noteforge` terminal command.
+
+Before the first release, register a pending Trusted Publisher on PyPI with:
+
+```text
+PyPI project name: noteforge-cli
+GitHub owner: ztygod
+GitHub repository: NoteForge
+Workflow: publish.yml
+Environment: pypi
+```
+
+Create a protected `pypi` environment in the GitHub repository and require manual
+approval. Then publish a version by updating the version and pushing a matching
+tag:
+
+```bash
+uv version 0.1.0
+git add pyproject.toml uv.lock
+git commit -m "release: v0.1.0"
+git tag v0.1.0
+git push origin main v0.1.0
+```
+
+The workflow builds and validates both distributions before publishing through
+PyPI Trusted Publishing; no long-lived PyPI token is stored in GitHub.
 
 Project structure:
 
@@ -326,6 +368,7 @@ noteforge/
 │   ├── renderer/     # Markdown rendering and writing
 │   └── core/         # End-to-end pipeline
 ├── tests/
+├── .github/workflows/publish.yml
 ├── .env.example
 ├── pyproject.toml
 └── uv.lock

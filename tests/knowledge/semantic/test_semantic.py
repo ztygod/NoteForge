@@ -116,6 +116,17 @@ def test_multiple_topics_produce_multiple_chunks() -> None:
     assert result[1].chunk_type is SemanticChunkType.EXAMPLE
 
 
+def test_comparison_is_a_supported_semantic_chunk_type() -> None:
+    chunk = make_chunk(0, 1, "两种方案的优缺点对比")
+
+    result, _ = analyze(
+        response(proposal([0], chunk_type="comparison")),
+        (chunk,),
+    )
+
+    assert result[0].chunk_type is SemanticChunkType.COMPARISON
+
+
 def validation_result(
     *indexes: tuple[int, ...],
 ) -> SemanticAnalysisResult:

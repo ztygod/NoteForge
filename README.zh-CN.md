@@ -14,7 +14,7 @@
 
 [快速开始](#快速开始) · [模型配置](#llm-配置) · [使用方法](#使用方法) · [常见问题](#常见问题) · [开发](#开发)
 
-[English](README.md) · **简体中文**
+[English](https://github.com/ztygod/NoteForge/blob/main/README.md) · **简体中文**
 
 </div>
 
@@ -71,27 +71,27 @@ NoteForge 只下载字幕，不下载视频或音频。
 
 ## 快速开始
 
-### 1. 安装
+### 1. 安装命令
 
 ```bash
-git clone https://github.com/ztygod/NoteForge.git
-cd noteforge
-uv sync
+uv tool install noteforge-cli
 ```
 
 确认 CLI 可以使用：
 
 ```bash
-uv run noteforge --version
-uv run noteforge --help
+noteforge --version
+noteforge --help
 ```
+
+如果安装后终端找不到命令，请运行 `uv tool update-shell`，重启终端后再试。
 
 ### 2. 配置 LLM
 
 启动交互式配置向导：
 
 ```bash
-uv run noteforge configure
+noteforge configure
 ```
 
 如果使用默认的本地 Ollama，选择或接受 `ollama`，然后准备向导建议的模型：
@@ -111,7 +111,7 @@ ollama pull qwen2.5:7b
 ### 3. 生成前检查视频
 
 ```bash
-uv run noteforge inspect \
+noteforge inspect \
   "https://www.bilibili.com/video/BVxxxxxxxxxx" \
   --cookies-from-browser chrome
 ```
@@ -122,7 +122,7 @@ uv run noteforge inspect \
 ### 4. 生成笔记
 
 ```bash
-uv run noteforge generate \
+noteforge generate \
   "https://www.bilibili.com/video/BVxxxxxxxxxx" \
   --output output/note.md \
   --cookies-from-browser chrome
@@ -140,7 +140,7 @@ NoteForge 会读取当前目录的 `.env` 和进程环境变量；Shell 中显�
 需要更换服务商或模型时，可以再次运行：
 
 ```bash
-uv run noteforge configure
+noteforge configure
 ```
 
 在交互式终端执行 `generate` 且配置缺失时，程序会主动询问是否立即启动同一个
@@ -197,7 +197,7 @@ NOTEFORGE_LLM_TIMEOUT_SECONDS=120
 `inspect` 不会调用 LLM，适合先确认视频和字幕是否能正常采集：
 
 ```bash
-uv run noteforge inspect 视频链接 [选项]
+noteforge inspect 视频链接 [选项]
 ```
 
 常用选项：
@@ -211,35 +211,35 @@ uv run noteforge inspect 视频链接 [选项]
 如果公开视频不需要浏览器 Cookie：
 
 ```bash
-uv run noteforge inspect 视频链接 --cookies-from-browser ""
+noteforge inspect 视频链接 --cookies-from-browser ""
 ```
 
 ### 生成笔记
 
 ```bash
-uv run noteforge generate 视频链接 [选项]
+noteforge generate 视频链接 [选项]
 ```
 
 示例：
 
 ```bash
 # 优先选择简体中文字幕
-uv run noteforge generate 视频链接 \
+noteforge generate 视频链接 \
   --subtitle-language zh-Hans \
   --output output/course-note.md
 
 # 生成分 P 视频的第 2 P
-uv run noteforge generate \
+noteforge generate \
   "https://www.bilibili.com/video/BVxxxxxxxxxx?p=2" \
   --output output/part-2.md
 
 # 不读取浏览器 Cookie
-uv run noteforge generate 视频链接 \
+noteforge generate 视频链接 \
   --cookies-from-browser "" \
   --output output/note.md
 ```
 
-运行 `uv run noteforge 命令 --help` 可以查看完整选项。
+运行 `noteforge 命令 --help` 可以查看完整选项。
 
 ---
 
@@ -250,7 +250,7 @@ uv run noteforge generate 视频链接 \
 运行交互式配置：
 
 ```bash
-uv run noteforge configure
+noteforge configure
 ```
 
 ### 浏览器 Cookie 读取失败
@@ -258,13 +258,13 @@ uv run noteforge configure
 指定本机已经安装且登录了 B 站的浏览器：
 
 ```bash
-uv run noteforge inspect 视频链接 --cookies-from-browser firefox
+noteforge inspect 视频链接 --cookies-from-browser firefox
 ```
 
 对于公开视频，可以尝试禁用 Cookie：
 
 ```bash
-uv run noteforge inspect 视频链接 --cookies-from-browser ""
+noteforge inspect 视频链接 --cookies-from-browser ""
 ```
 
 如果浏览器 Cookie 数据库被锁定，可以暂时关闭浏览器后重试。
@@ -298,10 +298,49 @@ NOTEFORGE_LLM_TIMEOUT_SECONDS=180
 ## 开发
 
 ```bash
+git clone https://github.com/ztygod/NoteForge.git
+cd NoteForge
 uv sync --group dev
 uv run pytest -q
 uv build
 ```
+
+正式版本的安装、升级与卸载：
+
+```bash
+uv tool install noteforge-cli
+uv tool upgrade noteforge-cli
+uv tool uninstall noteforge-cli
+```
+
+### 发布新版本
+
+由于 PyPI 上的 `noteforge` 包名已经被其他项目占用，本项目使用
+`noteforge-cli` 作为发行包名，同时继续向用户提供 `noteforge` 终端命令。
+
+第一次发布前，需要在 PyPI 注册 Pending Trusted Publisher：
+
+```text
+PyPI 项目名称：noteforge-cli
+GitHub Owner：ztygod
+GitHub 仓库：NoteForge
+Workflow：publish.yml
+Environment：pypi
+```
+
+然后在 GitHub 仓库中创建受保护的 `pypi` Environment，并启用人工审批。更新
+版本号并推送对应标签即可发布：
+
+```bash
+uv version 0.1.0
+git add pyproject.toml uv.lock
+git commit -m "release: v0.1.0"
+git tag v0.1.0
+git push origin main v0.1.0
+```
+
+工作流会先构建并检查 wheel 和源码包，再通过 PyPI Trusted Publishing 发布；
+GitHub 中不需要保存长期 PyPI Token。
 
 项目结构：
 
@@ -317,6 +356,7 @@ noteforge/
 │   ├── renderer/     # Markdown 渲染与写入
 │   └── core/         # 端到端流水线
 ├── tests/
+├── .github/workflows/publish.yml
 ├── .env.example
 ├── pyproject.toml
 └── uv.lock

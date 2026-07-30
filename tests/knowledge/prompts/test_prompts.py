@@ -103,6 +103,7 @@ def test_semantic_analysis_prompt_assigns_stable_indexes() -> None:
     )
 
     assert '"source_indexes"' in system_message.content
+    assert "comparison" in system_message.content
     assert "不返回时间、原始文本或来源对象" in system_message.content
     assert "[0]\n时间：0.660 - 5.200" in user_message.content
     assert "[1]\n时间：5.200 - 10.140" in user_message.content

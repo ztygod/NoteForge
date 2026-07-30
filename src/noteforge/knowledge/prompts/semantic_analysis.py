@@ -29,7 +29,7 @@ class SemanticAnalysisPrompt(BasePrompt):
       "source_indexes": [0, 1],
       "topic": "简短主题",
       "summary": "核心内容概括",
-      "chunk_type": "definition|explanation|example|procedure|conclusion|transition|question|other",
+      "chunk_type": "definition|explanation|example|comparison|procedure|conclusion|transition|question|other",
       "importance": 0.8
     }
   ]

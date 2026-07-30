@@ -28,6 +28,7 @@ app = typer.Typer(
 )
 
 _SUBTITLE_PREVIEW_LIMIT = 5
+_DISTRIBUTION_NAME = "noteforge-cli"
 _PROVIDER_DEFAULTS = {
     "ollama": ("qwen2.5:7b", "http://localhost:11434"),
     "openai": ("", "https://api.openai.com/v1"),
@@ -68,7 +69,7 @@ def _subtitle_debug_output(
 
 def _version_callback(value: bool) -> None:
     if value:
-        typer.echo(version("noteforge"))
+        typer.echo(version(_DISTRIBUTION_NAME))
         raise typer.Exit()
 
 

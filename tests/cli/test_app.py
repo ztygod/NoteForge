@@ -70,7 +70,7 @@ def test_version() -> None:
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert result.stdout.strip() == version("noteforge")
+    assert result.stdout.strip() == version("noteforge-cli")
 
 
 def test_generate_runs_pipeline_and_writes_output(
