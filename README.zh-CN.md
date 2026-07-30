@@ -8,7 +8,7 @@
 
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776ab)
 ![CLI](https://img.shields.io/badge/Interface-CLI-6366f1)
-![Tests](https://img.shields.io/badge/Tests-193%20passing-22c55e)
+![Tests](https://img.shields.io/badge/Tests-198%20passing-22c55e)
 
 **B 站字幕采集、LLM 知识提取与可追溯学习笔记**
 
@@ -88,20 +88,24 @@ uv run noteforge --help
 
 ### 2. 配置 LLM
 
-使用本地 Ollama：
+启动交互式配置向导：
 
 ```bash
-cp .env.example .env
-ollama pull qwen2.5:7b
-set -a
-source .env
-set +a
+uv run noteforge configure
 ```
 
-示例配置默认连接 `http://localhost:11434`。如果你的 Ollama 安装不会自动启动
-服务，请保持 `ollama serve` 正在运行。
+如果使用默认的本地 Ollama，选择或接受 `ollama`，然后准备向导建议的模型：
 
-如需使用 OpenAI 或 Anthropic，请先编辑 `.env`，具体参考
+```bash
+ollama pull qwen2.5:7b
+```
+
+向导会把配置保存到本地 `.env`，文件权限仅限当前用户，NoteForge 会自动加载。
+默认配置连接 `http://localhost:11434`。如果你的 Ollama 安装不会自动启动服务，
+请保持 `ollama serve` 正在运行。
+
+如需使用 OpenAI 或 Anthropic，在向导中选择对应服务商即可；API Key 输入不会
+显示在屏幕上。也可以复制并编辑 `.env.example`，具体参考
 [LLM 配置](#llm-配置)。
 
 ### 3. 生成前检查视频
@@ -130,8 +134,17 @@ uv run noteforge generate \
 
 ## LLM 配置
 
-NoteForge 从环境变量读取配置，不会自动加载 `.env` 文件。因此，每次打开新的
-终端后，请先运行 `set -a; source .env; set +a`，再执行 `generate`。
+NoteForge 会读取当前目录的 `.env` 和进程环境变量；Shell 中显式导出的变量
+优先级高于 `.env`。
+
+需要更换服务商或模型时，可以再次运行：
+
+```bash
+uv run noteforge configure
+```
+
+在交互式终端执行 `generate` 且配置缺失时，程序会主动询问是否立即启动同一个
+向导。在脚本或 CI 等非交互环境中，程序会直接给出配置命令，不会等待输入。
 
 | 环境变量 | 是否必填 | 说明 |
 | --- | --- | --- |
@@ -234,12 +247,10 @@ uv run noteforge generate 视频链接 \
 
 ### `缺少配置：NOTEFORGE_LLM_PROVIDER`
 
-生成前先加载环境变量：
+运行交互式配置：
 
 ```bash
-set -a
-source .env
-set +a
+uv run noteforge configure
 ```
 
 ### 浏览器 Cookie 读取失败

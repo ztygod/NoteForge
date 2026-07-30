@@ -24,6 +24,46 @@ def test_help_lists_inspect_command() -> None:
     assert result.exit_code == 0
     assert "inspect" in result.stdout
     assert "generate" in result.stdout
+    assert "configure" in result.stdout
+
+
+def test_configure_writes_ollama_dotenv(tmp_path) -> None:
+    env_path = tmp_path / ".env"
+
+    result = runner.invoke(
+        app,
+        ["configure", "--path", str(env_path)],
+        input="ollama\nqwen-test\nhttp://localhost:11434\n90\n",
+    )
+
+    assert result.exit_code == 0
+    content = env_path.read_text(encoding="utf-8")
+    assert 'NOTEFORGE_LLM_PROVIDER="ollama"' in content
+    assert 'NOTEFORGE_LLM_MODEL="qwen-test"' in content
+    assert 'NOTEFORGE_LLM_TIMEOUT_SECONDS="90"' in content
+    assert "配置已保存" in result.stdout
+
+
+def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
+    def fail_to_create():
+        from noteforge.exceptions import LLMConfigurationError
+
+        raise LLMConfigurationError("缺少配置")
+
+    monkeypatch.setattr(
+        "noteforge.cli.app.create_llm_client",
+        fail_to_create,
+    )
+    monkeypatch.setattr("noteforge.cli.app.sys.stdin.isatty", lambda: False)
+
+    result = runner.invoke(
+        app,
+        ["generate", "https://www.bilibili.com/video/BV1CkArz1E4o"],
+    )
+
+    assert result.exit_code == 1
+    assert "noteforge configure" in result.output
+    assert "Traceback" not in result.output
 
 
 def test_version() -> None:

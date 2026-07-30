@@ -4,8 +4,9 @@
 """
 
 from dataclasses import dataclass
-import os
 from typing import Mapping
+
+from noteforge.config.dotenv import merged_environment
 
 
 _DEFAULT_BASE_URLS = {
@@ -32,7 +33,11 @@ class LLMSettings:
     ) -> "LLMSettings":
         """从 ``NOTEFORGE_LLM_*`` 环境变量加载配置。"""
 
-        values = os.environ if environ is None else environ
+        values = (
+            merged_environment()
+            if environ is None
+            else environ
+        )
         provider = values.get("NOTEFORGE_LLM_PROVIDER", "").strip().lower()
         model = values.get("NOTEFORGE_LLM_MODEL", "").strip()
         api_key = values.get("NOTEFORGE_LLM_API_KEY") or None

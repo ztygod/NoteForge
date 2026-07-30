@@ -8,7 +8,7 @@
 
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776ab)
 ![CLI](https://img.shields.io/badge/Interface-CLI-6366f1)
-![Tests](https://img.shields.io/badge/Tests-193%20passing-22c55e)
+![Tests](https://img.shields.io/badge/Tests-198%20passing-22c55e)
 
 **Bilibili subtitle collection, LLM-powered knowledge extraction, and traceable notes**
 
@@ -90,20 +90,26 @@ uv run noteforge --help
 
 ### 2. Configure an LLM
 
-For a local Ollama setup:
+Start the interactive setup:
 
 ```bash
-cp .env.example .env
-ollama pull qwen2.5:7b
-set -a
-source .env
-set +a
+uv run noteforge configure
 ```
 
-The default example expects Ollama at `http://localhost:11434`. Keep `ollama serve`
-running if your installation does not start it automatically.
+For the default local Ollama setup, accept `ollama`, then prepare the suggested
+model:
 
-For OpenAI or Anthropic, edit `.env` first; see
+```bash
+ollama pull qwen2.5:7b
+```
+
+The wizard stores the settings in a local `.env` file with user-only permissions.
+NoteForge loads this file automatically. The default setup expects Ollama at
+`http://localhost:11434`; keep `ollama serve` running if your installation does
+not start it automatically.
+
+For OpenAI or Anthropic, choose the provider in the wizard. API-key input is
+hidden. You may also copy and edit `.env.example`; see
 [LLM configuration](#llm-configuration).
 
 ### 3. Inspect a video before generating
@@ -133,9 +139,19 @@ automatically.
 
 ## LLM configuration
 
-NoteForge reads configuration from environment variables. It does not load `.env`
-files automatically, so run `set -a; source .env; set +a` in each new shell before
-using `generate`.
+NoteForge reads configuration from a `.env` file in the current directory and
+from process environment variables. Values explicitly exported in the shell take
+precedence over `.env`.
+
+Run the setup again whenever you want to change providers or models:
+
+```bash
+uv run noteforge configure
+```
+
+When `generate` detects missing configuration in an interactive terminal, it
+offers to start the same wizard automatically. In scripts and CI it exits with a
+clear instruction instead of waiting for input.
 
 | Variable | Required | Description |
 | --- | --- | --- |
@@ -238,12 +254,10 @@ Run `uv run noteforge COMMAND --help` for the complete option reference.
 
 ### `缺少配置：NOTEFORGE_LLM_PROVIDER`
 
-Load the environment file before running `generate`:
+Run the interactive configuration:
 
 ```bash
-set -a
-source .env
-set +a
+uv run noteforge configure
 ```
 
 ### Browser-cookie errors
