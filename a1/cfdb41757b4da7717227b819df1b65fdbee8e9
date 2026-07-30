@@ -1,0 +1,47 @@
+src/noteforge/cli/app.py
+  s_d1e0310e1efcd2::t_4aee6686a8ef93 31,72
+pyproject.toml
+  s_d1e0310e1efcd2::t_4aee6686a8ef93 2,7-28,34-37
+  s_d1e0310e1efcd2::t_c4d3be08e9daf3 50-52
+  s_d1e0310e1efcd2::t_cbe51d49a5c5c6 38
+tests/cli/test_app.py
+  s_d1e0310e1efcd2::t_4aee6686a8ef93 73
+README.md
+  s_d1e0310e1efcd2::t_0cfc4b194960f0 76,79,85-86,89-91,97,119,130,150,208,222,228,235,240,245,250,261,270,276,311-312,318-323
+  s_d1e0310e1efcd2::t_f6b8d606c62be0 17
+  s_d1e0310e1efcd2::t_dea2f5daed3f83 324,326-356,371
+  s_d1e0310e1efcd2::t_6dec3546c20273 325
+src/noteforge/knowledge/prompts/semantic_analysis.py
+  s_d1e0310e1efcd2::t_ba18a325cbe51c 32
+tests/knowledge/semantic/test_semantic.py
+  s_d1e0310e1efcd2::t_ba18a325cbe51c 119-129
+tests/knowledge/prompts/test_prompts.py
+  s_d1e0310e1efcd2::t_ba18a325cbe51c 106
+.github/workflows/publish.yml
+  s_d1e0310e1efcd2::t_4aee6686a8ef93 1-62
+README.zh-CN.md
+  s_d1e0310e1efcd2::t_f6b8d606c62be0 17
+  s_d1e0310e1efcd2::t_0cfc4b194960f0 74,77,83-84,87-88,94,114,125,143,200,214,220,227,232,237,242,253,261,267,301-302,308-313
+  s_d1e0310e1efcd2::t_dea2f5daed3f83 314,316-344,359
+  s_d1e0310e1efcd2::t_db518c6427231e 315
+src/noteforge/knowledge/semantic/models.py
+  s_d1e0310e1efcd2::t_ba18a325cbe51c 16
+uv.lock
+  s_d1e0310e1efcd2::t_5989ab2753e9cf 194
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "a1cfdb41757b4da7717227b819df1b65fdbee8e9",
+  "prompts": {},
+  "sessions": {
+    "s_d1e0310e1efcd2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fb210-bcbe-7c21-8612-a20fbc97cb43",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
