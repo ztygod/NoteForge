@@ -1,0 +1,62 @@
+src/noteforge/cli/commands/generate.py
+  s_f5017c4f1c96fa::t_10bdc50d5b1d99 1-71
+src/noteforge/cli/renderer.py
+  s_f5017c4f1c96fa::t_a70b36df91fe02 29-30,74-75
+  s_f5017c4f1c96fa::t_41bf95eb3be9c8 2-15,17-28,31-73
+  s_f5017c4f1c96fa::t_fe2b969fd62eba 1,16
+src/noteforge/cli/commands/configure.py
+  s_f5017c4f1c96fa::t_10bdc50d5b1d99 1-20
+src/noteforge/exceptions/__init__.py
+  s_f5017c4f1c96fa::t_7a8fc06d48d195 22,46-47
+tests/cli/test_renderer.py
+  s_f5017c4f1c96fa::t_ca301e8b68d421 1-66
+pyproject.toml
+  s_f5017c4f1c96fa::t_41bf95eb3be9c8 30
+src/noteforge/core/events.py
+  s_f5017c4f1c96fa::t_fe2b969fd62eba 1,18,40
+  s_f5017c4f1c96fa::t_7a8fc06d48d195 2-17,19-39
+src/noteforge/cli/commands/inspect.py
+  s_f5017c4f1c96fa::t_10bdc50d5b1d99 1-68
+tests/cli/test_app.py
+  s_f5017c4f1c96fa::t_ad205e73b34fb7 54,57-60,94
+tests/cli/test_event.py
+  s_f5017c4f1c96fa::t_ca301e8b68d421 1-30
+src/noteforge/core/pipeline.py
+  s_f5017c4f1c96fa::t_a70b36df91fe02 152-164
+  s_f5017c4f1c96fa::t_41bf95eb3be9c8 80,83-84
+  s_f5017c4f1c96fa::t_4d0fa92102a3ff 4-6,8-10,14,16-20,22-23,27,34-59,71-72,77-78,86-89,91-94,97-101,110,112-115,117-151,165-214
+  s_f5017c4f1c96fa::t_fe2b969fd62eba 1,63,81
+  s_f5017c4f1c96fa::t_d28629da871174 60-61
+  s_f5017c4f1c96fa::t_8ab527fed61f46 85
+src/noteforge/cli/commands/__init__.py
+  s_f5017c4f1c96fa::t_10bdc50d5b1d99 1-8
+src/noteforge/cli/app.py
+  s_f5017c4f1c96fa::t_10bdc50d5b1d99 1,7-8,10,19-20,39-41,46
+src/noteforge/cli/configuration.py
+  s_f5017c4f1c96fa::t_10bdc50d5b1d99 1-122
+src/noteforge/exceptions/pipeline.py
+  s_f5017c4f1c96fa::t_fe2b969fd62eba 1,18
+  s_f5017c4f1c96fa::t_7a8fc06d48d195 2-17,19-23
+src/noteforge/cli/serialization.py
+  s_f5017c4f1c96fa::t_10bdc50d5b1d99 1-37
+src/noteforge/core/__init__.py
+  s_f5017c4f1c96fa::t_7a8fc06d48d195 4,6
+uv.lock
+  s_f5017c4f1c96fa::t_d982db3017e39a 198,210,272,278,280
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "af39ab297ff0eae4d2789e72f0dbe077c1fb1334",
+  "prompts": {},
+  "sessions": {
+    "s_f5017c4f1c96fa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc068-0d9b-77b3-81da-7b632d446840",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
