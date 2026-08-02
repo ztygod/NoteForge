@@ -19,6 +19,7 @@ from noteforge.exceptions.llm import (
 )
 from noteforge.exceptions.knowledge import KnowledgeExtractionError
 from noteforge.exceptions.semantic import SemanticAnalysisError
+from noteforge.exceptions.pipeline import PipelineErrorContext, PipelineExecutionError
 from noteforge.exceptions.subtitle import (
     InvalidSubtitleResponseError,
     SubtitleDownloadError,
@@ -42,6 +43,8 @@ __all__ = [
     "RemoteCollectionError",
     "RiskControlError",
     "SemanticAnalysisError",
+    "PipelineErrorContext",
+    "PipelineExecutionError",
     "UnsupportedSourceError",
     "VideoUnavailableError",
     "SubtitleDownloadError",

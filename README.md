@@ -14,7 +14,7 @@
 
 [Quick start](#quick-start) · [Configuration](#llm-configuration) · [Usage](#usage) · [Troubleshooting](#troubleshooting) · [Development](#development)
 
-**English** · [简体中文](https://github.com/ztygod/NoteForge/blob/main/README.zh-CN.md)
+**English** · [简体中文](/README.zh-CN.md)
 
 </div>
 

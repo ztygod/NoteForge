@@ -51,10 +51,13 @@ def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
         raise LLMConfigurationError("缺少配置")
 
     monkeypatch.setattr(
-        "noteforge.cli.app.create_llm_client",
+        "noteforge.cli.configuration.create_llm_client",
         fail_to_create,
     )
-    monkeypatch.setattr("noteforge.cli.app.sys.stdin.isatty", lambda: False)
+    monkeypatch.setattr(
+        "noteforge.cli.configuration.sys.stdin.isatty",
+        lambda: False,
+    )
 
     result = runner.invoke(
         app,
@@ -88,7 +91,7 @@ def test_generate_runs_pipeline_and_writes_output(
             return output
 
     monkeypatch.setattr(
-        "noteforge.cli.app.create_llm_client",
+        "noteforge.cli.configuration.create_llm_client",
         lambda: object(),
     )
     monkeypatch.setattr(

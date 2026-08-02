@@ -14,7 +14,7 @@
 
 [快速开始](#快速开始) · [模型配置](#llm-配置) · [使用方法](#使用方法) · [常见问题](#常见问题) · [开发](#开发)
 
-[English](https://github.com/ztygod/NoteForge/blob/main/README.md) · **简体中文**
+[English](/README.md) · **简体中文**
 
 </div>
 
