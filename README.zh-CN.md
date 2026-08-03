@@ -8,13 +8,13 @@
 
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776ab)
 ![CLI](https://img.shields.io/badge/Interface-CLI-6366f1)
-![Tests](https://img.shields.io/badge/Tests-198%20passing-22c55e)
+![Tests](https://img.shields.io/badge/Tests-217%20passing-22c55e)
 
 **B 站字幕采集、LLM 知识提取与可追溯学习笔记**
 
 [快速开始](#快速开始) · [模型配置](#llm-配置) · [使用方法](#使用方法) · [常见问题](#常见问题) · [开发](#开发)
 
-[English](/README.md) · **简体中文**
+[English](https://github.com/ztygod/NoteForge/blob/main/README.md) · **简体中文**
 
 </div>
 
@@ -24,7 +24,7 @@
 > NoteForge 目前仍处于开发阶段，存在许多不完善之处，请谨慎使用。
 > 因使用本项目造成的任何损失，作者概不负责。
 
-![NoteForge CLI 运行示例](asserts/example.png)
+![NoteForge CLI 运行示例](https://raw.githubusercontent.com/ztygod/NoteForge/main/asserts/example.png)
 
 ---
 
