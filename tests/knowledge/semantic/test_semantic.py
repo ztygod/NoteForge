@@ -75,6 +75,32 @@ def analyze(
     return result, client
 
 
+def test_reports_progress_before_and_after_each_batch(monkeypatch) -> None:
+    events: list[tuple[int, int, bool]] = []
+    analyzer = LLMSemanticAnalyzer(
+        StaticClient("{}"),
+        batch_size=2,
+        progress_handler=lambda current, total, completed: events.append(
+            (current, total, completed)
+        ),
+    )
+
+    async def fake_analyze_batch(chunks):
+        return ()
+
+    monkeypatch.setattr(analyzer, "_analyze_batch", fake_analyze_batch)
+    chunks = tuple(make_chunk(index, index + 1, str(index)) for index in range(3))
+
+    asyncio.run(analyzer.analyze(chunks))
+
+    assert events == [
+        (1, 2, False),
+        (1, 2, True),
+        (2, 2, False),
+        (2, 2, True),
+    ]
+
+
 def test_single_input_produces_one_semantic_chunk() -> None:
     chunk = make_chunk(0.5, 2, "闭包可以访问外层变量")
 
@@ -114,6 +140,17 @@ def test_multiple_topics_produce_multiple_chunks() -> None:
 
     assert [item.topic for item in result] == ["概念", "例子"]
     assert result[1].chunk_type is SemanticChunkType.EXAMPLE
+
+
+def test_comparison_is_a_supported_semantic_chunk_type() -> None:
+    chunk = make_chunk(0, 1, "两种方案的优缺点对比")
+
+    result, _ = analyze(
+        response(proposal([0], chunk_type="comparison")),
+        (chunk,),
+    )
+
+    assert result[0].chunk_type is SemanticChunkType.COMPARISON
 
 
 def validation_result(

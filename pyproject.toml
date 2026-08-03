@@ -1,13 +1,41 @@
 [project]
-name = "noteforge"
+name = "noteforge-cli"
 version = "0.1.0"
 description = "Generate structured study notes from public course videos"
 readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+    { name = "ztygod" },
+]
+keywords = [
+    "bilibili",
+    "cli",
+    "learning-notes",
+    "llm",
+    "subtitles",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Education",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
 dependencies = [
+    "rich>=13,<15",
     "typer>=0.12,<1",
     "yt-dlp[curl-cffi]>=2026.7.4",
 ]
+
+[project.urls]
+Homepage = "https://github.com/ztygod/NoteForge"
+Repository = "https://github.com/ztygod/NoteForge"
+Issues = "https://github.com/ztygod/NoteForge/issues"
 
 [project.scripts]
 noteforge = "noteforge.cli.app:main"
@@ -20,3 +48,6 @@ dev = [
 [build-system]
 requires = ["uv_build>=0.11.30,<0.12"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "noteforge"

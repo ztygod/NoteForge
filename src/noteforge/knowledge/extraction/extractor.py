@@ -1,5 +1,6 @@
 """基于统一 LLM Client 的批量知识点提取器。"""
 
+from collections.abc import Callable
 from typing import Protocol
 
 from noteforge.exceptions import (
@@ -36,6 +37,7 @@ class LLMKnowledgeExtractor:
         *,
         batch_size: int = 20,
         prompt: KnowledgeExtractionPrompt | None = None,
+        progress_handler: Callable[[int, int, bool], None] | None = None,
     ) -> None:
         if (
             isinstance(batch_size, bool)
@@ -46,6 +48,15 @@ class LLMKnowledgeExtractor:
         self._client = client
         self._batch_size = batch_size
         self._prompt = prompt or KnowledgeExtractionPrompt()
+        self._progress_handler = progress_handler
+
+    def set_progress_handler(
+        self,
+        handler: Callable[[int, int, bool], None],
+    ) -> None:
+        """绑定批次进度处理器，参数依次为当前批次、总批次和是否完成。"""
+
+        self._progress_handler = handler
 
     async def extract(
         self,
@@ -57,8 +68,14 @@ class LLMKnowledgeExtractor:
             raise TypeError("chunks 必须是 SemanticChunk 元组")
 
         results: list[KnowledgePoint] = []
-        for start_index in range(0, len(chunks), self._batch_size):
+        total_batches = (len(chunks) + self._batch_size - 1) // self._batch_size
+        for batch_number, start_index in enumerate(
+            range(0, len(chunks), self._batch_size),
+            start=1,
+        ):
             batch = chunks[start_index : start_index + self._batch_size]
+            if self._progress_handler:
+                self._progress_handler(batch_number, total_batches, False)
             results.extend(
                 await self._extract_batch(
                     batch,
@@ -66,6 +83,8 @@ class LLMKnowledgeExtractor:
                     all_chunks=chunks,
                 )
             )
+            if self._progress_handler:
+                self._progress_handler(batch_number, total_batches, True)
         return tuple(results)
 
     async def _extract_batch(

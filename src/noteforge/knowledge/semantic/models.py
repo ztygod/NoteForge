@@ -13,6 +13,7 @@ class SemanticChunkType(StrEnum):
     DEFINITION = "definition"
     EXPLANATION = "explanation"
     EXAMPLE = "example"
+    COMPARISON = "comparison"
     PROCEDURE = "procedure"
     CONCLUSION = "conclusion"
     TRANSITION = "transition"

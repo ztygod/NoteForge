@@ -10,6 +10,7 @@ from noteforge.collector.models import (
     VideoMetadata,
 )
 from noteforge.exceptions import RiskControlError
+from noteforge.core import NoteGenerationPipeline
 from noteforge.subtitle.downloader import YtDlpSubtitleDownloader
 from noteforge.subtitle.models import SubtitleFile
 
@@ -22,13 +23,101 @@ def test_help_lists_inspect_command() -> None:
 
     assert result.exit_code == 0
     assert "inspect" in result.stdout
+    assert "generate" in result.stdout
+    assert "configure" in result.stdout
+
+
+def test_configure_writes_ollama_dotenv(tmp_path) -> None:
+    env_path = tmp_path / ".env"
+
+    result = runner.invoke(
+        app,
+        ["configure", "--path", str(env_path)],
+        input="ollama\nqwen-test\nhttp://localhost:11434\n90\n",
+    )
+
+    assert result.exit_code == 0
+    content = env_path.read_text(encoding="utf-8")
+    assert 'NOTEFORGE_LLM_PROVIDER="ollama"' in content
+    assert 'NOTEFORGE_LLM_MODEL="qwen-test"' in content
+    assert 'NOTEFORGE_LLM_TIMEOUT_SECONDS="90"' in content
+    assert "配置已保存" in result.stdout
+
+
+def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
+    def fail_to_create():
+        from noteforge.exceptions import LLMConfigurationError
+
+        raise LLMConfigurationError("缺少配置")
+
+    monkeypatch.setattr(
+        "noteforge.cli.configuration.create_llm_client",
+        fail_to_create,
+    )
+    monkeypatch.setattr(
+        "noteforge.cli.configuration.sys.stdin.isatty",
+        lambda: False,
+    )
+
+    result = runner.invoke(
+        app,
+        ["generate", "https://www.bilibili.com/video/BV1CkArz1E4o"],
+    )
+
+    assert result.exit_code == 1
+    assert "noteforge configure" in result.output
+    assert "Traceback" not in result.output
 
 
 def test_version() -> None:
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert result.stdout.strip() == version("noteforge")
+    assert result.stdout.strip() == version("noteforge-cli")
+
+
+def test_generate_runs_pipeline_and_writes_output(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    output_path = tmp_path / "notes" / "note.md"
+    received = []
+
+    class FakePipeline:
+        async def run(self, source, output, **options):
+            received.append((source, output, options))
+            output.parent.mkdir(parents=True)
+            output.write_text("# 已生成\n", encoding="utf-8")
+            return output
+
+    monkeypatch.setattr(
+        "noteforge.cli.configuration.create_llm_client",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        NoteGenerationPipeline,
+        "from_llm_client",
+        classmethod(lambda cls, client: FakePipeline()),
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "https://www.bilibili.com/video/BV1CkArz1E4o",
+            "--output",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    assert output_path.read_text(encoding="utf-8") == "# 已生成\n"
+    assert received[0][0] == (
+        "https://www.bilibili.com/video/BV1CkArz1E4o"
+    )
+    assert received[0][1] == output_path
+    assert "学习笔记已生成" in result.stdout
 
 
 def test_inspect_requires_url() -> None:

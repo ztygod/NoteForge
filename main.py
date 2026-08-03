@@ -1,5 +1,6 @@
-def main():
-    print("Hello from noteforge!")
+"""从源码运行 NoteForge CLI。"""
+
+from noteforge.cli.app import main
 
 
 if __name__ == "__main__":

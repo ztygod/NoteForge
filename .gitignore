@@ -7,6 +7,10 @@ dist/
 wheels/
 *.egg-info
 .cache/
+.env
+.env.*
+!.env.example
+.noteforge
 
 # Virtual environments
 .venv
