@@ -20,6 +20,15 @@
 
 ---
 
+> [!WARNING]
+> NoteForge is still under active development and has many incomplete or
+> unpolished areas. Use it with caution. The author assumes no responsibility
+> for any loss or damage resulting from its use.
+
+![NoteForge CLI example](asserts/example.png)
+
+---
+
 ## Why NoteForge
 
 Long course videos are useful, but turning them into reviewable notes takes time.

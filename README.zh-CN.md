@@ -20,6 +20,14 @@
 
 ---
 
+> [!WARNING]
+> NoteForge 目前仍处于开发阶段，存在许多不完善之处，请谨慎使用。
+> 因使用本项目造成的任何损失，作者概不负责。
+
+![NoteForge CLI 运行示例](asserts/example.png)
+
+---
+
 ## 为什么使用 NoteForge
 
 公开课视频内容丰富，但手工整理成方便复习的笔记往往很耗时。NoteForge 会获取
