@@ -1,0 +1,98 @@
+tests/cli/test_renderer.py
+  s_4b7c46e97b2cbe::t_50125a0dba589e 89-106
+src/noteforge/knowledge/semantic/analyzer.py
+  s_4b7c46e97b2cbe::t_e7bab30da4e8ef 16,18,41-42,55-56,69-77,129-131,133,135-137,140-146,148-155
+  s_4b7c46e97b2cbe::t_d7bad35a81a71a 3,43,57-59,87-98,100-116,121-123,132,134,138-139,147
+src/noteforge/llm/providers/__init__.py
+  s_4b7c46e97b2cbe::t_8bf18a76a0e572 1,5-6,19,27-31,33-34,36-38,40,49-55,57-58,60-61,63-64,68-72,75
+tests/knowledge/semantic/test_semantic.py
+  s_4b7c46e97b2cbe::t_e637436c83915a 30,45,121
+  s_4b7c46e97b2cbe::t_6a00412257a4b1 113
+  s_4b7c46e97b2cbe::t_50125a0dba589e 40-44,46-49,147-163
+  s_4b7c46e97b2cbe::t_05283907d028ca 50-64,122-134
+  s_4b7c46e97b2cbe::t_8079207d9a9822 164-165
+src/noteforge/llm/providers/anthropic.py
+  s_4b7c46e97b2cbe::t_ab361e3694851f 11,36
+  s_4b7c46e97b2cbe::t_4dca62f800bc9f 38,72,113,136,159-161
+  s_4b7c46e97b2cbe::t_ec0456eb849f10 16-18,114-135,137-155,158
+  s_4b7c46e97b2cbe::t_32a89201d7d0c3 156-157
+  s_4b7c46e97b2cbe::t_f796c63903d398 162
+src/noteforge/llm/__init__.py
+  s_4b7c46e97b2cbe::t_ef92d89c5c3358 18-20,36-38
+tests/cli/test_app.py
+  s_4b7c46e97b2cbe::t_ad4d2b4fcfba1b 93-96,99
+  s_4b7c46e97b2cbe::t_e637436c83915a 104
+src/noteforge/cli/commands/generate.py
+  s_4b7c46e97b2cbe::t_05283907d028ca 60,64-69
+  s_4b7c46e97b2cbe::t_12f5bd53935e22 43-48,55-57,61-63,70-74
+src/noteforge/knowledge/prompts/knowledge_extraction.py
+  s_4b7c46e97b2cbe::t_7ed489b8faad34 29,51
+src/noteforge/llm/providers/ollama.py
+  s_4b7c46e97b2cbe::t_83b721c22d6b97 3-4,8
+  s_4b7c46e97b2cbe::t_ec0456eb849f10 15-17,87-107,109-117,123-130,132
+  s_4b7c46e97b2cbe::t_ab361e3694851f 10,33
+  s_4b7c46e97b2cbe::t_4dca62f800bc9f 35,59,86,108,133-135
+  s_4b7c46e97b2cbe::t_217945f561e98b 118-122
+  s_4b7c46e97b2cbe::t_ef8f271aae7d55 131
+  s_4b7c46e97b2cbe::t_8d163a2b6eb5f0 136
+src/noteforge/llm/models.py
+  s_4b7c46e97b2cbe::t_ef92d89c5c3358 4,61-86
+  s_4b7c46e97b2cbe::t_cbfa43cbfcab08 87-88
+src/noteforge/llm/providers/openai.py
+  s_4b7c46e97b2cbe::t_ab361e3694851f 15,40
+  s_4b7c46e97b2cbe::t_4dca62f800bc9f 42,62,89,122,151-153
+  s_4b7c46e97b2cbe::t_217945f561e98b 133-135
+  s_4b7c46e97b2cbe::t_83b721c22d6b97 11
+  s_4b7c46e97b2cbe::t_ec0456eb849f10 3-4,20-22,90-95,105-109,111-113,118-121,123-132,136-146,150
+  s_4b7c46e97b2cbe::t_5cee2c0a924e7c 6,96-104,110,114-117,162-164
+  s_4b7c46e97b2cbe::t_031894e5b5f5fe 147-149
+  s_4b7c46e97b2cbe::t_034f84c13b95a2 154
+  s_4b7c46e97b2cbe::t_c4aaab497f3943 165-166
+pyproject.toml
+  s_4b7c46e97b2cbe::t_8bf18a76a0e572 30
+src/noteforge/knowledge/extraction/extractor.py
+  s_4b7c46e97b2cbe::t_e7bab30da4e8ef 19,21,44-45,58-59,72-80,144-146,148,150-151,155-169,171-179
+  s_4b7c46e97b2cbe::t_d7bad35a81a71a 3,46,60-62,91-102,104-105,109-110,112-121,123-124,132-133,147,149,153-154,170
+src/noteforge/knowledge/prompts/semantic_analysis.py
+  s_4b7c46e97b2cbe::t_7ed489b8faad34 23,44
+tests/knowledge/extraction/test_extraction.py
+  s_4b7c46e97b2cbe::t_e637436c83915a 41,129
+src/noteforge/knowledge/tools.py
+  s_4b7c46e97b2cbe::t_ef92d89c5c3358 1-22,26-29,31-53,57-60,63-68
+  s_4b7c46e97b2cbe::t_0123481242aa4b 23-25,30,54-56,61-62
+src/noteforge/core/pipeline.py
+  s_4b7c46e97b2cbe::t_217945f561e98b 158
+  s_4b7c46e97b2cbe::t_7ed489b8faad34 27-29,59-65,67-70,74,139-144,147-152,154-157,159-167
+  s_4b7c46e97b2cbe::t_12f5bd53935e22 45,52,58,66,72-73,105,114-118,121-122,153,185-188,203
+  s_4b7c46e97b2cbe::t_49302af6257b37 71
+  s_4b7c46e97b2cbe::t_dcef14f569ab49 168
+tests/llm/test_llm.py
+  s_4b7c46e97b2cbe::t_5cee2c0a924e7c 126-149
+  s_4b7c46e97b2cbe::t_ad4d2b4fcfba1b 1
+  s_4b7c46e97b2cbe::t_50125a0dba589e 15,99-115,117,119-123
+  s_4b7c46e97b2cbe::t_e637436c83915a 30,41-43,49,63,65,85,88,116,118,160,162,181,183,211,213
+  s_4b7c46e97b2cbe::t_14d92d6584458c 124-125
+src/noteforge/llm/base.py
+  s_4b7c46e97b2cbe::t_ef92d89c5c3358 13-15,44,46-53,55-67
+  s_4b7c46e97b2cbe::t_8bf18a76a0e572 23,31,39,45,54,68-70
+src/noteforge/cli/renderer.py
+  s_4b7c46e97b2cbe::t_7ed489b8faad34 19-25,55-58,65-74
+uv.lock
+  s_4b7c46e97b2cbe::t_59426f49d9d4da 14-26,176-221,257,270,368-376
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "333d2dd2f35d83a8214fd85dec045897bc09e208",
+  "prompts": {},
+  "sessions": {
+    "s_4b7c46e97b2cbe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6b5-2b89-7a71-b5ba-2191f72ebace",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
