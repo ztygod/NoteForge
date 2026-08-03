@@ -36,6 +36,9 @@ class _MeasuredLLMClient(LLMClient):
         self.client = client
         self.call_count = 0
         self.retry_count = 0
+        self.input_tokens = 0
+        self.output_tokens = 0
+        self.last_model: str | None = None
 
     def generate(
         self,
@@ -44,7 +47,11 @@ class _MeasuredLLMClient(LLMClient):
         options: LLMRequestOptions | None = None,
     ) -> LLMResponse:
         self.call_count += 1
-        return self.client.generate(messages, options=options)
+        response = self.client.generate(messages, options=options)
+        self.last_model = response.model
+        self.input_tokens += response.usage.input_tokens or 0
+        self.output_tokens += response.usage.output_tokens or 0
+        return response
 
 
 def _json_value(value: Any) -> Any:
@@ -87,17 +94,65 @@ class NoteGenerationPipeline:
         cls, client: LLMClient, *, event_handler: EventHandler | None = None
     ) -> "NoteGenerationPipeline":
         measured = _MeasuredLLMClient(client)
-        return cls(
-            LLMSemanticAnalyzer(measured),
-            LLMKnowledgeExtractor(measured),
+        semantic_analyzer = LLMSemanticAnalyzer(measured)
+        knowledge_extractor = LLMKnowledgeExtractor(measured)
+        pipeline = cls(
+            semantic_analyzer,
+            knowledge_extractor,
             event_handler=event_handler,
             measured_client=measured,
         )
+        semantic_analyzer.set_progress_handler(
+            lambda current, total, completed: pipeline._batch_event(
+                "semantic", "Semantic chunks generated", current, total, completed
+            )
+        )
+        knowledge_extractor.set_progress_handler(
+            lambda current, total, completed: pipeline._batch_event(
+                "knowledge", "Knowledge generated", current, total, completed
+            )
+        )
+        return pipeline
 
     def _event(
         self, stage: str, status: PipelineStatus, message: str, **kwargs: Any
     ) -> None:
         self._emit(PipelineEvent(stage, status, message, **kwargs))
+
+    def _batch_event(
+        self,
+        stage: str,
+        message: str,
+        current: int,
+        total: int,
+        completed: bool,
+    ) -> None:
+        """将业务模块的批次进度转换为统一 Pipeline 事件。"""
+
+        completed_batches = current if completed else current - 1
+        llm_calls = self._measured_client.call_count if self._measured_client else 0
+        if not completed:
+            llm_calls += 1
+        measured_metrics: dict[str, Any] = {}
+        if self._measured_client:
+            measured_metrics = {
+                "model": self._measured_client.last_model,
+                "input_tokens": self._measured_client.input_tokens,
+                "output_tokens": self._measured_client.output_tokens,
+            }
+        self._event(
+            stage,
+            PipelineStatus.RUNNING,
+            message,
+            progress=completed_batches / total,
+            metrics={
+                "batch_current": current,
+                "batch_total": total,
+                "llm_calls": llm_calls,
+                "request_status": "已完成" if completed else "等待模型响应",
+                **measured_metrics,
+            },
+        )
 
     async def run(
         self,
@@ -114,22 +169,44 @@ class NoteGenerationPipeline:
         current_source_text: str | None = None
         started = perf_counter()
 
-        async def async_stage(stage: str, message: str, operation: Any) -> Any:
+        async def async_stage(
+            stage: str,
+            message: str,
+            operation: Any,
+            metrics: Callable[[Any], dict[str, Any]] | None = None,
+        ) -> Any:
             nonlocal current_stage
             current_stage = stage
             began = perf_counter()
             self._event(stage, PipelineStatus.RUNNING, message)
             result = await operation()
-            self._event(stage, PipelineStatus.SUCCESS, message, duration=perf_counter() - began)
+            self._event(
+                stage,
+                PipelineStatus.SUCCESS,
+                message,
+                metrics=metrics(result) if metrics else {},
+                duration=perf_counter() - began,
+            )
             return result
 
-        def sync_stage(stage: str, message: str, operation: Any) -> Any:
+        def sync_stage(
+            stage: str,
+            message: str,
+            operation: Any,
+            metrics: Callable[[Any], dict[str, Any]] | None = None,
+        ) -> Any:
             nonlocal current_stage
             current_stage = stage
             began = perf_counter()
             self._event(stage, PipelineStatus.RUNNING, message)
             result = operation()
-            self._event(stage, PipelineStatus.SUCCESS, message, duration=perf_counter() - began)
+            self._event(
+                stage,
+                PipelineStatus.SUCCESS,
+                message,
+                metrics=metrics(result) if metrics else {},
+                duration=perf_counter() - began,
+            )
             return result
 
         try:
@@ -146,47 +223,81 @@ class NoteGenerationPipeline:
                     subtitle_output_dir=subtitle_output_dir,
                     page_number=inspected.page_number,
                 ),
-            )
-            if collection.transcript is None:
-                raise NoteForgeError("视频没有可供处理的受支持字幕")
-            self._event(
-                "transcript",
-                PipelineStatus.SUCCESS,
-                "Transcript metrics",
-                metrics={
-                    "segments": len(collection.transcript.segments),
+                lambda result: {
+                    "segments": (
+                        len(result.transcript.segments) if result.transcript else 0
+                    ),
                     "video_duration_minutes": (
-                        round(collection.metadata.duration / 60, 2)
-                        if collection.metadata.duration is not None
+                        round(result.metadata.duration / 60, 2)
+                        if result.metadata.duration is not None
                         else None
                     ),
                 },
             )
+            if collection.transcript is None:
+                raise NoteForgeError("视频没有可供处理的受支持字幕")
 
-            raw_chunks = sync_stage("chunk", "Raw chunks created", lambda: TranscriptChunker().chunk(collection.transcript))
+            raw_chunks = sync_stage(
+                "chunk",
+                "Raw chunks created",
+                lambda: TranscriptChunker().chunk(collection.transcript),
+                lambda result: {"raw_chunks": len(result)},
+            )
             snapshots["raw_chunks.json"] = raw_chunks
-            self._event("chunk", PipelineStatus.SUCCESS, "Raw chunks counted", metrics={"raw_chunks": len(raw_chunks)})
 
-            preprocessed_chunks = sync_stage("preprocess", "Chunks preprocessed", lambda: ChunkPreprocessor().preprocess(raw_chunks))
-            self._event("preprocess", PipelineStatus.SUCCESS, "Preprocessed chunks counted", metrics={"preprocessed_chunks": len(preprocessed_chunks)})
+            preprocessed_chunks = sync_stage(
+                "preprocess",
+                "Chunks preprocessed",
+                lambda: ChunkPreprocessor().preprocess(raw_chunks),
+                lambda result: {"preprocessed_chunks": len(result)},
+            )
 
-            semantic_chunks = await async_stage("semantic", "Semantic chunks generated", lambda: self._semantic_analyzer.analyze(preprocessed_chunks))
+            semantic_chunks = await async_stage(
+                "semantic",
+                "Semantic chunks generated",
+                lambda: self._semantic_analyzer.analyze(preprocessed_chunks),
+                lambda result: {
+                    "semantic_chunks": len(result),
+                    "llm_calls": (
+                        self._measured_client.call_count
+                        if self._measured_client
+                        else None
+                    ),
+                },
+            )
             snapshots["semantic_chunks.json"] = semantic_chunks
             current_source_text = "\n".join(chunk.text for chunk in semantic_chunks)
-            self._event("semantic", PipelineStatus.SUCCESS, "Semantic chunks counted", metrics={"semantic_chunks": len(semantic_chunks)})
 
-            knowledge_points = await async_stage("knowledge", "Knowledge generated", lambda: self._knowledge_extractor.extract(semantic_chunks))
+            def knowledge_metrics(result: Any) -> dict[str, Any]:
+                counts: dict[str, int] = {}
+                for point in result:
+                    counts[point.point_type.value] = (
+                        counts.get(point.point_type.value, 0) + 1
+                    )
+                return {
+                    "knowledge_points": len(result),
+                    "types": counts,
+                    "llm_calls": (
+                        self._measured_client.call_count
+                        if self._measured_client
+                        else None
+                    ),
+                    "retries": (
+                        self._measured_client.retry_count
+                        if self._measured_client
+                        else None
+                    ),
+                }
+
+            knowledge_points = await async_stage(
+                "knowledge",
+                "Knowledge generated",
+                lambda: self._knowledge_extractor.extract(semantic_chunks),
+                knowledge_metrics,
+            )
             if not knowledge_points:
                 raise NoteForgeError("未能从视频字幕中提取出知识点")
             snapshots["knowledge_points.json"] = knowledge_points
-            counts: dict[str, int] = {}
-            for point in knowledge_points:
-                counts[point.point_type.value] = counts.get(point.point_type.value, 0) + 1
-            metrics: dict[str, Any] = {"knowledge_points": len(knowledge_points), "types": counts}
-            if self._measured_client:
-                metrics.update(llm_calls=self._measured_client.call_count, retries=self._measured_client.retry_count)
-            self._event("knowledge", PipelineStatus.SUCCESS, "Knowledge points counted", metrics=metrics)
-
             document = sync_stage("document", "Document built", lambda: generate_document(knowledge_points))
             snapshots["document.json"] = document
             markdown = sync_stage("markdown", "Markdown rendered", lambda: MarkdownRenderer().render(document))

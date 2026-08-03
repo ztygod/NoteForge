@@ -108,6 +108,32 @@ def extract(
     return result, client
 
 
+def test_reports_progress_before_and_after_each_batch(monkeypatch) -> None:
+    events: list[tuple[int, int, bool]] = []
+    extractor = LLMKnowledgeExtractor(
+        StaticClient("{}"),
+        batch_size=2,
+        progress_handler=lambda current, total, completed: events.append(
+            (current, total, completed)
+        ),
+    )
+
+    async def fake_extract_batch(chunks, **options):
+        return ()
+
+    monkeypatch.setattr(extractor, "_extract_batch", fake_extract_batch)
+    chunks = tuple(make_semantic(index) for index in range(3))
+
+    asyncio.run(extractor.extract(chunks))
+
+    assert events == [
+        (1, 2, False),
+        (1, 2, True),
+        (2, 2, False),
+        (2, 2, True),
+    ]
+
+
 def test_empty_input_returns_empty_without_llm_call() -> None:
     result, client = extract("not json", ())
 
