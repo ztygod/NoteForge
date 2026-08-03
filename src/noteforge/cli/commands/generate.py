@@ -40,25 +40,38 @@ def generate(
     debug: bool = typer.Option(
         False, "--debug", help="失败时保存中间数据并显示原始异常。"
     ),
+    llm_concurrency: int = typer.Option(
+        2,
+        "--llm-concurrency",
+        min=1,
+        help="单个 LLM 阶段允许同时执行的最大批次数。",
+    ),
 ) -> None:
     """从视频字幕生成 Markdown 学习笔记。"""
 
     renderer = PipelineRenderer(verbose=verbose)
     try:
         client = create_configured_llm_client()
-        pipeline = NoteGenerationPipeline.from_llm_client(client)
+        pipeline = NoteGenerationPipeline.from_llm_client(
+            client, max_concurrency=llm_concurrency
+        )
         if hasattr(pipeline, "set_event_handler"):
             pipeline.set_event_handler(renderer.handle)
-        written_path = asyncio.run(
-            pipeline.run(
-                source,
-                output,
-                cookies_from_browser=cookies_from_browser or None,
-                subtitle_language=subtitle_language,
-                subtitle_output_dir=subtitle_output_dir,
-                **({"debug_dir": Path(".noteforge/debug")} if debug else {}),
-            )
-        )
+
+        async def run_and_close() -> Path:
+            try:
+                return await pipeline.run(
+                    source,
+                    output,
+                    cookies_from_browser=cookies_from_browser or None,
+                    subtitle_language=subtitle_language,
+                    subtitle_output_dir=subtitle_output_dir,
+                    **({"debug_dir": Path(".noteforge/debug")} if debug else {}),
+                )
+            finally:
+                await client.aclose()
+
+        written_path = asyncio.run(run_and_close())
     except PipelineExecutionError as error:
         renderer.render_error(error, debug=debug)
         if debug:
@@ -68,4 +81,3 @@ def generate(
         typer.secho(f"生成失败：{error}", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1) from error
     typer.echo(f"学习笔记已生成：{written_path}")
-

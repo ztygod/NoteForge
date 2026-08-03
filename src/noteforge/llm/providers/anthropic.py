@@ -8,11 +8,14 @@ from noteforge.exceptions import (
     LLMRequestError,
 )
 from noteforge.llm.base import LLMClient
-from noteforge.llm.providers import HTTPTransport, UrllibHTTPTransport
+from noteforge.llm.providers import HTTPTransport, HttpxHTTPTransport
 from noteforge.llm.models import (
     LLMMessage,
     LLMRequestOptions,
     LLMResponse,
+    LLMTool,
+    LLMToolCall,
+    LLMToolResponse,
     LLMUsage,
     RawJSON,
 )
@@ -30,9 +33,9 @@ class AnthropicClient(LLMClient):
         if not settings.api_key:
             raise LLMConfigurationError("Anthropic provider 缺少 api_key")
         self._settings = settings
-        self._transport = transport or UrllibHTTPTransport()
+        self._transport = transport or HttpxHTTPTransport()
 
-    def generate(
+    async def generate(
         self,
         messages: Sequence[LLMMessage],
         *,
@@ -66,7 +69,7 @@ class AnthropicClient(LLMClient):
         if options and options.temperature is not None:
             payload["temperature"] = options.temperature
 
-        result = self._transport.post_json(
+        result = await self._transport.post_json(
             f"{self._settings.base_url}/messages",
             headers={
                 "x-api-key": self._settings.api_key,
@@ -106,6 +109,56 @@ class AnthropicClient(LLMClient):
             finish_reason=_str_or_none(result.data.get("stop_reason")),
             request_id=_str_or_none(result.data.get("id")),
         )
+
+    async def call_tool(
+        self,
+        messages: Sequence[LLMMessage],
+        *,
+        tool: LLMTool,
+        options: LLMRequestOptions | None = None,
+    ) -> LLMToolResponse:
+        system_parts = [item.content for item in messages if item.role == "system"]
+        chat_messages = [
+            {"role": item.role, "content": item.content}
+            for item in messages if item.role != "system"
+        ]
+        payload: RawJSON = {
+            "model": self._settings.model,
+            "messages": chat_messages,
+            "max_tokens": options.max_tokens if options and options.max_tokens else 4096,
+            "tools": [{"name": tool.name, "description": tool.description, "input_schema": dict(tool.parameters)}],
+            "tool_choice": {"type": "tool", "name": tool.name},
+        }
+        if system_parts:
+            payload["system"] = "\n\n".join(system_parts)
+        if options and options.temperature is not None:
+            payload["temperature"] = options.temperature
+        result = await self._transport.post_json(
+            f"{self._settings.base_url}/messages",
+            headers={"x-api-key": self._settings.api_key, "anthropic-version": "2023-06-01"},
+            payload=payload,
+            timeout_seconds=self._settings.timeout_seconds,
+        )
+        blocks = result.data.get("content")
+        block = next(
+            (item for item in blocks if isinstance(item, dict) and item.get("type") == "tool_use"),
+            None,
+        ) if isinstance(blocks, list) else None
+        if not block or block.get("name") != tool.name or not isinstance(block.get("input"), dict):
+            raise LLMRequestError(f"Anthropic 未调用要求的工具：{tool.name}")
+        usage_data = result.data.get("usage", {})
+        input_tokens = _usage_int(usage_data, "input_tokens")
+        output_tokens = _usage_int(usage_data, "output_tokens")
+        return LLMToolResponse(
+            LLMToolCall(tool.name, block["input"]),
+            model=str(result.data.get("model", self._settings.model)),
+            usage=LLMUsage(input_tokens, output_tokens, input_tokens + output_tokens if input_tokens is not None and output_tokens is not None else None),
+            finish_reason=_str_or_none(result.data.get("stop_reason")),
+            request_id=_str_or_none(result.data.get("id")),
+        )
+
+    async def aclose(self) -> None:
+        await self._transport.aclose()
 
 
 def _usage_int(value: object, key: str) -> int | None:

@@ -27,13 +27,38 @@ class StaticClient(LLMClient):
         self.content = content
         self.messages: list[Sequence[LLMMessage]] = []
 
-    def generate(
+    async def generate(
         self,
         messages: Sequence[LLMMessage],
         *,
         options: LLMRequestOptions | None = None,
     ) -> LLMResponse:
         self.messages.append(messages)
+        return LLMResponse(content=self.content, model="test")
+
+
+class SequenceClient(StaticClient):
+    def __init__(self, contents: list[str]) -> None:
+        super().__init__("")
+        self.contents = iter(contents)
+
+    async def generate(self, messages, *, options=None):
+        self.messages.append(messages)
+        return LLMResponse(content=next(self.contents), model="test")
+
+
+class ConcurrentClient(StaticClient):
+    def __init__(self, content: str) -> None:
+        super().__init__(content)
+        self.active = 0
+        self.max_active = 0
+
+    async def generate(self, messages, *, options=None):
+        self.messages.append(messages)
+        self.active += 1
+        self.max_active = max(self.max_active, self.active)
+        await asyncio.sleep(0.01)
+        self.active -= 1
         return LLMResponse(content=self.content, model="test")
 
 
@@ -85,7 +110,7 @@ def test_reports_progress_before_and_after_each_batch(monkeypatch) -> None:
         ),
     )
 
-    async def fake_analyze_batch(chunks):
+    async def fake_analyze_batch(chunks, **options):
         return ()
 
     monkeypatch.setattr(analyzer, "_analyze_batch", fake_analyze_batch)
@@ -93,12 +118,20 @@ def test_reports_progress_before_and_after_each_batch(monkeypatch) -> None:
 
     asyncio.run(analyzer.analyze(chunks))
 
-    assert events == [
-        (1, 2, False),
-        (1, 2, True),
-        (2, 2, False),
-        (2, 2, True),
-    ]
+    assert events == [(1, 2, False), (1, 2, True), (2, 2, True)]
+
+
+def test_batches_run_with_bounded_concurrency_and_keep_order() -> None:
+    chunks = tuple(make_chunk(index, index + 1, str(index)) for index in range(4))
+    client = ConcurrentClient(response(proposal([0])))
+    analyzer = LLMSemanticAnalyzer(
+        client, batch_size=1, max_concurrency=2
+    )
+
+    result = asyncio.run(analyzer.analyze(chunks))
+
+    assert client.max_active == 2
+    assert [chunk.text for chunk in result] == ["0", "1", "2", "3"]
 
 
 def test_single_input_produces_one_semantic_chunk() -> None:
@@ -109,6 +142,25 @@ def test_single_input_produces_one_semantic_chunk() -> None:
     assert len(result) == 1
     assert result[0].source_chunks == (chunk,)
     assert "[0]" in client.messages[0][1].content
+
+
+def test_validation_failure_is_retried_once_with_feedback() -> None:
+    chunks = (make_chunk(0, 1, "一"), make_chunk(1, 2, "二"))
+    client = SequenceClient([
+        response(proposal([0])),
+        response(proposal([0, 1])),
+    ])
+    activities: list[tuple[str, dict[str, object]]] = []
+    analyzer = LLMSemanticAnalyzer(
+        client, activity_handler=lambda operation, data: activities.append((operation, data))
+    )
+
+    result = asyncio.run(analyzer.analyze(chunks))
+
+    assert len(result) == 1
+    assert len(client.messages) == 2
+    assert "missing source indexes" in client.messages[1][-1].content
+    assert "retrying_validation" in [operation for operation, _ in activities]
 
 
 def test_merges_inputs_and_rebuilds_time_and_text() -> None:

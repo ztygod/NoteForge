@@ -24,7 +24,9 @@ from noteforge.knowledge.extraction import KnowledgeExtractor, KnowledgePointTyp
 from noteforge.knowledge.preprocessor import ChunkPreprocessor
 from noteforge.knowledge.semantic import LLMSemanticAnalyzer, SemanticAnalyzer
 from noteforge.llm import LLMClient
-from noteforge.llm.models import LLMMessage, LLMRequestOptions, LLMResponse
+from noteforge.llm.models import (
+    LLMMessage, LLMRequestOptions, LLMResponse, LLMTool, LLMToolResponse,
+)
 from noteforge.renderer import MarkdownRenderer, write_markdown
 
 
@@ -40,18 +42,35 @@ class _MeasuredLLMClient(LLMClient):
         self.output_tokens = 0
         self.last_model: str | None = None
 
-    def generate(
+    async def generate(
         self,
         messages: list[LLMMessage] | tuple[LLMMessage, ...],
         *,
         options: LLMRequestOptions | None = None,
     ) -> LLMResponse:
         self.call_count += 1
-        response = self.client.generate(messages, options=options)
+        response = await self.client.generate(messages, options=options)
         self.last_model = response.model
         self.input_tokens += response.usage.input_tokens or 0
         self.output_tokens += response.usage.output_tokens or 0
         return response
+
+    async def call_tool(
+        self,
+        messages: list[LLMMessage] | tuple[LLMMessage, ...],
+        *,
+        tool: LLMTool,
+        options: LLMRequestOptions | None = None,
+    ) -> LLMToolResponse:
+        self.call_count += 1
+        response = await self.client.call_tool(messages, tool=tool, options=options)
+        self.last_model = response.model
+        self.input_tokens += response.usage.input_tokens or 0
+        self.output_tokens += response.usage.output_tokens or 0
+        return response
+
+    async def aclose(self) -> None:
+        await self.client.aclose()
 
 
 def _json_value(value: Any) -> Any:
@@ -83,6 +102,7 @@ class NoteGenerationPipeline:
         self._collector = collector
         self._emit = event_handler or null_event_handler
         self._measured_client = measured_client
+        self._stage_progress: dict[str, float] = {}
 
     def set_event_handler(self, handler: EventHandler) -> None:
         """在 Pipeline 运行前绑定或替换事件消费者。"""
@@ -91,11 +111,15 @@ class NoteGenerationPipeline:
 
     @classmethod
     def from_llm_client(
-        cls, client: LLMClient, *, event_handler: EventHandler | None = None
+        cls,
+        client: LLMClient,
+        *,
+        event_handler: EventHandler | None = None,
+        max_concurrency: int = 2,
     ) -> "NoteGenerationPipeline":
         measured = _MeasuredLLMClient(client)
-        semantic_analyzer = LLMSemanticAnalyzer(measured)
-        knowledge_extractor = LLMKnowledgeExtractor(measured)
+        semantic_analyzer = LLMSemanticAnalyzer(measured, max_concurrency=max_concurrency)
+        knowledge_extractor = LLMKnowledgeExtractor(measured, max_concurrency=max_concurrency)
         pipeline = cls(
             semantic_analyzer,
             knowledge_extractor,
@@ -112,7 +136,35 @@ class NoteGenerationPipeline:
                 "knowledge", "Knowledge generated", current, total, completed
             )
         )
+        semantic_analyzer.set_activity_handler(
+            lambda operation, data: pipeline._llm_activity("semantic", operation, data)
+        )
+        knowledge_extractor.set_activity_handler(
+            lambda operation, data: pipeline._llm_activity("knowledge", operation, data)
+        )
         return pipeline
+
+    def _llm_activity(
+        self, stage: str, operation: str, data: dict[str, object]
+    ) -> None:
+        if operation == "retrying_validation" and self._measured_client:
+            self._measured_client.retry_count += 1
+        measured = self._measured_client
+        progress = self._stage_progress.get(stage)
+        self._event(
+            stage,
+            PipelineStatus.RUNNING,
+            "Semantic chunks generated" if stage == "semantic" else "Knowledge generated",
+            progress=progress,
+            metrics={
+                "operation": operation,
+                **data,
+                "llm_calls": measured.call_count if measured else None,
+                "model": measured.last_model if measured else None,
+                "input_tokens": measured.input_tokens if measured else None,
+                "output_tokens": measured.output_tokens if measured else None,
+            },
+        )
 
     def _event(
         self, stage: str, status: PipelineStatus, message: str, **kwargs: Any
@@ -130,6 +182,10 @@ class NoteGenerationPipeline:
         """将业务模块的批次进度转换为统一 Pipeline 事件。"""
 
         completed_batches = current if completed else current - 1
+        progress = completed_batches / total
+        self._stage_progress[stage] = max(
+            progress, self._stage_progress.get(stage, 0.0)
+        )
         llm_calls = self._measured_client.call_count if self._measured_client else 0
         if not completed:
             llm_calls += 1
@@ -144,7 +200,7 @@ class NoteGenerationPipeline:
             stage,
             PipelineStatus.RUNNING,
             message,
-            progress=completed_batches / total,
+            progress=self._stage_progress[stage],
             metrics={
                 "batch_current": current,
                 "batch_total": total,

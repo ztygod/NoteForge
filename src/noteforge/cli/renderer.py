@@ -16,6 +16,13 @@ from noteforge.exceptions import PipelineExecutionError
 
 _KEY_STAGES = {"transcript", "semantic", "knowledge", "output"}
 
+_OPERATION_LABELS = {
+    "requesting_model": "请求模型",
+    "tool_submitted": "工具已提交",
+    "validating_response": "校验响应",
+    "retrying_validation": "校验失败，正在重试",
+}
+
 
 class _RunningStage:
     """由 Rich Live 重复渲染的单阶段状态。"""
@@ -45,12 +52,26 @@ class _RunningStage:
         llm_calls = self.metrics.get("llm_calls")
         model = self.metrics.get("model")
         output_tokens = self.metrics.get("output_tokens")
+        operation = self.metrics.get("operation")
+        attempt = self.metrics.get("attempt")
+        max_attempts = self.metrics.get("max_attempts")
+        tool_name = self.metrics.get("tool_name")
 
         description = Text(self.message)
         if batch_current is not None and batch_total is not None:
             description.append(f"  {batch_current}/{batch_total}", style="cyan")
         if request_status:
             description.append(f"  {request_status}", style="yellow")
+        if operation:
+            description.append(
+                f"  {_OPERATION_LABELS.get(str(operation), operation)}",
+                style="yellow",
+            )
+        if tool_name:
+            description.append(f"  {tool_name}", style="cyan")
+        if attempt is not None:
+            attempt_text = f"{attempt}/{max_attempts}" if max_attempts else str(attempt)
+            description.append(f"  attempt {attempt_text}", style="magenta")
         if llm_calls is not None:
             description.append(f"  LLM #{llm_calls}", style="magenta")
         if model:

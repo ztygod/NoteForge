@@ -38,7 +38,7 @@ class StaticClient(LLMClient):
         self.error = error
         self.messages: list[Sequence[LLMMessage]] = []
 
-    def generate(
+    async def generate(
         self,
         messages: Sequence[LLMMessage],
         *,
@@ -126,12 +126,7 @@ def test_reports_progress_before_and_after_each_batch(monkeypatch) -> None:
 
     asyncio.run(extractor.extract(chunks))
 
-    assert events == [
-        (1, 2, False),
-        (1, 2, True),
-        (2, 2, False),
-        (2, 2, True),
-    ]
+    assert events == [(1, 2, False), (1, 2, True), (2, 2, True)]
 
 
 def test_empty_input_returns_empty_without_llm_call() -> None:
