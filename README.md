@@ -8,13 +8,13 @@
 
 ![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776ab)
 ![CLI](https://img.shields.io/badge/Interface-CLI-6366f1)
-![Tests](https://img.shields.io/badge/Tests-198%20passing-22c55e)
+![Tests](https://img.shields.io/badge/Tests-217%20passing-22c55e)
 
 **Bilibili subtitle collection, LLM-powered knowledge extraction, and traceable notes**
 
 [Quick start](#quick-start) · [Configuration](#llm-configuration) · [Usage](#usage) · [Troubleshooting](#troubleshooting) · [Development](#development)
 
-**English** · [简体中文](/README.zh-CN.md)
+**English** · [简体中文](https://github.com/ztygod/NoteForge/blob/main/README.zh-CN.md)
 
 </div>
 
@@ -25,7 +25,7 @@
 > unpolished areas. Use it with caution. The author assumes no responsibility
 > for any loss or damage resulting from its use.
 
-![NoteForge CLI example](asserts/example.png)
+![NoteForge CLI example](https://raw.githubusercontent.com/ztygod/NoteForge/main/asserts/example.png)
 
 ---
 
