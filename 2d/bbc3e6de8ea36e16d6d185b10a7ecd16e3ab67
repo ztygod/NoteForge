@@ -1,0 +1,27 @@
+.github/workflows/publish.yml
+  s_4b7c46e97b2cbe::t_9bfafeb3ced955 28-34
+README.zh-CN.md
+  s_4b7c46e97b2cbe::t_9bfafeb3ced955 11,17,27
+pyproject.toml
+  s_4b7c46e97b2cbe::t_ffd9a7ff3a5852 6-7
+README.md
+  s_4b7c46e97b2cbe::t_9bfafeb3ced955 11,17,28
+LICENSE
+  s_4b7c46e97b2cbe::t_9bfafeb3ced955 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "2dbbc3e6de8ea36e16d6d185b10a7ecd16e3ab67",
+  "prompts": {},
+  "sessions": {
+    "s_4b7c46e97b2cbe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6b5-2b89-7a71-b5ba-2191f72ebace",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
