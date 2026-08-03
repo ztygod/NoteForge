@@ -20,6 +20,15 @@ _PROPOSAL_FIELDS = {
     "importance",
 }
 
+# 模型偶尔会沿用上游 SemanticChunkType。这里只收敛含义明确的近义类型；
+# 其他未知值继续拒绝，避免把真实的模型错误静默写进文档。
+_POINT_TYPE_ALIASES = {
+    "definition": KnowledgePointType.CONCEPT,
+    "explanation": KnowledgePointType.CONCEPT,
+    "question": KnowledgePointType.OTHER,
+    "transition": KnowledgePointType.OTHER,
+}
+
 
 def parse_knowledge_extraction_result(
     value: object,
@@ -73,12 +82,19 @@ def _parse_proposal(value: Any, position: int) -> KnowledgePointProposal:
         raise KnowledgeExtractionError(
             f"{prefix} keywords must be an array of strings"
         )
+    raw_point_type = value["point_type"]
     try:
-        point_type = KnowledgePointType(value["point_type"])
+        point_type = KnowledgePointType(raw_point_type)
     except (TypeError, ValueError) as error:
-        raise KnowledgeExtractionError(
-            f"{prefix} contains invalid point_type: {value['point_type']!r}"
-        ) from error
+        point_type = (
+            _POINT_TYPE_ALIASES.get(raw_point_type)
+            if isinstance(raw_point_type, str)
+            else None
+        )
+        if point_type is None:
+            raise KnowledgeExtractionError(
+                f"{prefix} contains invalid point_type: {raw_point_type!r}"
+            ) from error
     return KnowledgePointProposal(
         source_indexes=tuple(indexes),
         title=value["title"],

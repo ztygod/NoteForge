@@ -19,6 +19,7 @@ from noteforge.knowledge.extraction import (
 )
 from noteforge.knowledge.preprocessor import PreprocessedChunk
 from noteforge.knowledge.semantic import SemanticChunk, SemanticChunkType
+from noteforge.knowledge.tools import KNOWLEDGE_POINTS_TOOL
 from noteforge.llm import (
     LLMClient,
     LLMMessage,
@@ -38,7 +39,7 @@ class StaticClient(LLMClient):
         self.error = error
         self.messages: list[Sequence[LLMMessage]] = []
 
-    def generate(
+    async def generate(
         self,
         messages: Sequence[LLMMessage],
         *,
@@ -126,12 +127,7 @@ def test_reports_progress_before_and_after_each_batch(monkeypatch) -> None:
 
     asyncio.run(extractor.extract(chunks))
 
-    assert events == [
-        (1, 2, False),
-        (1, 2, True),
-        (2, 2, False),
-        (2, 2, True),
-    ]
+    assert events == [(1, 2, False), (1, 2, True), (2, 2, True)]
 
 
 def test_empty_input_returns_empty_without_llm_call() -> None:
@@ -149,6 +145,34 @@ def test_single_chunk_extracts_one_point() -> None:
     assert len(result) == 1
     assert result[0].source_chunks == (chunk,)
     assert "[0]" in client.messages[0][1].content
+
+
+@pytest.mark.parametrize(
+    ("model_type", "normalized_type"),
+    [
+        ("definition", KnowledgePointType.CONCEPT),
+        ("explanation", KnowledgePointType.CONCEPT),
+        ("question", KnowledgePointType.OTHER),
+        ("transition", KnowledgePointType.OTHER),
+    ],
+)
+def test_known_semantic_type_aliases_are_normalized(
+    model_type: str, normalized_type: KnowledgePointType
+) -> None:
+    result, _ = extract(
+        response(proposal([0], point_type=model_type)),
+        (make_semantic(0),),
+    )
+
+    assert result[0].point_type is normalized_type
+
+
+def test_knowledge_tool_enum_is_derived_from_domain_enum() -> None:
+    point_schema = KNOWLEDGE_POINTS_TOOL.parameters["properties"][
+        "knowledge_points"
+    ]["items"]["properties"]["point_type"]
+
+    assert point_schema["enum"] == [item.value for item in KnowledgePointType]
 
 
 def test_multiple_continuous_chunks_build_one_point_with_source_time() -> None:

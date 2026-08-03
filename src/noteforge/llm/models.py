@@ -1,7 +1,7 @@
 """LLM 模块的供应商无关数据类型。"""
 
 from dataclasses import dataclass, field
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, Mapping, TypeAlias
 
 
 LLMRole: TypeAlias = Literal["system", "user", "assistant"]
@@ -56,6 +56,34 @@ class LLMRequestOptions:
             raise ValueError("temperature 不能小于 0")
         if self.max_tokens is not None and self.max_tokens <= 0:
             raise ValueError("max_tokens 必须大于 0")
+
+
+@dataclass(frozen=True, slots=True)
+class LLMTool:
+    """要求模型调用的单个、供应商无关工具。"""
+
+    name: str
+    description: str
+    parameters: Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class LLMToolCall:
+    """模型返回的工具名和已解析参数。"""
+
+    name: str
+    arguments: Mapping[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class LLMToolResponse:
+    """一次受约束工具调用及其模型元数据。"""
+
+    tool_call: LLMToolCall
+    model: str
+    usage: LLMUsage = field(default_factory=LLMUsage)
+    finish_reason: str | None = None
+    request_id: str | None = None
 
 
 RawJSON: TypeAlias = dict[str, Any]

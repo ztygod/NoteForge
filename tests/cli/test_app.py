@@ -90,14 +90,18 @@ def test_generate_runs_pipeline_and_writes_output(
             output.write_text("# 已生成\n", encoding="utf-8")
             return output
 
+    class FakeClient:
+        async def aclose(self):
+            pass
+
     monkeypatch.setattr(
         "noteforge.cli.configuration.create_llm_client",
-        lambda: object(),
+        FakeClient,
     )
     monkeypatch.setattr(
         NoteGenerationPipeline,
         "from_llm_client",
-        classmethod(lambda cls, client: FakePipeline()),
+        classmethod(lambda cls, client, **kwargs: FakePipeline()),
     )
 
     result = runner.invoke(

@@ -15,6 +15,9 @@ from noteforge.llm.models import (
     LLMRequestOptions,
     LLMResponse,
     LLMRole,
+    LLMTool,
+    LLMToolCall,
+    LLMToolResponse,
     LLMUsage,
 )
 
@@ -30,6 +33,9 @@ __all__ = [
     "LLMResponse",
     "LLMRole",
     "LLMTimeoutError",
+    "LLMTool",
+    "LLMToolCall",
+    "LLMToolResponse",
     "LLMUsage",
     "create_llm_client",
     "register_provider",
