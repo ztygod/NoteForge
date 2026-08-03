@@ -2,6 +2,7 @@
 
 from noteforge.knowledge.prompts.base import BasePrompt
 from noteforge.knowledge.prompts.utils import format_seconds
+from noteforge.knowledge.taxonomy import KnowledgePointType
 from noteforge.knowledge.semantic.models import SemanticChunk
 from noteforge.llm.models import LLMMessage
 
@@ -19,8 +20,10 @@ class KnowledgeExtractionPrompt(BasePrompt):
 4. source_indexes 只能引用真实输入索引，必须严格递增且连续，不得重复或越界。
 5. 不得改变来源顺序；不要求覆盖全部输入索引。
 6. keywords 为 1 至 6 个核心关键词，不得为空或重复。
-7. point_type 只能是 concept、principle、procedure、api、example、comparison、
-   pitfall、conclusion、other 之一。
+7. point_type 是最终知识分类，只能是：{allowed_point_types}。
+   输入中的“语义角色”属于上一阶段的描述字段，不是 point_type，禁止直接照抄。
+   转换原则：definition/explanation 通常归为 concept；question 应根据答案内容归类，
+   无法确定时归为 other；transition 通常忽略，确有知识价值时归为 other。
 8. importance 表示进入最终笔记的价值，必须在 0 到 1 之间。
 9. 不得编造输入未出现的事实；可规范化口语，但不能改变原意。
 10. 时间仅帮助理解上下文，不返回时间、来源对象、完整输入块或原始字幕索引。
@@ -66,9 +69,14 @@ class KnowledgeExtractionPrompt(BasePrompt):
                 f"时间：{format_seconds(chunk.start_time)} - "
                 f"{format_seconds(chunk.end_time)}\n"
                 f"主题：{chunk.topic}\n"
-                f"类型：{chunk.chunk_type.value}\n"
+                f"语义角色（不是 point_type）：{chunk.chunk_type.value}\n"
                 f"重要程度：{chunk.importance:.3f}\n"
                 f"摘要：{chunk.summary}\n"
                 f"正文：\n{chunk.text}"
             )
-        return self.build_messages({"chunks": "\n\n".join(sections)})
+        return self.build_messages({
+            "chunks": "\n\n".join(sections),
+            "allowed_point_types": "、".join(
+                item.value for item in KnowledgePointType
+            ),
+        })

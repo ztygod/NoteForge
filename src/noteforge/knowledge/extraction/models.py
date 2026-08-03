@@ -1,24 +1,10 @@
 """知识点提取层的数据模型。"""
 
 from dataclasses import dataclass
-from enum import StrEnum
 from math import isfinite
 
 from noteforge.knowledge.semantic.models import SemanticChunk
-
-
-class KnowledgePointType(StrEnum):
-    """知识点类型。"""
-
-    CONCEPT = "concept"
-    PRINCIPLE = "principle"
-    PROCEDURE = "procedure"
-    API = "api"
-    EXAMPLE = "example"
-    COMPARISON = "comparison"
-    PITFALL = "pitfall"
-    CONCLUSION = "conclusion"
-    OTHER = "other"
+from noteforge.knowledge.taxonomy import KnowledgePointType
 
 
 @dataclass(frozen=True, slots=True)

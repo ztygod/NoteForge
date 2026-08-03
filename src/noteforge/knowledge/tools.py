@@ -1,5 +1,6 @@
 """知识处理阶段使用的固定结构化提交工具。"""
 
+from noteforge.knowledge.taxonomy import KnowledgePointType, SemanticChunkType
 from noteforge.llm import LLMTool
 
 
@@ -25,7 +26,7 @@ SEMANTIC_ANALYSIS_TOOL = LLMTool(
                         "summary": {"type": "string"},
                         "chunk_type": {
                             "type": "string",
-                            "enum": ["definition", "explanation", "example", "comparison", "procedure", "conclusion", "transition", "question", "other"],
+                            "enum": [item.value for item in SemanticChunkType],
                         },
                         "importance": {"type": "number"},
                     },
@@ -56,7 +57,7 @@ KNOWLEDGE_POINTS_TOOL = LLMTool(
                         "explanation": {"type": "string"},
                         "point_type": {
                             "type": "string",
-                            "enum": ["concept", "principle", "procedure", "api", "example", "comparison", "pitfall", "conclusion", "other"],
+                            "enum": [item.value for item in KnowledgePointType],
                         },
                         "keywords": {"type": "array", "items": {"type": "string"}},
                         "importance": {"type": "number"},

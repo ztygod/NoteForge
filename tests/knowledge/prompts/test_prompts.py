@@ -135,6 +135,8 @@ def test_knowledge_extraction_prompt_contains_semantic_context() -> None:
     assert "不要求覆盖全部输入索引" in system_message.content
     assert "[3]\n时间：12.400 - 26.800" in user_message.content
     assert "主题：闭包的定义" in user_message.content
-    assert "类型：definition" in user_message.content
+    assert "语义角色（不是 point_type）：definition" in user_message.content
+    assert "禁止直接照抄" in system_message.content
+    assert "concept、principle、procedure、api" in system_message.content
     assert "重要程度：0.910" in user_message.content
     assert f"正文：\n{raw.text}" in user_message.content

@@ -1,24 +1,10 @@
 """语义切分的数据模型。"""
 
 from dataclasses import dataclass
-from enum import StrEnum
 from math import isfinite
 
 from noteforge.knowledge.preprocessor import PreprocessedChunk
-
-
-class SemanticChunkType(StrEnum):
-    """语义块的内容类型。"""
-
-    DEFINITION = "definition"
-    EXPLANATION = "explanation"
-    EXAMPLE = "example"
-    COMPARISON = "comparison"
-    PROCEDURE = "procedure"
-    CONCLUSION = "conclusion"
-    TRANSITION = "transition"
-    QUESTION = "question"
-    OTHER = "other"
+from noteforge.knowledge.taxonomy import SemanticChunkType
 
 
 @dataclass(frozen=True, slots=True)

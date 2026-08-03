@@ -41,7 +41,7 @@ def generate(
         False, "--debug", help="失败时保存中间数据并显示原始异常。"
     ),
     llm_concurrency: int = typer.Option(
-        2,
+        3,
         "--llm-concurrency",
         min=1,
         help="单个 LLM 阶段允许同时执行的最大批次数。",
