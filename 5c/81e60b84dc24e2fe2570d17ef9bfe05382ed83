@@ -1,0 +1,36 @@
+src/noteforge/knowledge/tools.py
+  s_4b7c46e97b2cbe::t_f9771b5cd0df86 29,60
+  s_4b7c46e97b2cbe::t_5b3a22308a1f02 3
+src/noteforge/knowledge/taxonomy.py
+  s_4b7c46e97b2cbe::t_5b3a22308a1f02 1-31
+src/noteforge/knowledge/prompts/knowledge_extraction.py
+  s_4b7c46e97b2cbe::t_f9771b5cd0df86 23-26,72,77-82
+  s_4b7c46e97b2cbe::t_5b3a22308a1f02 5
+tests/knowledge/prompts/test_prompts.py
+  s_4b7c46e97b2cbe::t_00581e3fd96246 138-140
+src/noteforge/knowledge/semantic/models.py
+  s_4b7c46e97b2cbe::t_5b3a22308a1f02 7
+tests/knowledge/extraction/test_extraction.py
+  s_4b7c46e97b2cbe::t_f9771b5cd0df86 22,168-175
+  s_4b7c46e97b2cbe::t_abb0b3f25c0f80 150-167,176-177
+src/noteforge/knowledge/extraction/validation.py
+  s_4b7c46e97b2cbe::t_abb0b3f25c0f80 23-31,85,87,89-97
+src/noteforge/knowledge/extraction/models.py
+  s_4b7c46e97b2cbe::t_5b3a22308a1f02 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "5c81e60b84dc24e2fe2570d17ef9bfe05382ed83",
+  "prompts": {},
+  "sessions": {
+    "s_4b7c46e97b2cbe": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fc6b5-2b89-7a71-b5ba-2191f72ebace",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
