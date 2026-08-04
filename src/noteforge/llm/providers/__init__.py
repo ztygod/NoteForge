@@ -1,4 +1,4 @@
-"""模型供应商实现及共用异步 HTTP 传输层。"""
+"""模型 API 格式适配器及共用异步 HTTP 传输层。"""
 
 from dataclasses import dataclass
 from typing import Mapping, Protocol

@@ -17,7 +17,7 @@ from noteforge.llm.models import (
 
 
 class LLMClient(ABC):
-    """所有模型供应商必须实现的统一同步接口。"""
+    """所有模型 API 格式适配器必须实现的统一异步接口。"""
 
     @abstractmethod
     async def generate(
@@ -49,7 +49,7 @@ class LLMClient(ABC):
         tool: LLMTool,
         options: LLMRequestOptions | None = None,
     ) -> LLMToolResponse:
-        """调用一个固定工具；旧 Provider 默认退回 JSON 文本生成。"""
+        """调用一个固定工具；基础适配器默认退回 JSON 文本生成。"""
 
         response = await self.generate(messages, options=options)
         try:

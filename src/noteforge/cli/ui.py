@@ -28,6 +28,9 @@ class StatusUI:
     def failure(self, label: str, detail: str) -> None:
         self._row("✗", "red", label, detail)
 
+    def info(self, label: str, detail: str) -> None:
+        self._row("", "dim", label, detail)
+
     def _row(self, icon: str, style: str, label: str, detail: str) -> None:
         # Rich 按终端显示宽度处理中文，比字符串 padding 更稳定。
         table = Table.grid(padding=(0, 2))

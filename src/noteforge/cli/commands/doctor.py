@@ -8,7 +8,7 @@ import typer
 from noteforge.cli.ui import StatusUI
 from noteforge.collector import bilibili, inspection
 from noteforge.collector.models import VideoCollectionResult
-from noteforge.config import LLMSettings
+from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.exceptions import CollectionError, LLMConfigurationError
 from noteforge.llm import LLMMessage, create_llm_client
 from noteforge.subtitle.selector import SubtitleSelector
@@ -47,7 +47,10 @@ def _load_settings(ui: StatusUI) -> LLMSettings:
         ui.failure("LLM 配置", str(error))
         ui.console.print("\n请先运行：\n  [bold]noteforge configure[/bold]")
         raise typer.Exit(code=1) from error
-    ui.success("LLM 配置", f"{settings.provider} / {settings.model}")
+    ui.success(
+        "LLM 配置",
+        f"{llm_api_format_label(settings.provider)} / {settings.model}",
+    )
     return settings
 
 
@@ -66,7 +69,7 @@ def _render_model_check(ui: StatusUI, settings: LLMSettings) -> bool:
                 f"    ollama pull {settings.model}"
             )
         else:
-            ui.console.print("  请检查 API Key、模型名称、接口地址和网络连接。")
+            ui.console.print("  请检查 API Key、API 格式、模型名称、接口地址和网络连接。")
         return True
     ui.success("模型调用", f"可用（{responding_model}）")
     return False

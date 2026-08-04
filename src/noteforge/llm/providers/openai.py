@@ -1,4 +1,4 @@
-"""OpenAI Chat Completions API 适配器。"""
+"""OpenAI-compatible Chat Completions API 适配器。"""
 
 import json
 
@@ -25,7 +25,7 @@ from noteforge.llm.models import (
 )
 
 
-class OpenAIClient(LLMClient):
+class OpenAICompatibleClient(LLMClient):
     """通过 OpenAI 兼容的 Chat Completions API 调用模型。"""
 
     def __init__(
@@ -35,7 +35,7 @@ class OpenAIClient(LLMClient):
         transport: HTTPTransport | None = None,
     ) -> None:
         if not settings.api_key:
-            raise LLMConfigurationError("OpenAI provider 缺少 api_key")
+            raise LLMConfigurationError("OpenAI-compatible API 格式缺少 api_key")
         self._settings = settings
         self._transport = transport or HttpxHTTPTransport()
 
@@ -69,9 +69,9 @@ class OpenAIClient(LLMClient):
             choice = result.data["choices"][0]
             content = choice["message"]["content"]
         except (KeyError, IndexError, TypeError) as error:
-            raise LLMRequestError("OpenAI 响应结构不完整") from error
+            raise LLMRequestError("OpenAI-compatible 响应结构不完整") from error
         if not isinstance(content, str):
-            raise LLMRequestError("OpenAI 响应内容不是文本")
+            raise LLMRequestError("OpenAI-compatible 响应内容不是文本")
 
         usage_data = result.data.get("usage", {})
         return LLMResponse(
@@ -133,9 +133,11 @@ class OpenAIClient(LLMClient):
         except json.JSONDecodeError as error:
             raise LLMJSONDecodeError(str(function.get("arguments", ""))) from error
         except (KeyError, IndexError, TypeError) as error:
-            raise LLMRequestError("OpenAI 响应没有有效的工具调用") from error
+            raise LLMRequestError("OpenAI-compatible 响应没有有效的工具调用") from error
         if name != tool.name or not isinstance(arguments, dict):
-            raise LLMRequestError(f"OpenAI 未调用要求的工具：{tool.name}")
+            raise LLMRequestError(
+                f"OpenAI-compatible 端点未调用要求的工具：{tool.name}"
+            )
         usage_data = result.data.get("usage", {})
         return LLMToolResponse(
             LLMToolCall(name, arguments),
@@ -151,6 +153,10 @@ class OpenAIClient(LLMClient):
 
     async def aclose(self) -> None:
         await self._transport.aclose()
+
+
+# 兼容 0.1 的公开类名。
+OpenAIClient = OpenAICompatibleClient
 
 
 def _optional_int(value: object, key: str) -> int | None:

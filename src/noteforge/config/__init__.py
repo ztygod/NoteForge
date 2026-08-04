@@ -10,10 +10,12 @@ from noteforge.config.dotenv import (
     write_llm_dotenv,
 )
 from noteforge.config.llm import LLMSettings
+from noteforge.config.llm import llm_api_format_label
 
 __all__ = [
     "DEFAULT_ENV_PATH",
     "LLMSettings",
+    "llm_api_format_label",
     "merged_environment",
     "read_dotenv",
     "write_llm_dotenv",

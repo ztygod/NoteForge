@@ -7,28 +7,27 @@ import typer
 
 from noteforge.config import LLMSettings, read_dotenv, write_llm_dotenv
 from noteforge.exceptions import LLMConfigurationError
-from noteforge.llm import create_llm_client
 
 
-_PROVIDER_DEFAULTS = {
+_API_FORMAT_DEFAULTS = {
     "ollama": ("qwen2.5:7b", "http://localhost:11434"),
     "openai": ("", "https://api.openai.com/v1"),
     "anthropic": ("", "https://api.anthropic.com/v1"),
 }
 
 
-def prompt_provider(default: str = "ollama") -> str:
-    """提示用户选择受支持的 LLM 服务商。"""
+def prompt_api_format(default: str = "ollama") -> str:
+    """提示用户选择模型端点使用的 API 格式。"""
 
     while True:
-        provider = typer.prompt(
-            "LLM 服务商（ollama/openai/anthropic）",
+        api_format = typer.prompt(
+            "LLM API 格式（ollama/openai/anthropic）",
             default=default,
         ).strip().lower()
-        if provider in _PROVIDER_DEFAULTS:
-            return provider
+        if api_format in _API_FORMAT_DEFAULTS:
+            return api_format
         typer.secho(
-            "请输入 ollama、openai 或 anthropic。",
+            "请输入 ollama、openai 或 anthropic；它们表示 API 格式。",
             fg=typer.colors.YELLOW,
             err=True,
         )
@@ -38,18 +37,18 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
     """交互收集、校验并保存 LLM 配置。"""
 
     existing = read_dotenv(path)
-    existing_provider = existing.get(
+    existing_api_format = existing.get(
         "NOTEFORGE_LLM_PROVIDER", "ollama"
     ).strip().lower()
-    if existing_provider not in _PROVIDER_DEFAULTS:
-        existing_provider = "ollama"
+    if existing_api_format not in _API_FORMAT_DEFAULTS:
+        existing_api_format = "ollama"
 
     typer.echo(
         "欢迎使用 NoteForge！先完成一次 LLM 配置。\n"
         "如果使用 Ollama，请确保服务已经启动并已下载所选模型。"
     )
-    provider = prompt_provider(existing_provider)
-    default_model, default_base_url = _PROVIDER_DEFAULTS[provider]
+    api_format = prompt_api_format(existing_api_format)
+    default_model, default_base_url = _API_FORMAT_DEFAULTS[api_format]
     model = typer.prompt(
         "模型名称",
         default=existing.get("NOTEFORGE_LLM_MODEL") or default_model or None,
@@ -59,7 +58,7 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
         model = typer.prompt("模型名称").strip()
 
     api_key = ""
-    if provider in {"openai", "anthropic"}:
+    if api_format in {"openai", "anthropic"}:
         existing_key = existing.get("NOTEFORGE_LLM_API_KEY", "")
         if existing_key and typer.confirm("保留现有 API Key？", default=True):
             api_key = existing_key
@@ -67,7 +66,7 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
             api_key = typer.prompt("API Key", hide_input=True).strip()
             while not api_key:
                 typer.secho(
-                    "该服务商需要 API Key。",
+                    "该 API 格式需要 API Key。",
                     fg=typer.colors.YELLOW,
                     err=True,
                 )
@@ -83,7 +82,8 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
     ).strip()
 
     values = {
-        "NOTEFORGE_LLM_PROVIDER": provider,
+        # 环境变量名为兼容 0.1 保留，值实际表示 API 格式。
+        "NOTEFORGE_LLM_PROVIDER": api_format,
         "NOTEFORGE_LLM_MODEL": model,
         "NOTEFORGE_LLM_BASE_URL": base_url,
         "NOTEFORGE_LLM_TIMEOUT_SECONDS": timeout,
@@ -109,23 +109,26 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
     return settings
 
 
-def create_configured_llm_client():
-    """创建客户端，并在交互终端中引导用户补齐缺失配置。"""
+def load_configured_llm_settings() -> LLMSettings:
+    """加载配置，并在交互终端中引导用户补齐缺失项。"""
 
     try:
-        return create_llm_client()
-    except LLMConfigurationError as error:
+        return LLMSettings.from_env()
+    except ValueError as error:
+        configuration_error = LLMConfigurationError(str(error))
         if not sys.stdin.isatty():
             raise LLMConfigurationError(
-                f"{error}；请先运行 `noteforge configure`。"
+                f"{configuration_error}；请先运行 `noteforge configure`。"
             ) from error
-        typer.secho(f"尚未完成 LLM 配置：{error}", fg=typer.colors.YELLOW)
+        typer.secho(
+            f"尚未完成 LLM 配置：{configuration_error}",
+            fg=typer.colors.YELLOW,
+        )
         if not typer.confirm("现在开始配置？", default=True):
             raise LLMConfigurationError(
                 "尚未配置 LLM；请先运行 `noteforge configure`。"
             ) from error
-        settings = run_configuration_wizard()
-        return create_llm_client(settings)
+        return run_configuration_wizard()
 
 
 def configure(

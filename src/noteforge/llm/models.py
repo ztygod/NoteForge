@@ -1,4 +1,4 @@
-"""LLM 模块的供应商无关数据类型。"""
+"""LLM 模块的 API 格式无关数据类型。"""
 
 from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping, TypeAlias
@@ -26,7 +26,7 @@ class LLMMessage:
 
 @dataclass(frozen=True, slots=True)
 class LLMUsage:
-    """统一后的 token 用量；供应商未返回时字段为 ``None``。"""
+    """统一后的 token 用量；端点未返回时字段为 ``None``。"""
 
     input_tokens: int | None = None
     output_tokens: int | None = None
@@ -46,7 +46,7 @@ class LLMResponse:
 
 @dataclass(frozen=True, slots=True)
 class LLMRequestOptions:
-    """与供应商无关的常用生成参数。"""
+    """与 API 格式无关的常用生成参数。"""
 
     temperature: float | None = None
     max_tokens: int | None = None
@@ -60,7 +60,7 @@ class LLMRequestOptions:
 
 @dataclass(frozen=True, slots=True)
 class LLMTool:
-    """要求模型调用的单个、供应商无关工具。"""
+    """要求模型调用的单个、API 格式无关工具。"""
 
     name: str
     description: str

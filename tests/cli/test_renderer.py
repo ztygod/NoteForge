@@ -19,7 +19,7 @@ def test_default_renderer_only_prints_key_success_stages() -> None:
 
     output = console.export_text()
     assert "Raw chunks created" not in output
-    assert "Transcript extracted" in output
+    assert "Transcript extracted" not in output
     assert "Knowledge generated" in output
     assert "Markdown saved" in output
 

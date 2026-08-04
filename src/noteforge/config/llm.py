@@ -1,6 +1,6 @@
 """大模型运行时配置。
 
-配置只在应用边界从环境变量读取，LLM provider 不直接访问环境变量。
+配置只在应用边界从环境变量读取，LLM API 适配器不直接访问环境变量。
 """
 
 from dataclasses import dataclass
@@ -15,10 +15,27 @@ _DEFAULT_BASE_URLS = {
     "ollama": "http://localhost:11434",
 }
 
+_API_FORMAT_LABELS = {
+    "openai": "OpenAI-compatible",
+    "anthropic": "Anthropic Messages",
+    "ollama": "Ollama native",
+}
+
+
+def llm_api_format_label(value: str) -> str:
+    """返回面向用户的 API 格式名称。"""
+
+    normalized = value.strip().lower()
+    return _API_FORMAT_LABELS.get(normalized, normalized)
+
 
 @dataclass(frozen=True, slots=True)
 class LLMSettings:
-    """大模型连接配置。"""
+    """大模型连接配置。
+
+    ``provider`` 是为兼容 0.1 配置保留的字段名，其值实际表示请求所用的
+    API 格式，而不是模型服务商身份。
+    """
 
     provider: str
     model: str
@@ -52,7 +69,7 @@ class LLMSettings:
                 base_url = _DEFAULT_BASE_URLS[provider]
             except KeyError as error:
                 raise ValueError(
-                    "未知 provider 必须配置 NOTEFORGE_LLM_BASE_URL"
+                    "未知 API 格式必须配置 NOTEFORGE_LLM_BASE_URL"
                 ) from error
 
         timeout_value = values.get("NOTEFORGE_LLM_TIMEOUT_SECONDS", "60")

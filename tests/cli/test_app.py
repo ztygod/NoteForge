@@ -21,6 +21,7 @@ from noteforge.subtitle.models import SubtitleFile
 runner = CliRunner()
 doctor_module = importlib.import_module("noteforge.cli.commands.doctor")
 configure_module = importlib.import_module("noteforge.cli.commands.configure")
+generate_module = importlib.import_module("noteforge.cli.commands.generate")
 
 
 def test_help_lists_inspect_command() -> None:
@@ -65,7 +66,7 @@ def test_doctor_checks_model_and_explains_optional_video_check(
     result = runner.invoke(app, ["doctor"])
 
     assert result.exit_code == 0
-    assert "ollama / qwen-test" in result.output
+    assert "Ollama native / qwen-test" in result.output
     assert "模型调用" in result.output
     assert "未提供 URL" in result.output
     assert "noteforge doctor 'https://www.bilibili.com/video/BV...'" in result.output
@@ -271,13 +272,12 @@ def test_configure_writes_ollama_dotenv(tmp_path) -> None:
 
 
 def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
-    def fail_to_create():
+    def fail_to_load():
         from noteforge.exceptions import LLMConfigurationError
 
-        raise LLMConfigurationError("缺少配置")
+        raise LLMConfigurationError("缺少配置；请先运行 `noteforge configure`。")
 
-    monkeypatch.setattr(configure_module, "create_llm_client", fail_to_create)
-    monkeypatch.setattr(configure_module.sys.stdin, "isatty", lambda: False)
+    monkeypatch.setattr(generate_module, "load_configured_llm_settings", fail_to_load)
 
     result = runner.invoke(
         app,
@@ -314,7 +314,24 @@ def test_generate_runs_pipeline_and_writes_output(
         async def aclose(self):
             pass
 
-    monkeypatch.setattr(configure_module, "create_llm_client", FakeClient)
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+    precollected = object()
+    monkeypatch.setattr(
+        generate_module,
+        "load_configured_llm_settings",
+        lambda: settings,
+    )
+    monkeypatch.setattr(
+        generate_module,
+        "_run_preflight",
+        lambda *args, **kwargs: precollected,
+    )
+    monkeypatch.setattr(generate_module, "create_llm_client", lambda settings: FakeClient())
     monkeypatch.setattr(
         NoteGenerationPipeline,
         "from_llm_client",
@@ -338,7 +355,68 @@ def test_generate_runs_pipeline_and_writes_output(
         "https://www.bilibili.com/video/BV1CkArz1E4o"
     )
     assert received[0][1] == output_path
+    assert received[0][2]["precollected"] is precollected
+    assert str(output_path) in result.output
+    assert "Ollama native / qwen-test" in result.output
     assert "学习笔记已生成" in result.stdout
+
+
+def test_generate_uses_video_id_default_and_stops_before_llm_without_subtitle(
+    monkeypatch,
+) -> None:
+    source = "https://www.bilibili.com/video/BV1CkArz1E4o"
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+    collection = VideoCollectionResult(
+        metadata=VideoMetadata(
+            id="BV1CkArz1E4o",
+            title="无字幕课程",
+            description=None,
+            uploader=None,
+            uploader_id=None,
+            duration=7560,
+            webpage_url=source,
+            thumbnail=None,
+            upload_date=None,
+            view_count=None,
+            like_count=None,
+            extractor="BiliBili",
+            extractor_key="BiliBili",
+        ),
+        subtitle_tracks=(),
+    )
+    client_created = False
+
+    def create_client(_settings):
+        nonlocal client_created
+        client_created = True
+        raise AssertionError("没有字幕时不应创建 LLM client")
+
+    monkeypatch.setattr(
+        generate_module,
+        "load_configured_llm_settings",
+        lambda: settings,
+    )
+    monkeypatch.setattr(
+        generate_module.bilibili,
+        "collect_bilibili_video",
+        lambda **kwargs: collection,
+    )
+    monkeypatch.setattr(generate_module, "create_llm_client", create_client)
+
+    result = runner.invoke(app, ["generate", source])
+
+    assert result.exit_code == 1
+    assert client_created is False
+    assert "output/BV1CkArz1E4o.md" in result.output
+    assert "Ollama native / qwen-test" in result.output
+    assert "无字幕课程 · 2h 06m" in result.output
+    assert "没有可用字幕" in result.output
+    assert "noteforge doctor" in result.output
 
 
 def test_inspect_requires_url() -> None:

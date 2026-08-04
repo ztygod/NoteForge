@@ -14,7 +14,7 @@ from noteforge.core.events import PipelineEvent, PipelineStatus
 from noteforge.exceptions import PipelineExecutionError
 
 
-_KEY_STAGES = {"transcript", "semantic", "knowledge", "output"}
+_KEY_STAGES = {"semantic", "knowledge", "output"}
 
 _OPERATION_LABELS = {
     "requesting_model": "请求模型",
@@ -104,13 +104,15 @@ class PipelineRenderer:
         *,
         verbose: bool = False,
         console: Console | None = None,
+        show_header: bool = True,
     ) -> None:
         self.verbose = verbose
         self.console = console or Console()
         self._live: Live | None = None
         self._running: _RunningStage | None = None
         self._running_stage: str | None = None
-        self.console.print("[bold cyan]NoteForge Generate[/bold cyan]\n")
+        if show_header:
+            self.console.print("[bold cyan]NoteForge Generate[/bold cyan]\n")
 
     def _is_visible(self, event: PipelineEvent) -> bool:
         return self.verbose or event.stage in _KEY_STAGES

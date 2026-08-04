@@ -219,6 +219,7 @@ class NoteGenerationPipeline:
         subtitle_language: str | None = None,
         subtitle_output_dir: Path = Path(".cache/noteforge/subtitles"),
         debug_dir: Path | None = None,
+        precollected: VideoCollectionResult | None = None,
     ) -> Path:
         snapshots: dict[str, Any] = {}
         current_stage = "input"
@@ -272,7 +273,7 @@ class NoteGenerationPipeline:
 
             collection = sync_stage(
                 "transcript", "Transcript extracted",
-                lambda: self._collector(
+                lambda: precollected or self._collector(
                     source=inspected.normalized_source,
                     cookies_from_browser=cookies_from_browser,
                     subtitle_language=subtitle_language,

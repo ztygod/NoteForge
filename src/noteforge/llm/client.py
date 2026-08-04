@@ -5,27 +5,33 @@ from collections.abc import Callable
 from noteforge.config import LLMSettings
 from noteforge.exceptions import LLMConfigurationError
 from noteforge.llm.base import LLMClient
-from noteforge.llm.providers.anthropic import AnthropicClient
+from noteforge.llm.providers.anthropic import AnthropicMessagesClient
 from noteforge.llm.providers.ollama import OllamaClient
-from noteforge.llm.providers.openai import OpenAIClient
+from noteforge.llm.providers.openai import OpenAICompatibleClient
 
 
 ClientFactory = Callable[[LLMSettings], LLMClient]
 
-_PROVIDERS: dict[str, ClientFactory] = {
-    "openai": OpenAIClient,
-    "anthropic": AnthropicClient,
+_API_FORMATS: dict[str, ClientFactory] = {
+    "openai": OpenAICompatibleClient,
+    "anthropic": AnthropicMessagesClient,
     "ollama": OllamaClient,
 }
 
 
-def register_provider(name: str, factory: ClientFactory) -> None:
-    """注册自定义 provider，供插件或应用启动代码扩展。"""
+def register_api_format(name: str, factory: ClientFactory) -> None:
+    """注册自定义 API 格式适配器，供插件或应用启动代码扩展。"""
 
     normalized_name = name.strip().lower()
     if not normalized_name:
-        raise ValueError("provider 名称不能为空")
-    _PROVIDERS[normalized_name] = factory
+        raise ValueError("API 格式名称不能为空")
+    _API_FORMATS[normalized_name] = factory
+
+
+def register_provider(name: str, factory: ClientFactory) -> None:
+    """兼容旧名称；新代码应使用 :func:`register_api_format`。"""
+
+    register_api_format(name, factory)
 
 
 def create_llm_client(
@@ -40,9 +46,9 @@ def create_llm_client(
             raise LLMConfigurationError(str(error)) from error
 
     try:
-        factory = _PROVIDERS[settings.provider.strip().lower()]
+        factory = _API_FORMATS[settings.provider.strip().lower()]
     except KeyError as error:
         raise LLMConfigurationError(
-            f"不支持的 LLM provider：{settings.provider}"
+            f"不支持的 LLM API 格式：{settings.provider}"
         ) from error
     return factory(settings)
