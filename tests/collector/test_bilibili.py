@@ -11,6 +11,7 @@ from noteforge.collector.bilibili import (
     collect_bilibili_video,
     get_bilibili_video_info,
 )
+from noteforge.collector.ytdlp import _YTDLP_LOGGER
 from noteforge.exceptions import (
     CollectionError,
     InvalidCollectionResponseError,
@@ -67,6 +68,7 @@ def test_get_bilibili_video_info_maps_metadata_without_exposing_raw_data() -> No
         "skip_download": True,
         "quiet": True,
         "no_warnings": True,
+        "logger": _YTDLP_LOGGER,
         "ignoreconfig": True,
         "noplaylist": True,
         "impersonate": ImpersonateTarget(client="chrome"),

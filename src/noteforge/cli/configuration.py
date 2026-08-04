@@ -44,7 +44,10 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
     if existing_provider not in _PROVIDER_DEFAULTS:
         existing_provider = "ollama"
 
-    typer.echo("欢迎使用 NoteForge！先完成一次 LLM 配置。")
+    typer.echo(
+        "欢迎使用 NoteForge！先完成一次 LLM 配置。\n"
+        "如果使用 Ollama，请确保服务已经启动并已下载所选模型。"
+    )
     provider = prompt_provider(existing_provider)
     default_model, default_base_url = _PROVIDER_DEFAULTS[provider]
     model = typer.prompt(
@@ -99,6 +102,10 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
         f"配置已保存到 {written_path}（权限仅限当前用户）。",
         fg=typer.colors.GREEN,
     )
+    typer.echo(
+        "可以运行 `noteforge doctor` 检查服务和模型，或运行\n"
+        "`noteforge doctor <视频URL>` 同时检查 Cookie 与字幕。"
+    )
     return settings
 
 
@@ -119,4 +126,3 @@ def create_configured_llm_client():
             ) from error
         settings = run_configuration_wizard()
         return create_llm_client(settings)
-

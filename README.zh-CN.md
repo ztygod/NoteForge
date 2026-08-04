@@ -102,6 +102,14 @@ noteforge --help
 noteforge configure
 ```
 
+首次使用建议运行环境检查；提供视频链接后还会判断该视频是否需要浏览器 Cookie，
+并确认是否存在支持的字幕：
+
+```bash
+noteforge doctor \
+  "https://www.bilibili.com/video/BVxxxxxxxxxx"
+```
+
 如果使用默认的本地 Ollama，选择或接受 `ollama`，然后准备向导建议的模型：
 
 ```bash

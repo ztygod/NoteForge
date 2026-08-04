@@ -106,6 +106,14 @@ Start the interactive setup:
 noteforge configure
 ```
 
+For a first-run check, verify the configured model and optionally inspect whether
+a video needs browser cookies and has supported subtitles:
+
+```bash
+noteforge doctor \
+  "https://www.bilibili.com/video/BVxxxxxxxxxx"
+```
+
 For the default local Ollama setup, accept `ollama`, then prepare the suggested
 model:
 

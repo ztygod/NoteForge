@@ -11,7 +11,9 @@ DEFAULT_LANGUAGE_PRIORITY = (
     "en",
     "en-US",
 )
-DEFAULT_FORMAT_PRIORITY = ("vtt", "srt", "json3", "ttml")
+# 当前解析器只支持 VTT 和 SRT。这里既是优先级，也是 selector 的
+# 可选格式白名单，避免把 B 站弹幕 XML 当成字幕。
+DEFAULT_FORMAT_PRIORITY = ("vtt", "srt")
 
 
 class SubtitleSelector:
@@ -41,19 +43,22 @@ class SubtitleSelector:
             for index, extension in enumerate(self._preferred_formats)
         }
         language_fallback = len(language_rank)
-        format_fallback = len(format_rank)
+        supported_tracks = tuple(
+            track
+            for track in tracks
+            if track.extension.casefold() in format_rank
+        )
+        if not supported_tracks:
+            return None
 
         return min(
-            tracks,
+            supported_tracks,
             key=lambda track: (
                 language_rank.get(
                     track.language.casefold(),
                     language_fallback,
                 ),
                 track.is_automatic,
-                format_rank.get(
-                    track.extension.casefold(),
-                    format_fallback,
-                ),
+                format_rank[track.extension.casefold()],
             ),
         )
