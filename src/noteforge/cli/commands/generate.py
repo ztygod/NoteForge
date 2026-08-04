@@ -5,7 +5,7 @@ from pathlib import Path
 
 import typer
 
-from noteforge.cli.configuration import create_configured_llm_client
+from noteforge.cli.commands.configure import create_configured_llm_client
 from noteforge.cli.renderer import PipelineRenderer
 from noteforge.core import NoteGenerationPipeline
 from noteforge.exceptions import NoteForgeError, PipelineExecutionError

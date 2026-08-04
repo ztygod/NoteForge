@@ -20,6 +20,7 @@ from noteforge.subtitle.models import SubtitleFile
 
 runner = CliRunner()
 doctor_module = importlib.import_module("noteforge.cli.commands.doctor")
+configure_module = importlib.import_module("noteforge.cli.commands.configure")
 
 
 def test_help_lists_inspect_command() -> None:
@@ -186,6 +187,72 @@ def test_doctor_reports_anonymous_failure_before_cookie_retry(
     assert "需要 chrome 浏览器 Cookie" in result.output
 
 
+def test_doctor_retries_with_cookie_when_anonymous_result_has_only_danmaku(
+    monkeypatch,
+) -> None:
+    source = "https://www.bilibili.com/video/BV1CkArz1E4o"
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+
+    async def healthy_model(_settings):
+        return "qwen-test"
+
+    monkeypatch.setattr(doctor_module.LLMSettings, "from_env", lambda: settings)
+    monkeypatch.setattr(doctor_module, "_check_model", healthy_model)
+
+    calls = []
+
+    def video_info(url, *, cookies_from_browser):
+        calls.append(cookies_from_browser)
+        track = (
+            SubtitleTrack(
+                language="danmaku",
+                extension="xml",
+                url="https://comment.bilibili.com/test.xml",
+            )
+            if cookies_from_browser is None
+            else SubtitleTrack(
+                language="ai-zh",
+                extension="srt",
+                url="https://example.com/subtitle.srt",
+                is_automatic=True,
+            )
+        )
+        return VideoCollectionResult(
+            metadata=VideoMetadata(
+                id="BV1CkArz1E4o",
+                title="测试课程",
+                description=None,
+                uploader=None,
+                uploader_id=None,
+                duration=60,
+                webpage_url=url,
+                thumbnail=None,
+                upload_date=None,
+                view_count=None,
+                like_count=None,
+                extractor="BiliBili",
+                extractor_key="BiliBili",
+            ),
+            subtitle_tracks=(track,),
+        )
+
+    monkeypatch.setattr(doctor_module.bilibili, "get_bilibili_video_info", video_info)
+
+    result = runner.invoke(app, ["doctor", source])
+
+    assert result.exit_code == 0
+    assert calls == [None, "chrome"]
+    assert "匿名字幕" in result.output
+    assert "未发现 VTT/SRT，正在使用 chrome 浏览器 Cookie 重试" in result.output
+    assert "已使用 chrome 浏览器 Cookie 重新检查" in result.output
+    assert "ai-zh · 自动字幕 · SRT" in result.output
+
+
 def test_configure_writes_ollama_dotenv(tmp_path) -> None:
     env_path = tmp_path / ".env"
 
@@ -209,14 +276,8 @@ def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
 
         raise LLMConfigurationError("缺少配置")
 
-    monkeypatch.setattr(
-        "noteforge.cli.configuration.create_llm_client",
-        fail_to_create,
-    )
-    monkeypatch.setattr(
-        "noteforge.cli.configuration.sys.stdin.isatty",
-        lambda: False,
-    )
+    monkeypatch.setattr(configure_module, "create_llm_client", fail_to_create)
+    monkeypatch.setattr(configure_module.sys.stdin, "isatty", lambda: False)
 
     result = runner.invoke(
         app,
@@ -253,10 +314,7 @@ def test_generate_runs_pipeline_and_writes_output(
         async def aclose(self):
             pass
 
-    monkeypatch.setattr(
-        "noteforge.cli.configuration.create_llm_client",
-        FakeClient,
-    )
+    monkeypatch.setattr(configure_module, "create_llm_client", FakeClient)
     monkeypatch.setattr(
         NoteGenerationPipeline,
         "from_llm_client",

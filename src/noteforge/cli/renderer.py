@@ -110,7 +110,7 @@ class PipelineRenderer:
         self._live: Live | None = None
         self._running: _RunningStage | None = None
         self._running_stage: str | None = None
-        self.console.print("[bold cyan]🚀 NoteForge Generate[/bold cyan]\n")
+        self.console.print("[bold cyan]NoteForge Generate[/bold cyan]\n")
 
     def _is_visible(self, event: PipelineEvent) -> bool:
         return self.verbose or event.stage in _KEY_STAGES
@@ -145,7 +145,8 @@ class PipelineRenderer:
         if event.stage == "pipeline" and event.status is PipelineStatus.SUCCESS:
             self._stop_live()
             self.console.print(
-                f"\n[bold green]✨ Finished in {event.duration or 0:.1f}s[/bold green]"
+                f"\n[bold green]✓ 笔记生成完成[/bold green]"
+                f"  [dim]{event.duration or 0:.1f}s[/dim]"
             )
             return
         if not self._is_visible(event):
