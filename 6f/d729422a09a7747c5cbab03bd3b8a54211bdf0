@@ -1,0 +1,43 @@
+tests/collector/test_bilibili.py
+  s_747d4244292d45::t_abfc909403a9b0 14,71
+src/noteforge/cli/app.py
+  s_747d4244292d45::t_e313a4efe7ca12 7,40
+tests/subtitle/test_selector.py
+  s_747d4244292d45::t_40613dcc96cb5b 59-72
+src/noteforge/subtitle/selector.py
+  s_747d4244292d45::t_40613dcc96cb5b 14-16,46-52,55,62
+src/noteforge/cli/commands/doctor.py
+  s_747d4244292d45::t_0ccda776f1e345 112-115
+  s_747d4244292d45::t_40613dcc96cb5b 136-143
+  s_747d4244292d45::t_e313a4efe7ca12 1-111,116-135,144-162
+src/noteforge/cli/commands/__init__.py
+  s_747d4244292d45::t_e313a4efe7ca12 4,8
+src/noteforge/cli/configuration.py
+  s_747d4244292d45::t_e313a4efe7ca12 47-50,105-108
+README.zh-CN.md
+  s_747d4244292d45::t_e313a4efe7ca12 105-112
+README.md
+  s_747d4244292d45::t_e313a4efe7ca12 109-116
+tests/cli/test_app.py
+  s_747d4244292d45::t_0ccda776f1e345 15,128-186
+  s_747d4244292d45::t_660d0d62054cab 2,22,39,61-62,87-88,119
+  s_747d4244292d45::t_e1825861f0e164 13,32-38,40-60,63-86,89-118,120-127
+src/noteforge/collector/ytdlp.py
+  s_747d4244292d45::t_abfc909403a9b0 8-27,42-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.20",
+  "base_commit_sha": "6fd729422a09a7747c5cbab03bd3b8a54211bdf0",
+  "prompts": {},
+  "sessions": {
+    "s_747d4244292d45": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fcbc5-fac5-7663-b5c8-c16aa162303f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
