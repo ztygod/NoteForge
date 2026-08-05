@@ -1,5 +1,6 @@
 from importlib.metadata import version
 import importlib
+import json
 
 from typer.testing import CliRunner
 
@@ -15,7 +16,7 @@ from noteforge.exceptions import RiskControlError
 from noteforge.exceptions import RemoteCollectionError
 from noteforge.core import NoteGenerationPipeline
 from noteforge.subtitle.downloader import YtDlpSubtitleDownloader
-from noteforge.subtitle.models import SubtitleFile
+from noteforge.subtitle.models import SubtitleFile, Transcript, TranscriptSegment
 
 
 runner = CliRunner()
@@ -271,7 +272,7 @@ def test_configure_writes_ollama_dotenv(tmp_path) -> None:
     assert "配置已保存" in result.stdout
 
 
-def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
+def test_generate_missing_config_points_to_configure(monkeypatch, tmp_path) -> None:
     def fail_to_load():
         from noteforge.exceptions import LLMConfigurationError
 
@@ -281,7 +282,12 @@ def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
 
     result = runner.invoke(
         app,
-        ["generate", "https://www.bilibili.com/video/BV1CkArz1E4o"],
+        [
+            "generate",
+            "https://www.bilibili.com/video/BV1CkArz1E4o",
+            "--run-dir",
+            str(tmp_path / "runs"),
+        ],
     )
 
     assert result.exit_code == 1
@@ -320,7 +326,29 @@ def test_generate_runs_pipeline_and_writes_output(
         api_key=None,
         base_url="http://localhost:11434",
     )
-    precollected = object()
+    precollected = VideoCollectionResult(
+        metadata=VideoMetadata(
+            id="BV1CkArz1E4o",
+            title="测试课程",
+            description=None,
+            uploader=None,
+            uploader_id=None,
+            duration=60,
+            webpage_url="https://www.bilibili.com/video/BV1CkArz1E4o",
+            thumbnail=None,
+            upload_date=None,
+            view_count=None,
+            like_count=None,
+            extractor="BiliBili",
+            extractor_key="BiliBili",
+        ),
+        subtitle_tracks=(),
+        transcript=Transcript(
+            language="zh-CN",
+            segments=(TranscriptSegment(0, 1, "测试字幕"),),
+            source="manual_subtitle",
+        ),
+    )
     monkeypatch.setattr(
         generate_module,
         "load_configured_llm_settings",
@@ -345,6 +373,8 @@ def test_generate_runs_pipeline_and_writes_output(
             "https://www.bilibili.com/video/BV1CkArz1E4o",
             "--output",
             str(output_path),
+            "--run-dir",
+            str(tmp_path / "runs"),
         ],
     )
 
@@ -359,10 +389,16 @@ def test_generate_runs_pipeline_and_writes_output(
     assert str(output_path) in result.output
     assert "Ollama native / qwen-test" in result.output
     assert "学习笔记已生成" in result.stdout
+    run_dirs = list((tmp_path / "runs").iterdir())
+    assert len(run_dirs) == 1
+    manifest = json.loads((run_dirs[0] / "manifest.json").read_text())
+    assert manifest["status"] == "success"
+    assert (run_dirs[0] / "artifacts" / "transcript.json").exists()
 
 
 def test_generate_uses_video_id_default_and_stops_before_llm_without_subtitle(
     monkeypatch,
+    tmp_path,
 ) -> None:
     source = "https://www.bilibili.com/video/BV1CkArz1E4o"
     settings = LLMSettings(
@@ -408,7 +444,12 @@ def test_generate_uses_video_id_default_and_stops_before_llm_without_subtitle(
     )
     monkeypatch.setattr(generate_module, "create_llm_client", create_client)
 
-    result = runner.invoke(app, ["generate", source])
+    result = runner.invoke(app, [
+        "generate",
+        source,
+        "--run-dir",
+        str(tmp_path / "runs"),
+    ])
 
     assert result.exit_code == 1
     assert client_created is False
@@ -417,6 +458,11 @@ def test_generate_uses_video_id_default_and_stops_before_llm_without_subtitle(
     assert "无字幕课程 · 2h 06m" in result.output
     assert "没有可用字幕" in result.output
     assert "noteforge doctor" in result.output
+    run_dirs = list((tmp_path / "runs").iterdir())
+    assert len(run_dirs) == 1
+    manifest = json.loads((run_dirs[0] / "manifest.json").read_text())
+    assert manifest["status"] == "failed"
+    assert (run_dirs[0] / "logs" / "error.json").exists()
 
 
 def test_inspect_requires_url() -> None:

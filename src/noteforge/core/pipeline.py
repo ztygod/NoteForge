@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import re
 from time import perf_counter
-from typing import Any
+from typing import Any, Protocol
 
 from noteforge.collector import bilibili, inspection
 from noteforge.collector.models import VideoCollectionResult
@@ -31,6 +31,12 @@ from noteforge.renderer import MarkdownRenderer, write_markdown
 
 
 VideoCollector = Callable[..., VideoCollectionResult]
+
+
+class ArtifactSink(Protocol):
+    def save_artifact(self, name: str, value: Any) -> Path: ...
+
+    def save_note(self, markdown: str) -> Path: ...
 
 
 class _MeasuredLLMClient(LLMClient):
@@ -96,18 +102,29 @@ class NoteGenerationPipeline:
         collector: VideoCollector = bilibili.collect_bilibili_video,
         event_handler: EventHandler | None = None,
         measured_client: _MeasuredLLMClient | None = None,
+        artifact_sink: ArtifactSink | None = None,
     ) -> None:
         self._semantic_analyzer = semantic_analyzer
         self._knowledge_extractor = knowledge_extractor
         self._collector = collector
         self._emit = event_handler or null_event_handler
         self._measured_client = measured_client
+        self._artifact_sink = artifact_sink
         self._stage_progress: dict[str, float] = {}
 
     def set_event_handler(self, handler: EventHandler) -> None:
         """在 Pipeline 运行前绑定或替换事件消费者。"""
 
         self._emit = handler
+
+    def set_artifact_sink(self, sink: ArtifactSink) -> None:
+        """绑定阶段产物消费者。"""
+
+        self._artifact_sink = sink
+
+    def _artifact(self, name: str, value: Any) -> None:
+        if self._artifact_sink is not None:
+            self._artifact_sink.save_artifact(name, value)
 
     @classmethod
     def from_llm_client(
@@ -302,6 +319,8 @@ class NoteGenerationPipeline:
             )
             if collection.transcript is None:
                 raise NoteForgeError("视频没有可供处理的受支持字幕")
+            if precollected is None:
+                self._artifact("transcript", collection.transcript)
 
             raw_chunks = sync_stage(
                 "chunk",
@@ -310,6 +329,7 @@ class NoteGenerationPipeline:
                 lambda result: {"raw_chunks": len(result)},
             )
             snapshots["raw_chunks.json"] = raw_chunks
+            self._artifact("raw_chunks", raw_chunks)
 
             preprocessed_chunks = sync_stage(
                 "preprocess",
@@ -317,6 +337,7 @@ class NoteGenerationPipeline:
                 lambda: ChunkPreprocessor().preprocess(raw_chunks),
                 lambda result: {"preprocessed_chunks": len(result)},
             )
+            self._artifact("preprocessed_chunks", preprocessed_chunks)
 
             semantic_chunks = await async_stage(
                 "semantic",
@@ -332,6 +353,7 @@ class NoteGenerationPipeline:
                 },
             )
             snapshots["semantic_chunks.json"] = semantic_chunks
+            self._artifact("semantic_chunks", semantic_chunks)
             current_source_text = "\n".join(chunk.text for chunk in semantic_chunks)
 
             def knowledge_metrics(result: Any) -> dict[str, Any]:
@@ -364,9 +386,13 @@ class NoteGenerationPipeline:
             if not knowledge_points:
                 raise NoteForgeError("未能从视频字幕中提取出知识点")
             snapshots["knowledge_points.json"] = knowledge_points
+            self._artifact("knowledge_points", knowledge_points)
             document = sync_stage("document", "Document built", lambda: generate_document(knowledge_points))
             snapshots["document.json"] = document
+            self._artifact("document", document)
             markdown = sync_stage("markdown", "Markdown rendered", lambda: MarkdownRenderer().render(document))
+            if self._artifact_sink is not None:
+                self._artifact_sink.save_note(markdown)
             result = sync_stage("output", "Markdown saved", lambda: write_markdown(markdown, output_path))
             self._event("pipeline", PipelineStatus.SUCCESS, "Finished", duration=perf_counter() - started)
             return result

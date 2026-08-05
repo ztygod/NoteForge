@@ -263,6 +263,15 @@ noteforge generate 视频链接 \
 
 运行 `noteforge 命令 --help` 可以查看完整选项。
 
+### 运行记录
+
+每次执行 `generate` 都会创建 `.noteforge/runs/<run-id>/`，无论成功、失败或
+用户取消都会保留。目录包含 `manifest.json`、`events.jsonl`、各阶段 JSON
+产物、最终笔记副本和结构化错误记录。可用 `--run-dir PATH` 修改记录根目录。
+
+运行记录不会保存 API Key、Cookie 或 Authorization Header；模型端点仅记录
+移除了账号、密码、路径和查询参数的 origin。
+
 ---
 
 ## 常见问题

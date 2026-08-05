@@ -272,6 +272,16 @@ noteforge generate VIDEO_URL \
 
 Run `noteforge COMMAND --help` for the complete option reference.
 
+### Run records
+
+Every `generate` invocation creates `.noteforge/runs/<run-id>/`. Successful,
+failed, and cancelled runs are all retained with a manifest, JSONL event stream,
+stage artifacts, final-note copy, and structured error details. Use
+`--run-dir PATH` to choose another records root.
+
+Run records never persist API keys, cookies, or Authorization headers. Model
+endpoints are stored only as origins with credentials, paths, and query strings removed.
+
 ---
 
 ## Troubleshooting

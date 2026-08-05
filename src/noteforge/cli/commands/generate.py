@@ -12,8 +12,10 @@ from noteforge.collector import bilibili, inspection
 from noteforge.collector.models import VideoCollectionResult
 from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.core import NoteGenerationPipeline
+from noteforge.core.events import compose_event_handlers
 from noteforge.exceptions import NoteForgeError, PipelineExecutionError
 from noteforge.llm import create_llm_client
+from noteforge.run import RunRecorder
 
 
 def _default_output(inspected: inspection.InspectionResult) -> Path:
@@ -89,6 +91,7 @@ def _render_task(
     source: str,
     output: Path,
     settings: LLMSettings,
+    run_id: str,
 ) -> None:
     ui.title("NoteForge")
     ui.info("来源", source)
@@ -97,6 +100,7 @@ def _render_task(
         "模型",
         f"{llm_api_format_label(settings.provider)} / {settings.model}",
     )
+    ui.info("运行", run_id)
     ui.section("检查输入")
 
 
@@ -135,16 +139,39 @@ def generate(
         min=1,
         help="单个 LLM 阶段允许同时执行的最大批次数。",
     ),
+    run_dir: Path = typer.Option(
+        Path(".noteforge/runs"),
+        "--run-dir",
+        help="运行记录根目录。",
+    ),
 ) -> None:
     """从视频字幕生成 Markdown 学习笔记。"""
 
     ui = StatusUI()
     renderer: PipelineRenderer | None = None
+    recorder: RunRecorder | None = None
     try:
         inspected = inspection.inspect_source(source)
         output_path = output if output is not None else _default_output(inspected)
+        recorder = RunRecorder.start(
+            root=run_dir,
+            source=source,
+            source_id=inspected.source_id,
+            platform=inspected.platform.value,
+            normalized_source=inspected.normalized_source,
+            page_number=inspected.page_number,
+            output_path=output_path,
+        )
         settings = load_configured_llm_settings()
-        _render_task(ui, source, output_path, settings)
+        recorder.configure(
+            api_format=settings.provider,
+            model=settings.model,
+            base_url=settings.base_url,
+            llm_concurrency=llm_concurrency,
+            subtitle_language=subtitle_language,
+            cookie_strategy=cookies_from_browser or None,
+        )
+        _render_task(ui, source, output_path, settings, recorder.run_id)
         collection = _run_preflight(
             ui,
             inspected,
@@ -152,6 +179,8 @@ def generate(
             subtitle_language=subtitle_language,
             subtitle_output_dir=subtitle_output_dir,
         )
+        recorder.update_source(collection)
+        recorder.save_artifact("transcript", collection.transcript)
 
         renderer = PipelineRenderer(verbose=verbose, show_header=False)
         client = create_llm_client(settings)
@@ -159,7 +188,11 @@ def generate(
             client, max_concurrency=llm_concurrency
         )
         if hasattr(pipeline, "set_event_handler"):
-            pipeline.set_event_handler(renderer.handle)
+            pipeline.set_event_handler(
+                compose_event_handlers(renderer.handle, recorder.handle_event)
+            )
+        if hasattr(pipeline, "set_artifact_sink"):
+            pipeline.set_artifact_sink(recorder)
 
         async def run_and_close() -> Path:
             try:
@@ -176,13 +209,38 @@ def generate(
                 await client.aclose()
 
         written_path = asyncio.run(run_and_close())
+        recorder.complete(written_path)
+    except KeyboardInterrupt as error:
+        if recorder is not None:
+            recorder.cancel()
+            ui.warning("运行取消", f"记录已保存：{recorder.run_dir}")
+        raise typer.Exit(code=130) from error
     except PipelineExecutionError as error:
+        if recorder is not None:
+            recorder.fail(error)
         assert renderer is not None
         renderer.render_error(error, debug=debug)
         if debug:
             typer.echo("调试快照：.noteforge/debug/", err=True)
+        if recorder is not None:
+            ui.info("运行记录", str(recorder.run_dir))
         raise typer.Exit(code=1) from error
     except NoteForgeError as error:
+        if recorder is not None:
+            recorder.fail(error)
         ui.failure("生成失败", str(error))
+        if recorder is not None:
+            ui.info("运行记录", str(recorder.run_dir))
+        raise typer.Exit(code=1) from error
+    except Exception as error:
+        if recorder is not None:
+            recorder.fail(error)
+        if debug:
+            raise
+        ui.failure("生成失败", "发生未预期错误；详细信息已保存到运行记录。")
+        if recorder is not None:
+            ui.info("运行记录", str(recorder.run_dir))
         raise typer.Exit(code=1) from error
     typer.echo(f"学习笔记已生成：{written_path}")
+    assert recorder is not None
+    typer.echo(f"运行记录：{recorder.run_dir}")

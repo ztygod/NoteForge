@@ -50,6 +50,19 @@ class StaticKnowledgeExtractor:
         )
 
 
+class MemoryArtifactSink:
+    def __init__(self) -> None:
+        self.artifacts = {}
+
+    def save_artifact(self, name, value):
+        self.artifacts[name] = value
+        return Path(name)
+
+    def save_note(self, markdown):
+        self.artifacts["note"] = markdown
+        return Path("note.md")
+
+
 def make_collection(source: str) -> VideoCollectionResult:
     """创建带结构化字幕的采集结果。"""
 
@@ -84,6 +97,7 @@ def make_collection(source: str) -> VideoCollectionResult:
 def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
     output_path = tmp_path / "generated" / "note.md"
     received: list[str] = []
+    sink = MemoryArtifactSink()
 
     def collect(*, source: str, **_: object) -> VideoCollectionResult:
         received.append(source)
@@ -93,6 +107,7 @@ def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
         StaticSemanticAnalyzer(),
         StaticKnowledgeExtractor(),
         collector=collect,
+        artifact_sink=sink,
     )
     result = asyncio.run(
         pipeline.run(
@@ -110,6 +125,15 @@ def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
     assert "## 基础概念" in content
     assert "### TCP 是什么" in content
     assert "0 - 10" in content
+    assert set(sink.artifacts) == {
+        "transcript",
+        "raw_chunks",
+        "preprocessed_chunks",
+        "semantic_chunks",
+        "knowledge_points",
+        "document",
+        "note",
+    }
 
 
 def test_activity_event_keeps_completed_progress_separate_from_active_batch() -> None:
