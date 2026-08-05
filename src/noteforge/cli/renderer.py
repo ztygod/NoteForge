@@ -27,9 +27,10 @@ _OPERATION_LABELS = {
 class _RunningStage:
     """由 Rich Live 重复渲染的单阶段状态。"""
 
-    def __init__(self, event: PipelineEvent) -> None:
+    def __init__(self, event: PipelineEvent, *, verbose: bool = False) -> None:
         self.started_at = monotonic()
         self.spinner = Spinner("dots")
+        self.verbose = verbose
         self.update(event)
 
     def update(self, event: PipelineEvent) -> None:
@@ -46,8 +47,9 @@ class _RunningStage:
     ) -> RenderResult:
         elapsed = monotonic() - self.started_at
         suffix = Text(f"  {elapsed:.1f}s", style="dim")
-        batch_current = self.metrics.get("batch_current")
+        batch_completed = self.metrics.get("batch_completed")
         batch_total = self.metrics.get("batch_total")
+        active_batch = self.metrics.get("active_batch")
         request_status = self.metrics.get("request_status")
         llm_calls = self.metrics.get("llm_calls")
         model = self.metrics.get("model")
@@ -58,8 +60,13 @@ class _RunningStage:
         tool_name = self.metrics.get("tool_name")
 
         description = Text(self.message)
-        if batch_current is not None and batch_total is not None:
-            description.append(f"  {batch_current}/{batch_total}", style="cyan")
+        if batch_completed is not None and batch_total is not None:
+            description.append(
+                f"  已完成 {batch_completed}/{batch_total}",
+                style="cyan",
+            )
+        if self.verbose and active_batch is not None:
+            description.append(f"  活动批次 #{active_batch}", style="dim")
         if request_status:
             description.append(f"  {request_status}", style="yellow")
         if operation:
@@ -120,7 +127,7 @@ class PipelineRenderer:
     def _start_or_update(self, event: PipelineEvent) -> None:
         if self._running_stage != event.stage:
             self._stop_live()
-            self._running = _RunningStage(event)
+            self._running = _RunningStage(event, verbose=self.verbose)
             self._running_stage = event.stage
             self._live = Live(
                 self._running,

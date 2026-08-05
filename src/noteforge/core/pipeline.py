@@ -151,6 +151,12 @@ class NoteGenerationPipeline:
             self._measured_client.retry_count += 1
         measured = self._measured_client
         progress = self._stage_progress.get(stage)
+        activity = dict(data)
+        active_batch = activity.pop("batch_current", None)
+        batch_total = activity.pop("batch_total", None)
+        batch_completed = None
+        if progress is not None and isinstance(batch_total, int):
+            batch_completed = round(progress * batch_total)
         self._event(
             stage,
             PipelineStatus.RUNNING,
@@ -158,7 +164,10 @@ class NoteGenerationPipeline:
             progress=progress,
             metrics={
                 "operation": operation,
-                **data,
+                "batch_completed": batch_completed,
+                "batch_total": batch_total,
+                "active_batch": active_batch,
+                **activity,
                 "llm_calls": measured.call_count if measured else None,
                 "model": measured.last_model if measured else None,
                 "input_tokens": measured.input_tokens if measured else None,
@@ -202,10 +211,10 @@ class NoteGenerationPipeline:
             message,
             progress=self._stage_progress[stage],
             metrics={
-                "batch_current": current,
+                "batch_completed": completed_batches,
                 "batch_total": total,
                 "llm_calls": llm_calls,
-                "request_status": "已完成" if completed else "等待模型响应",
+                "request_status": None if completed else "等待模型响应",
                 **measured_metrics,
             },
         )

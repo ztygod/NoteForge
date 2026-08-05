@@ -167,8 +167,11 @@ class BilibiliCollector(Collector[VideoCollectionResult]):
     def __init__(
         self,
         cookies_from_browser: str | None = "chrome",
+        *,
+        downloader: yt_dlp.YoutubeDL | None = None,
     ) -> None:
         self._cookies_from_browser = cookies_from_browser
+        self._downloader = downloader
 
     def collect(self, source: str) -> VideoCollectionResult:
         """采集视频元数据并发现字幕轨道，不下载任何文件。"""
@@ -179,8 +182,11 @@ class BilibiliCollector(Collector[VideoCollectionResult]):
         )
 
         try:
-            with yt_dlp.YoutubeDL(options) as downloader:
-                info = downloader.extract_info(source, download=False)
+            if self._downloader is not None:
+                info = self._downloader.extract_info(source, download=False)
+            else:
+                with yt_dlp.YoutubeDL(options) as downloader:
+                    info = downloader.extract_info(source, download=False)
         except DownloadError as error:
             raise _translate_download_error(error) from error
         except Exception as error:
@@ -209,12 +215,41 @@ def collect_bilibili_video(
     subtitle_output_dir: Path = Path(".cache/noteforge/subtitles"),
     page_number: int | None = None,
 ) -> VideoCollectionResult:
-    """执行 B站视频采集，并下载和结构化解析最佳字幕。"""
+    """执行 B站视频采集，并在单个 yt-dlp 会话中处理字幕。"""
 
-    collection = get_bilibili_video_info(
-        source=source,
-        cookies_from_browser=cookies_from_browser,
+    options = build_ytdlp_options(
+        cookies_from_browser,
+        http_headers=_BILIBILI_HTTP_HEADERS,
     )
+    try:
+        with yt_dlp.YoutubeDL(options) as downloader:
+            return _collect_bilibili_video_in_session(
+                downloader,
+                source=source,
+                cookies_from_browser=cookies_from_browser,
+                subtitle_language=subtitle_language,
+                subtitle_output_dir=subtitle_output_dir,
+                page_number=page_number,
+            )
+    except DownloadError as error:
+        raise _translate_download_error(error) from error
+
+
+def _collect_bilibili_video_in_session(
+    downloader: yt_dlp.YoutubeDL,
+    *,
+    source: str,
+    cookies_from_browser: str | None,
+    subtitle_language: str | None,
+    subtitle_output_dir: Path,
+    page_number: int | None,
+) -> VideoCollectionResult:
+    """复用已加载 Cookie 的会话完成发现、选择和字幕下载。"""
+
+    collection = BilibiliCollector(
+        cookies_from_browser=cookies_from_browser,
+        downloader=downloader,
+    ).collect(source)
 
     # 根据用户指定的字幕语言优先级，构建最终的语言优先级列表。
     preferred_languages = DEFAULT_LANGUAGE_PRIORITY
@@ -241,6 +276,7 @@ def collect_bilibili_video(
     subtitle_file = YtDlpSubtitleDownloader(
         cookies_from_browser=cookies_from_browser,
         http_headers=_BILIBILI_HTTP_HEADERS,
+        downloader=downloader,
     ).download(
         source=source,
         track=selected_track,
