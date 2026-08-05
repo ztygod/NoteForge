@@ -1,0 +1,52 @@
+README.md
+  s_747d4244292d45::t_ae46fa4d212cad 275-284
+src/noteforge/cli/commands/generate.py
+  s_747d4244292d45::t_ce411dd7fd95d0 183,235-240,245
+  s_747d4244292d45::t_5635a85e456b0d 225-226,241-242
+  s_747d4244292d45::t_a319d8fadb3a47 15,18,94,103,142-146,152,156-164,166-174,182,191-195,212-217,219-220,229-230,232-233,246
+  s_747d4244292d45::t_a58c29ac402b0c 234
+src/noteforge/run/writer.py
+  s_747d4244292d45::t_243128afe9a4f3 1-44
+src/noteforge/run/__init__.py
+  s_747d4244292d45::t_243128afe9a4f3 1-5
+tests/core/test_pipeline.py
+  s_747d4244292d45::t_0f583da6df275f 53-65,100,110,128-136
+src/noteforge/run/serialization.py
+  s_747d4244292d45::t_243128afe9a4f3 1-22
+tests/run/test_recorder.py
+  s_747d4244292d45::t_0f583da6df275f 1-44,46-58,60-83
+  s_747d4244292d45::t_9eaa60115b2c62 45
+  s_747d4244292d45::t_d12e75b2d23e0c 59
+tests/cli/test_app.py
+  s_747d4244292d45::t_5f881685b9f311 275,285-290,329-351,376-377,392-396,401,447-452,461-465
+  s_747d4244292d45::t_776f0a80d10cb9 3,19
+src/noteforge/run/recorder.py
+  s_747d4244292d45::t_243128afe9a4f3 1-19,22,26-33,36-39,42-46,50-52,54-57,60-61,63-68,71-77,80,92-203,206,213-216,220-223,225-241,243-374
+  s_747d4244292d45::t_89e67685162c4f 20-21,23-25,34-35,40-41,47-49,53,58-59,62,69-70,78-79,83,88,90
+  s_747d4244292d45::t_9eaa60115b2c62 81-82,84-87,89,91
+  s_747d4244292d45::t_e1ad2740d272a2 204-205,207-212,217-219,224,242
+README.zh-CN.md
+  s_747d4244292d45::t_ae46fa4d212cad 266-274
+src/noteforge/core/pipeline.py
+  s_747d4244292d45::t_ce411dd7fd95d0 322-323
+  s_747d4244292d45::t_3d99fdbd66e377 10,36-41,105,112,120-127,332,340,356,389,392,394-395
+  s_747d4244292d45::t_1b33d703591617 128
+src/noteforge/core/events.py
+  s_747d4244292d45::t_a319d8fadb3a47 41-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "0065e905893677653414dcd3adcca7e23a41725b",
+  "prompts": {},
+  "sessions": {
+    "s_747d4244292d45": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fcbc5-fac5-7663-b5c8-c16aa162303f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
