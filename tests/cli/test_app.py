@@ -1,4 +1,6 @@
 from importlib.metadata import version
+import importlib
+import json
 
 from typer.testing import CliRunner
 
@@ -9,13 +11,18 @@ from noteforge.collector.models import (
     VideoCollectionResult,
     VideoMetadata,
 )
+from noteforge.config import LLMSettings
 from noteforge.exceptions import RiskControlError
+from noteforge.exceptions import RemoteCollectionError
 from noteforge.core import NoteGenerationPipeline
 from noteforge.subtitle.downloader import YtDlpSubtitleDownloader
-from noteforge.subtitle.models import SubtitleFile
+from noteforge.subtitle.models import SubtitleFile, Transcript, TranscriptSegment
 
 
 runner = CliRunner()
+doctor_module = importlib.import_module("noteforge.cli.commands.doctor")
+configure_module = importlib.import_module("noteforge.cli.commands.configure")
+generate_module = importlib.import_module("noteforge.cli.commands.generate")
 
 
 def test_help_lists_inspect_command() -> None:
@@ -25,6 +32,227 @@ def test_help_lists_inspect_command() -> None:
     assert "inspect" in result.stdout
     assert "generate" in result.stdout
     assert "configure" in result.stdout
+    assert "doctor" in result.stdout
+
+
+def test_doctor_missing_config_points_to_configure(monkeypatch) -> None:
+    def missing_settings():
+        raise ValueError("缺少配置：NOTEFORGE_LLM_PROVIDER")
+
+    monkeypatch.setattr(doctor_module.LLMSettings, "from_env", missing_settings)
+
+    result = runner.invoke(app, ["doctor"])
+
+    assert result.exit_code == 1
+    assert "LLM 配置" in result.output
+    assert "noteforge configure" in result.output
+
+
+def test_doctor_checks_model_and_explains_optional_video_check(
+    monkeypatch,
+) -> None:
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+
+    async def healthy_model(_settings):
+        return "qwen-test"
+
+    monkeypatch.setattr(doctor_module.LLMSettings, "from_env", lambda: settings)
+    monkeypatch.setattr(doctor_module, "_check_model", healthy_model)
+
+    result = runner.invoke(app, ["doctor"])
+
+    assert result.exit_code == 0
+    assert "Ollama native / qwen-test" in result.output
+    assert "模型调用" in result.output
+    assert "未提供 URL" in result.output
+    assert "noteforge doctor 'https://www.bilibili.com/video/BV...'" in result.output
+
+
+def test_doctor_checks_cookie_and_supported_subtitle(
+    monkeypatch,
+) -> None:
+    source = "https://www.bilibili.com/video/BV1CkArz1E4o"
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+
+    async def healthy_model(_settings):
+        return "qwen-test"
+
+    monkeypatch.setattr(doctor_module.LLMSettings, "from_env", lambda: settings)
+    monkeypatch.setattr(doctor_module, "_check_model", healthy_model)
+
+    received_cookies = []
+
+    def video_info(url, *, cookies_from_browser):
+        received_cookies.append(cookies_from_browser)
+        return VideoCollectionResult(
+            metadata=VideoMetadata(
+                id="BV1CkArz1E4o",
+                title="测试课程",
+                description=None,
+                uploader=None,
+                uploader_id=None,
+                duration=60,
+                webpage_url=url,
+                thumbnail=None,
+                upload_date=None,
+                view_count=None,
+                like_count=None,
+                extractor="BiliBili",
+                extractor_key="BiliBili",
+            ),
+            subtitle_tracks=(
+                SubtitleTrack(
+                    language="zh-CN",
+                    extension="vtt",
+                    url="https://example.com/subtitle.vtt",
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(doctor_module.bilibili, "get_bilibili_video_info", video_info)
+
+    result = runner.invoke(app, ["doctor", source])
+
+    assert result.exit_code == 0
+    assert received_cookies == [None]
+    assert "无需浏览器 Cookie" in result.output
+    assert "zh-CN · 人工字幕 · VTT" in result.output
+    assert f"noteforge generate '{source}' --cookies-from-browser \"\"" in result.output
+
+
+def test_doctor_reports_anonymous_failure_before_cookie_retry(
+    monkeypatch,
+) -> None:
+    source = "https://www.bilibili.com/video/BV1CkArz1E4o"
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+
+    async def healthy_model(_settings):
+        return "qwen-test"
+
+    monkeypatch.setattr(doctor_module.LLMSettings, "from_env", lambda: settings)
+    monkeypatch.setattr(doctor_module, "_check_model", healthy_model)
+
+    calls = []
+
+    def video_info(url, *, cookies_from_browser):
+        calls.append(cookies_from_browser)
+        if cookies_from_browser is None:
+            raise RemoteCollectionError("匿名响应中没有视频格式")
+        return VideoCollectionResult(
+            metadata=VideoMetadata(
+                id="BV1CkArz1E4o",
+                title="测试课程",
+                description=None,
+                uploader=None,
+                uploader_id=None,
+                duration=60,
+                webpage_url=url,
+                thumbnail=None,
+                upload_date=None,
+                view_count=None,
+                like_count=None,
+                extractor="BiliBili",
+                extractor_key="BiliBili",
+            ),
+            subtitle_tracks=(
+                SubtitleTrack(
+                    language="zh-CN",
+                    extension="vtt",
+                    url="https://example.com/subtitle.vtt",
+                ),
+            ),
+        )
+
+    monkeypatch.setattr(doctor_module.bilibili, "get_bilibili_video_info", video_info)
+
+    result = runner.invoke(app, ["doctor", source])
+
+    assert result.exit_code == 0
+    assert calls == [None, "chrome"]
+    assert "匿名访问" in result.output
+    assert "失败，正在使用 chrome 浏览器 Cookie 重试" in result.output
+    assert "需要 chrome 浏览器 Cookie" in result.output
+
+
+def test_doctor_retries_with_cookie_when_anonymous_result_has_only_danmaku(
+    monkeypatch,
+) -> None:
+    source = "https://www.bilibili.com/video/BV1CkArz1E4o"
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+
+    async def healthy_model(_settings):
+        return "qwen-test"
+
+    monkeypatch.setattr(doctor_module.LLMSettings, "from_env", lambda: settings)
+    monkeypatch.setattr(doctor_module, "_check_model", healthy_model)
+
+    calls = []
+
+    def video_info(url, *, cookies_from_browser):
+        calls.append(cookies_from_browser)
+        track = (
+            SubtitleTrack(
+                language="danmaku",
+                extension="xml",
+                url="https://comment.bilibili.com/test.xml",
+            )
+            if cookies_from_browser is None
+            else SubtitleTrack(
+                language="ai-zh",
+                extension="srt",
+                url="https://example.com/subtitle.srt",
+                is_automatic=True,
+            )
+        )
+        return VideoCollectionResult(
+            metadata=VideoMetadata(
+                id="BV1CkArz1E4o",
+                title="测试课程",
+                description=None,
+                uploader=None,
+                uploader_id=None,
+                duration=60,
+                webpage_url=url,
+                thumbnail=None,
+                upload_date=None,
+                view_count=None,
+                like_count=None,
+                extractor="BiliBili",
+                extractor_key="BiliBili",
+            ),
+            subtitle_tracks=(track,),
+        )
+
+    monkeypatch.setattr(doctor_module.bilibili, "get_bilibili_video_info", video_info)
+
+    result = runner.invoke(app, ["doctor", source])
+
+    assert result.exit_code == 0
+    assert calls == [None, "chrome"]
+    assert "匿名字幕" in result.output
+    assert "未发现 VTT/SRT，正在使用 chrome 浏览器 Cookie 重试" in result.output
+    assert "已使用 chrome 浏览器 Cookie 重新检查" in result.output
+    assert "ai-zh · 自动字幕 · SRT" in result.output
 
 
 def test_configure_writes_ollama_dotenv(tmp_path) -> None:
@@ -44,24 +272,22 @@ def test_configure_writes_ollama_dotenv(tmp_path) -> None:
     assert "配置已保存" in result.stdout
 
 
-def test_generate_missing_config_points_to_configure(monkeypatch) -> None:
-    def fail_to_create():
+def test_generate_missing_config_points_to_configure(monkeypatch, tmp_path) -> None:
+    def fail_to_load():
         from noteforge.exceptions import LLMConfigurationError
 
-        raise LLMConfigurationError("缺少配置")
+        raise LLMConfigurationError("缺少配置；请先运行 `noteforge configure`。")
 
-    monkeypatch.setattr(
-        "noteforge.cli.configuration.create_llm_client",
-        fail_to_create,
-    )
-    monkeypatch.setattr(
-        "noteforge.cli.configuration.sys.stdin.isatty",
-        lambda: False,
-    )
+    monkeypatch.setattr(generate_module, "load_configured_llm_settings", fail_to_load)
 
     result = runner.invoke(
         app,
-        ["generate", "https://www.bilibili.com/video/BV1CkArz1E4o"],
+        [
+            "generate",
+            "https://www.bilibili.com/video/BV1CkArz1E4o",
+            "--run-dir",
+            str(tmp_path / "runs"),
+        ],
     )
 
     assert result.exit_code == 1
@@ -94,10 +320,46 @@ def test_generate_runs_pipeline_and_writes_output(
         async def aclose(self):
             pass
 
-    monkeypatch.setattr(
-        "noteforge.cli.configuration.create_llm_client",
-        FakeClient,
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
     )
+    precollected = VideoCollectionResult(
+        metadata=VideoMetadata(
+            id="BV1CkArz1E4o",
+            title="测试课程",
+            description=None,
+            uploader=None,
+            uploader_id=None,
+            duration=60,
+            webpage_url="https://www.bilibili.com/video/BV1CkArz1E4o",
+            thumbnail=None,
+            upload_date=None,
+            view_count=None,
+            like_count=None,
+            extractor="BiliBili",
+            extractor_key="BiliBili",
+        ),
+        subtitle_tracks=(),
+        transcript=Transcript(
+            language="zh-CN",
+            segments=(TranscriptSegment(0, 1, "测试字幕"),),
+            source="manual_subtitle",
+        ),
+    )
+    monkeypatch.setattr(
+        generate_module,
+        "load_configured_llm_settings",
+        lambda: settings,
+    )
+    monkeypatch.setattr(
+        generate_module,
+        "_run_preflight",
+        lambda *args, **kwargs: precollected,
+    )
+    monkeypatch.setattr(generate_module, "create_llm_client", lambda settings: FakeClient())
     monkeypatch.setattr(
         NoteGenerationPipeline,
         "from_llm_client",
@@ -111,6 +373,8 @@ def test_generate_runs_pipeline_and_writes_output(
             "https://www.bilibili.com/video/BV1CkArz1E4o",
             "--output",
             str(output_path),
+            "--run-dir",
+            str(tmp_path / "runs"),
         ],
     )
 
@@ -121,7 +385,84 @@ def test_generate_runs_pipeline_and_writes_output(
         "https://www.bilibili.com/video/BV1CkArz1E4o"
     )
     assert received[0][1] == output_path
+    assert received[0][2]["precollected"] is precollected
+    assert str(output_path) in result.output
+    assert "Ollama native / qwen-test" in result.output
     assert "学习笔记已生成" in result.stdout
+    run_dirs = list((tmp_path / "runs").iterdir())
+    assert len(run_dirs) == 1
+    manifest = json.loads((run_dirs[0] / "manifest.json").read_text())
+    assert manifest["status"] == "success"
+    assert (run_dirs[0] / "artifacts" / "transcript.json").exists()
+
+
+def test_generate_uses_video_id_default_and_stops_before_llm_without_subtitle(
+    monkeypatch,
+    tmp_path,
+) -> None:
+    source = "https://www.bilibili.com/video/BV1CkArz1E4o"
+    settings = LLMSettings(
+        provider="ollama",
+        model="qwen-test",
+        api_key=None,
+        base_url="http://localhost:11434",
+    )
+    collection = VideoCollectionResult(
+        metadata=VideoMetadata(
+            id="BV1CkArz1E4o",
+            title="无字幕课程",
+            description=None,
+            uploader=None,
+            uploader_id=None,
+            duration=7560,
+            webpage_url=source,
+            thumbnail=None,
+            upload_date=None,
+            view_count=None,
+            like_count=None,
+            extractor="BiliBili",
+            extractor_key="BiliBili",
+        ),
+        subtitle_tracks=(),
+    )
+    client_created = False
+
+    def create_client(_settings):
+        nonlocal client_created
+        client_created = True
+        raise AssertionError("没有字幕时不应创建 LLM client")
+
+    monkeypatch.setattr(
+        generate_module,
+        "load_configured_llm_settings",
+        lambda: settings,
+    )
+    monkeypatch.setattr(
+        generate_module.bilibili,
+        "collect_bilibili_video",
+        lambda **kwargs: collection,
+    )
+    monkeypatch.setattr(generate_module, "create_llm_client", create_client)
+
+    result = runner.invoke(app, [
+        "generate",
+        source,
+        "--run-dir",
+        str(tmp_path / "runs"),
+    ])
+
+    assert result.exit_code == 1
+    assert client_created is False
+    assert "output/BV1CkArz1E4o.md" in result.output
+    assert "Ollama native / qwen-test" in result.output
+    assert "无字幕课程 · 2h 06m" in result.output
+    assert "没有可用字幕" in result.output
+    assert "noteforge doctor" in result.output
+    run_dirs = list((tmp_path / "runs").iterdir())
+    assert len(run_dirs) == 1
+    manifest = json.loads((run_dirs[0] / "manifest.json").read_text())
+    assert manifest["status"] == "failed"
+    assert (run_dirs[0] / "logs" / "error.json").exists()
 
 
 def test_inspect_requires_url() -> None:
@@ -150,6 +491,8 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
     def fake_init(
         self: bilibili.BilibiliCollector,
         cookies_from_browser: str | None = "chrome",
+        *,
+        downloader=None,
     ) -> None:
         received_browsers.append(cookies_from_browser)
 

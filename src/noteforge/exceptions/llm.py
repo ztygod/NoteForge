@@ -8,11 +8,11 @@ class LLMError(NoteForgeError):
 
 
 class LLMConfigurationError(LLMError):
-    """模型供应商配置无效。"""
+    """模型 API 格式或连接配置无效。"""
 
 
 class LLMRequestError(LLMError):
-    """供应商 API 请求或响应失败。"""
+    """模型端点请求或响应失败。"""
 
     def __init__(
         self,

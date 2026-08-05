@@ -3,6 +3,7 @@ from pathlib import Path
 
 from noteforge.collector.models import VideoCollectionResult, VideoMetadata
 from noteforge.core import NoteGenerationPipeline
+from noteforge.core.events import PipelineEvent
 from noteforge.knowledge.extraction import KnowledgePoint, KnowledgePointType
 from noteforge.knowledge.preprocessor import PreprocessedChunk
 from noteforge.knowledge.semantic import SemanticChunk, SemanticChunkType
@@ -49,6 +50,19 @@ class StaticKnowledgeExtractor:
         )
 
 
+class MemoryArtifactSink:
+    def __init__(self) -> None:
+        self.artifacts = {}
+
+    def save_artifact(self, name, value):
+        self.artifacts[name] = value
+        return Path(name)
+
+    def save_note(self, markdown):
+        self.artifacts["note"] = markdown
+        return Path("note.md")
+
+
 def make_collection(source: str) -> VideoCollectionResult:
     """创建带结构化字幕的采集结果。"""
 
@@ -83,6 +97,7 @@ def make_collection(source: str) -> VideoCollectionResult:
 def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
     output_path = tmp_path / "generated" / "note.md"
     received: list[str] = []
+    sink = MemoryArtifactSink()
 
     def collect(*, source: str, **_: object) -> VideoCollectionResult:
         received.append(source)
@@ -92,6 +107,7 @@ def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
         StaticSemanticAnalyzer(),
         StaticKnowledgeExtractor(),
         collector=collect,
+        artifact_sink=sink,
     )
     result = asyncio.run(
         pipeline.run(
@@ -109,3 +125,40 @@ def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
     assert "## 基础概念" in content
     assert "### TCP 是什么" in content
     assert "0 - 10" in content
+    assert set(sink.artifacts) == {
+        "transcript",
+        "raw_chunks",
+        "preprocessed_chunks",
+        "semantic_chunks",
+        "knowledge_points",
+        "document",
+        "note",
+    }
+
+
+def test_activity_event_keeps_completed_progress_separate_from_active_batch() -> None:
+    events: list[PipelineEvent] = []
+    pipeline = NoteGenerationPipeline(
+        StaticSemanticAnalyzer(),
+        StaticKnowledgeExtractor(),
+        event_handler=events.append,
+    )
+
+    pipeline._batch_event(
+        "semantic",
+        "Semantic chunks generated",
+        current=2,
+        total=6,
+        completed=True,
+    )
+    pipeline._llm_activity(
+        "semantic",
+        "requesting_model",
+        {"batch_current": 5, "batch_total": 6, "attempt": 1},
+    )
+
+    event = events[-1]
+    assert event.progress == 2 / 6
+    assert event.metrics["batch_completed"] == 2
+    assert event.metrics["active_batch"] == 5
+    assert event.metrics["batch_total"] == 6

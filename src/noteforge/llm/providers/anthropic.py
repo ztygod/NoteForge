@@ -1,4 +1,4 @@
-"""Anthropic Messages API 适配器。"""
+"""Anthropic Messages-compatible API 适配器。"""
 
 from typing import Sequence
 
@@ -21,8 +21,8 @@ from noteforge.llm.models import (
 )
 
 
-class AnthropicClient(LLMClient):
-    """调用 Anthropic Messages API。"""
+class AnthropicMessagesClient(LLMClient):
+    """调用兼容 Anthropic Messages 格式的 API。"""
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class AnthropicClient(LLMClient):
         transport: HTTPTransport | None = None,
     ) -> None:
         if not settings.api_key:
-            raise LLMConfigurationError("Anthropic provider 缺少 api_key")
+            raise LLMConfigurationError("Anthropic Messages API 格式缺少 api_key")
         self._settings = settings
         self._transport = transport or HttpxHTTPTransport()
 
@@ -53,7 +53,7 @@ class AnthropicClient(LLMClient):
             if message.role != "system"
         ]
         if not chat_messages:
-            raise ValueError("Anthropic 请求至少需要一条非 system 消息")
+            raise ValueError("Anthropic Messages 请求至少需要一条非 system 消息")
 
         payload: RawJSON = {
             "model": self._settings.model,
@@ -90,9 +90,9 @@ class AnthropicClient(LLMClient):
                 and isinstance(block.get("text"), str)
             )
         except (KeyError, TypeError) as error:
-            raise LLMRequestError("Anthropic 响应结构不完整") from error
+            raise LLMRequestError("Anthropic Messages 响应结构不完整") from error
         if not content:
-            raise LLMRequestError("Anthropic 响应没有文本内容")
+            raise LLMRequestError("Anthropic Messages 响应没有文本内容")
 
         usage_data = result.data.get("usage", {})
         input_tokens = _usage_int(usage_data, "input_tokens")
@@ -145,7 +145,9 @@ class AnthropicClient(LLMClient):
             None,
         ) if isinstance(blocks, list) else None
         if not block or block.get("name") != tool.name or not isinstance(block.get("input"), dict):
-            raise LLMRequestError(f"Anthropic 未调用要求的工具：{tool.name}")
+            raise LLMRequestError(
+                f"Anthropic Messages 端点未调用要求的工具：{tool.name}"
+            )
         usage_data = result.data.get("usage", {})
         input_tokens = _usage_int(usage_data, "input_tokens")
         output_tokens = _usage_int(usage_data, "output_tokens")
@@ -159,6 +161,10 @@ class AnthropicClient(LLMClient):
 
     async def aclose(self) -> None:
         await self._transport.aclose()
+
+
+# 兼容 0.1 的公开类名。
+AnthropicClient = AnthropicMessagesClient
 
 
 def _usage_int(value: object, key: str) -> int | None:

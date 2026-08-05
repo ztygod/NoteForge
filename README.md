@@ -58,7 +58,7 @@ NoteForge downloads subtitles only. It does not download the video or audio.
 | --- | --- |
 | **Source inspection** | Normalizes a URL and shows video, subtitle, and transcript metadata |
 | **Subtitle selection** | Prefers a requested language, then supported Chinese and English tracks |
-| **LLM analysis** | Supports OpenAI, Anthropic, and local Ollama models |
+| **LLM analysis** | Supports OpenAI-compatible, Anthropic Messages, and Ollama API formats |
 | **Note generation** | Creates organized Markdown notes with concepts, explanations, and timestamps |
 | **Multi-part videos** | Handles the `p` parameter in Bilibili multi-part video URLs |
 
@@ -71,7 +71,7 @@ NoteForge downloads subtitles only. It does not download the video or audio.
 
 - Python 3.11 or newer
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/)
-- Network access to Bilibili and the selected LLM provider
+- Network access to Bilibili and the selected model endpoint
 - A supported subtitle track on the target video
 - For restricted videos: a locally installed, signed-in browser
 
@@ -106,6 +106,14 @@ Start the interactive setup:
 noteforge configure
 ```
 
+For a first-run check, verify the configured model and optionally inspect whether
+a video needs browser cookies and has supported subtitles:
+
+```bash
+noteforge doctor \
+  "https://www.bilibili.com/video/BVxxxxxxxxxx"
+```
+
 For the default local Ollama setup, accept `ollama`, then prepare the suggested
 model:
 
@@ -118,7 +126,7 @@ NoteForge loads this file automatically. The default setup expects Ollama at
 `http://localhost:11434`; keep `ollama serve` running if your installation does
 not start it automatically.
 
-For OpenAI or Anthropic, choose the provider in the wizard. API-key input is
+For an OpenAI-compatible or Anthropic Messages endpoint, choose its API format in the wizard. API-key input is
 hidden. You may also copy and edit `.env.example`; see
 [LLM configuration](#llm-configuration).
 
@@ -153,7 +161,11 @@ NoteForge reads configuration from a `.env` file in the current directory and
 from process environment variables. Values explicitly exported in the shell take
 precedence over `.env`.
 
-Run the setup again whenever you want to change providers or models:
+> `NOTEFORGE_LLM_PROVIDER` is a legacy-compatible 0.1 name. Its value selects
+> the API wire format, not the company operating the model endpoint. For example,
+> a compatible DeepSeek endpoint uses the `openai` format with its own `BASE_URL`.
+
+Run the setup again whenever you want to change API formats, endpoints, or models:
 
 ```bash
 noteforge configure
@@ -165,10 +177,10 @@ clear instruction instead of waiting for input.
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `NOTEFORGE_LLM_PROVIDER` | Yes | `ollama`, `openai`, or `anthropic` |
-| `NOTEFORGE_LLM_MODEL` | Yes | Provider-specific model identifier |
-| `NOTEFORGE_LLM_API_KEY` | OpenAI/Anthropic | Provider API key; not needed by Ollama |
-| `NOTEFORGE_LLM_BASE_URL` | No | Custom endpoint; defaults depend on the provider |
+| `NOTEFORGE_LLM_PROVIDER` | Yes | API format identifier: `ollama`, `openai`, or `anthropic`; the legacy variable name is retained for 0.1 compatibility |
+| `NOTEFORGE_LLM_MODEL` | Yes | Model identifier accepted by the target endpoint |
+| `NOTEFORGE_LLM_API_KEY` | OpenAI-compatible/Anthropic Messages | Target endpoint API key; not needed by Ollama |
+| `NOTEFORGE_LLM_BASE_URL` | No | Model endpoint; each API format has an official default and can target compatible services |
 | `NOTEFORGE_LLM_TIMEOUT_SECONDS` | No | Request timeout in seconds; default: `60` |
 
 ### Ollama
@@ -180,7 +192,7 @@ NOTEFORGE_LLM_BASE_URL=http://localhost:11434
 NOTEFORGE_LLM_TIMEOUT_SECONDS=120
 ```
 
-### OpenAI
+### OpenAI-compatible
 
 ```dotenv
 NOTEFORGE_LLM_PROVIDER=openai
@@ -189,10 +201,11 @@ NOTEFORGE_LLM_API_KEY=<your-api-key>
 NOTEFORGE_LLM_TIMEOUT_SECONDS=120
 ```
 
-The default endpoint is `https://api.openai.com/v1`. OpenAI-compatible services can
-be used by setting `NOTEFORGE_LLM_BASE_URL`.
+This format uses the OpenAI Chat Completions request and response schema. Its default
+endpoint is `https://api.openai.com/v1`; set `NOTEFORGE_LLM_BASE_URL` to use DeepSeek
+or another compatible endpoint. Selecting `openai` does not require OpenAI to be the provider.
 
-### Anthropic
+### Anthropic Messages
 
 ```dotenv
 NOTEFORGE_LLM_PROVIDER=anthropic
@@ -201,7 +214,8 @@ NOTEFORGE_LLM_API_KEY=<your-api-key>
 NOTEFORGE_LLM_TIMEOUT_SECONDS=120
 ```
 
-The default endpoint is `https://api.anthropic.com/v1`.
+This format uses the Anthropic Messages request and response schema. Its default endpoint
+is `https://api.anthropic.com/v1`; compatible endpoints can be configured as well.
 
 Never commit `.env` or a real API key. `.env` is ignored by Git.
 
@@ -257,6 +271,16 @@ noteforge generate VIDEO_URL \
 ```
 
 Run `noteforge COMMAND --help` for the complete option reference.
+
+### Run records
+
+Every `generate` invocation creates `.noteforge/runs/<run-id>/`. Successful,
+failed, and cancelled runs are all retained with a manifest, JSONL event stream,
+stage artifacts, final-note copy, and structured error details. Use
+`--run-dir PATH` to choose another records root.
+
+Run records never persist API keys, cookies, or Authorization headers. Model
+endpoints are stored only as origins with credentials, paths, and query strings removed.
 
 ---
 
@@ -372,7 +396,7 @@ noteforge/
 │   ├── collector/    # Source inspection and Bilibili collection
 │   ├── subtitle/     # Subtitle selection, parsing, and normalization
 │   ├── knowledge/    # Chunking, semantic analysis, and extraction
-│   ├── llm/          # OpenAI, Anthropic, and Ollama adapters
+│   ├── llm/          # OpenAI-compatible, Anthropic Messages, and Ollama adapters
 │   ├── document/     # Learning-document construction
 │   ├── renderer/     # Markdown rendering and writing
 │   └── core/         # End-to-end pipeline

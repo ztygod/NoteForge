@@ -5,6 +5,26 @@ from typing import Any
 
 from yt_dlp.networking.impersonate import ImpersonateTarget
 
+
+class _NoteForgeYtDlpLogger:
+    """阻止 yt-dlp 绕过 NoteForge 的错误展示直接写终端。"""
+
+    def debug(self, _: str) -> None:
+        pass
+
+    def info(self, _: str) -> None:
+        pass
+
+    def warning(self, _: str) -> None:
+        pass
+
+    def error(self, _: str) -> None:
+        pass
+
+
+_YTDLP_LOGGER = _NoteForgeYtDlpLogger()
+
+
 def build_ytdlp_options(
     cookies_from_browser: str | None = "chrome",
     *,
@@ -19,6 +39,10 @@ def build_ytdlp_options(
         "quiet": True,
         # 不直接打印 yt-dlp 警告，避免污染 CLI 的结构化输出。
         "no_warnings": True,
+        # yt-dlp 即使在 quiet 模式下仍会先打印 ERROR 再抛出
+        # DownloadError。交给空 logger 后，由 NoteForge 捕获异常并决定
+        # 是否以及如何向用户展示，避免可恢复探测污染终端。
+        "logger": _YTDLP_LOGGER,
         # 忽略用户目录中的 yt-dlp 配置，保证程序行为可预测。
         "ignoreconfig": True,
         # 每次只处理传入 URL 对应的视频或分 P，不展开合集和播放列表。

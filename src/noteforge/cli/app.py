@@ -4,7 +4,7 @@ from importlib.metadata import version
 
 import typer
 
-from noteforge.cli.commands import configure, generate, inspect
+from noteforge.cli.commands import configure, doctor, generate, inspect
 
 
 _DISTRIBUTION_NAME = "noteforge-cli"
@@ -37,6 +37,7 @@ def cli(
 
 
 app.command()(configure)
+app.command()(doctor)
 app.command()(inspect)
 app.command()(generate)
 

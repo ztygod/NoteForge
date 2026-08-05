@@ -19,7 +19,7 @@ def test_default_renderer_only_prints_key_success_stages() -> None:
 
     output = console.export_text()
     assert "Raw chunks created" not in output
-    assert "Transcript extracted" in output
+    assert "Transcript extracted" not in output
     assert "Knowledge generated" in output
     assert "Markdown saved" in output
 
@@ -60,8 +60,9 @@ def test_running_events_update_one_live_stage_until_success() -> None:
             "Semantic chunks generated",
             progress=0.5,
             metrics={
-                "batch_current": 2,
+                "batch_completed": 2,
                 "batch_total": 4,
+                "active_batch": 3,
                 "llm_calls": 2,
                 "request_status": "等待模型响应",
             },
@@ -71,6 +72,10 @@ def test_running_events_update_one_live_stage_until_success() -> None:
     assert renderer._running is running
     assert renderer._running is not None
     assert renderer._running.progress == 0.5
+    console.print(renderer._running)
+    rendered = console.export_text()
+    assert "已完成 2/4" in rendered
+    assert "活动批次 #3" in rendered
 
     renderer.handle(
         PipelineEvent(
@@ -101,6 +106,30 @@ def test_running_event_carries_tool_operation_details() -> None:
     assert renderer._running is not None
     assert renderer._running.metrics["operation"] == "retrying_validation"
     assert renderer._running.metrics["attempt"] == 2
+    renderer._stop_live()
+
+
+def test_default_progress_does_not_present_active_batch_as_completion() -> None:
+    renderer, console = make_renderer()
+    renderer.handle(PipelineEvent(
+        "semantic",
+        PipelineStatus.RUNNING,
+        "Semantic chunks generated",
+        progress=2 / 6,
+        metrics={
+            "batch_completed": 2,
+            "batch_total": 6,
+            "active_batch": 5,
+            "operation": "requesting_model",
+        },
+    ))
+
+    assert renderer._running is not None
+    console.print(renderer._running)
+    output = console.export_text()
+    assert "已完成 2/6" in output
+    assert "5/6" not in output
+    assert "活动批次 #5" not in output
     renderer._stop_live()
 
 

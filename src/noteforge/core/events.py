@@ -38,3 +38,13 @@ EventHandler = Callable[[PipelineEvent], None]
 
 def null_event_handler(_: PipelineEvent) -> None:
     """为不需要进度事件的调用方提供默认空处理器。"""
+
+
+def compose_event_handlers(*handlers: EventHandler) -> EventHandler:
+    """将多个事件消费者组合为一个处理器。"""
+
+    def handle(event: PipelineEvent) -> None:
+        for handler in handlers:
+            handler(event)
+
+    return handle

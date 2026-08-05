@@ -56,3 +56,17 @@ def test_falls_back_to_an_available_unlisted_language() -> None:
     selected = SubtitleSelector().select((_track("fr"),))
 
     assert selected == _track("fr")
+
+
+def test_ignores_danmaku_xml_when_supported_subtitle_exists() -> None:
+    selected = SubtitleSelector().select(
+        (_track("danmaku", "xml"), _track("ai-zh-CN", "srt", automatic=True))
+    )
+
+    assert selected == _track("ai-zh-CN", "srt", automatic=True)
+
+
+def test_returns_none_when_only_unsupported_formats_exist() -> None:
+    assert SubtitleSelector().select(
+        (_track("danmaku", "xml"), _track("zh-CN", "json3"))
+    ) is None

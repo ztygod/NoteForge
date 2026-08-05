@@ -56,7 +56,7 @@ NoteForge 只下载字幕，不下载视频或音频。
 | --- | --- |
 | **来源检查** | 规范化链接，展示视频、字幕及转录文本信息 |
 | **字幕选择** | 优先选择指定语言，然后依次选择支持的中英文字幕 |
-| **LLM 分析** | 支持 OpenAI、Anthropic 和本地 Ollama 模型 |
+| **LLM 分析** | 支持 OpenAI-compatible、Anthropic Messages 和 Ollama API 格式 |
 | **笔记生成** | 生成包含概念、解释和来源时间戳的 Markdown 笔记 |
 | **分 P 视频** | 支持 B 站视频链接中的 `p` 分 P 参数 |
 
@@ -102,6 +102,14 @@ noteforge --help
 noteforge configure
 ```
 
+首次使用建议运行环境检查；提供视频链接后还会判断该视频是否需要浏览器 Cookie，
+并确认是否存在支持的字幕：
+
+```bash
+noteforge doctor \
+  "https://www.bilibili.com/video/BVxxxxxxxxxx"
+```
+
 如果使用默认的本地 Ollama，选择或接受 `ollama`，然后准备向导建议的模型：
 
 ```bash
@@ -112,8 +120,8 @@ ollama pull qwen2.5:7b
 默认配置连接 `http://localhost:11434`。如果你的 Ollama 安装不会自动启动服务，
 请保持 `ollama serve` 正在运行。
 
-如需使用 OpenAI 或 Anthropic，在向导中选择对应服务商即可；API Key 输入不会
-显示在屏幕上。也可以复制并编辑 `.env.example`，具体参考
+如需使用兼容 OpenAI Chat Completions 或 Anthropic Messages 的模型端点，
+在向导中选择对应 API 格式即可；API Key 输入不会显示在屏幕上。也可以复制并编辑 `.env.example`，具体参考
 [LLM 配置](#llm-配置)。
 
 ### 3. 生成前检查视频
@@ -145,7 +153,11 @@ noteforge generate \
 NoteForge 会读取当前目录的 `.env` 和进程环境变量；Shell 中显式导出的变量
 优先级高于 `.env`。
 
-需要更换服务商或模型时，可以再次运行：
+> `NOTEFORGE_LLM_PROVIDER` 是 0.1 保留下来的兼容名称，其值选择的是 API
+> 请求格式，并不用于判断模型由哪家公司提供。例如 DeepSeek 等兼容端点应选择
+> `openai` 格式并配置相应的 `BASE_URL`。
+
+需要更换 API 格式、端点或模型时，可以再次运行：
 
 ```bash
 noteforge configure
@@ -156,10 +168,10 @@ noteforge configure
 
 | 环境变量 | 是否必填 | 说明 |
 | --- | --- | --- |
-| `NOTEFORGE_LLM_PROVIDER` | 是 | `ollama`、`openai` 或 `anthropic` |
-| `NOTEFORGE_LLM_MODEL` | 是 | 对应服务商的模型标识 |
-| `NOTEFORGE_LLM_API_KEY` | OpenAI/Anthropic 必填 | 服务商 API Key；Ollama 不需要 |
-| `NOTEFORGE_LLM_BASE_URL` | 否 | 自定义接口地址；各服务商均有默认值 |
+| `NOTEFORGE_LLM_PROVIDER` | 是 | API 格式标识：`ollama`、`openai` 或 `anthropic`；变量名为兼容 0.1 保留 |
+| `NOTEFORGE_LLM_MODEL` | 是 | 目标端点接受的模型标识 |
+| `NOTEFORGE_LLM_API_KEY` | OpenAI-compatible/Anthropic Messages 必填 | 目标端点的 API Key；Ollama 不需要 |
+| `NOTEFORGE_LLM_BASE_URL` | 否 | 模型端点地址；各 API 格式均有官方默认值，也可指向兼容服务 |
 | `NOTEFORGE_LLM_TIMEOUT_SECONDS` | 否 | 请求超时时间，单位为秒；默认 `60` |
 
 ### Ollama
@@ -171,7 +183,7 @@ NOTEFORGE_LLM_BASE_URL=http://localhost:11434
 NOTEFORGE_LLM_TIMEOUT_SECONDS=120
 ```
 
-### OpenAI
+### OpenAI-compatible
 
 ```dotenv
 NOTEFORGE_LLM_PROVIDER=openai
@@ -180,10 +192,11 @@ NOTEFORGE_LLM_API_KEY=<你的-api-key>
 NOTEFORGE_LLM_TIMEOUT_SECONDS=120
 ```
 
-默认接口地址为 `https://api.openai.com/v1`。配置
-`NOTEFORGE_LLM_BASE_URL` 后，也可以连接兼容 OpenAI Chat Completions 的服务。
+该格式使用 OpenAI Chat Completions 请求和响应结构。默认端点为
+`https://api.openai.com/v1`，配置 `NOTEFORGE_LLM_BASE_URL` 后可连接 DeepSeek
+等兼容端点；选择 `openai` 不代表模型服务商必须是 OpenAI。
 
-### Anthropic
+### Anthropic Messages
 
 ```dotenv
 NOTEFORGE_LLM_PROVIDER=anthropic
@@ -192,7 +205,8 @@ NOTEFORGE_LLM_API_KEY=<你的-api-key>
 NOTEFORGE_LLM_TIMEOUT_SECONDS=120
 ```
 
-默认接口地址为 `https://api.anthropic.com/v1`。
+该格式使用 Anthropic Messages 请求和响应结构，默认端点为
+`https://api.anthropic.com/v1`，也可配置其他兼容端点。
 
 不要提交 `.env` 或真实 API Key；Git 已忽略 `.env`。
 
@@ -248,6 +262,15 @@ noteforge generate 视频链接 \
 ```
 
 运行 `noteforge 命令 --help` 可以查看完整选项。
+
+### 运行记录
+
+每次执行 `generate` 都会创建 `.noteforge/runs/<run-id>/`，无论成功、失败或
+用户取消都会保留。目录包含 `manifest.json`、`events.jsonl`、各阶段 JSON
+产物、最终笔记副本和结构化错误记录。可用 `--run-dir PATH` 修改记录根目录。
+
+运行记录不会保存 API Key、Cookie 或 Authorization Header；模型端点仅记录
+移除了账号、密码、路径和查询参数的 origin。
 
 ---
 
@@ -359,7 +382,7 @@ noteforge/
 │   ├── collector/    # 来源检查与 B 站采集
 │   ├── subtitle/     # 字幕选择、解析与规范化
 │   ├── knowledge/    # 分块、语义分析与知识提取
-│   ├── llm/          # OpenAI、Anthropic 和 Ollama 适配器
+│   ├── llm/          # OpenAI-compatible、Anthropic Messages 和 Ollama 适配器
 │   ├── document/     # 学习文档构建
 │   ├── renderer/     # Markdown 渲染与写入
 │   └── core/         # 端到端流水线

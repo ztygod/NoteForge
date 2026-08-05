@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import pytest
 from yt_dlp.networking.impersonate import ImpersonateTarget
@@ -11,6 +11,7 @@ from noteforge.collector.bilibili import (
     collect_bilibili_video,
     get_bilibili_video_info,
 )
+from noteforge.collector.ytdlp import _YTDLP_LOGGER
 from noteforge.exceptions import (
     CollectionError,
     InvalidCollectionResponseError,
@@ -67,6 +68,7 @@ def test_get_bilibili_video_info_maps_metadata_without_exposing_raw_data() -> No
         "skip_download": True,
         "quiet": True,
         "no_warnings": True,
+        "logger": _YTDLP_LOGGER,
         "ignoreconfig": True,
         "noplaylist": True,
         "impersonate": ImpersonateTarget(client="chrome"),
@@ -231,6 +233,52 @@ def test_collect_bilibili_video_parses_selected_srt(
     assert result.selected_subtitle.extension == "srt"
     assert result.transcript is not None
     assert result.transcript.source == "automatic_subtitle"
+    assert result.transcript.segments[0].text == "大家好"
+
+
+def test_collect_bilibili_video_reuses_one_ytdlp_session_for_subtitle(
+    tmp_path: Path,
+) -> None:
+    subtitle_path = tmp_path / "subtitle.srt"
+    subtitle_path.write_text(
+        "1\n00:00:00,000 --> 00:00:01,000\n大家好\n",
+        encoding="utf-8",
+    )
+    discovery = INFO | {
+        "subtitles": {
+            "ai-zh": [{
+                "ext": "srt",
+                "data": "1\n00:00:00,000 --> 00:00:01,000\n大家好\n",
+            }]
+        }
+    }
+    downloaded = {
+        "requested_subtitles": {
+            "ai-zh": {
+                "ext": "srt",
+                "filepath": str(subtitle_path),
+            }
+        }
+    }
+    downloader = _downloader_returning(discovery)
+    downloader.params = {}
+    downloader.extract_info.side_effect = [discovery, downloaded]
+
+    with patch(
+        "noteforge.collector.bilibili.yt_dlp.YoutubeDL",
+        return_value=downloader,
+    ) as youtube_dl:
+        result = collect_bilibili_video(
+            SOURCE,
+            subtitle_output_dir=tmp_path,
+        )
+
+    youtube_dl.assert_called_once()
+    assert downloader.extract_info.call_args_list == [
+        call(SOURCE, download=False),
+        call(SOURCE, download=True),
+    ]
+    assert result.transcript is not None
     assert result.transcript.segments[0].text == "大家好"
 
 

@@ -32,9 +32,11 @@ class YtDlpSubtitleDownloader:
         cookies_from_browser: str | None = "chrome",
         *,
         http_headers: Mapping[str, str] | None = None,
+        downloader: yt_dlp.YoutubeDL | None = None,
     ) -> None:
         self._cookies_from_browser = cookies_from_browser
         self._http_headers = http_headers
+        self._downloader = downloader
 
     def download(
         self,
@@ -76,8 +78,7 @@ class YtDlpSubtitleDownloader:
         )
 
         try:
-            with yt_dlp.YoutubeDL(options) as downloader:
-                info = downloader.extract_info(source, download=True)
+            info = self._extract_info(source, options)
         except DownloadError as error:
             raise SubtitleDownloadError(
                 f"字幕下载失败：{error}"
@@ -86,6 +87,32 @@ class YtDlpSubtitleDownloader:
             raise SubtitleDownloadError("下载字幕时发生未知错误。") from error
 
         return self._subtitle_file_from_info(info, track)
+
+    def _extract_info(
+        self,
+        source: str,
+        options: dict[str, object],
+    ) -> object:
+        """使用共享会话或临时会话下载字幕。"""
+
+        if self._downloader is None:
+            with yt_dlp.YoutubeDL(options) as downloader:
+                return downloader.extract_info(source, download=True)
+
+        # 第一次元数据请求已经触发 Cookie 解密；同一 YoutubeDL 实例的
+        # cookiejar 是 cached_property，因此字幕请求不会再次读取浏览器。
+        params = self._downloader.params
+        missing = object()
+        previous = {key: params.get(key, missing) for key in options}
+        params.update(options)
+        try:
+            return self._downloader.extract_info(source, download=True)
+        finally:
+            for key, value in previous.items():
+                if value is missing:
+                    params.pop(key, None)
+                else:
+                    params[key] = value
 
     @staticmethod
     def _subtitle_file_from_info(
