@@ -1,0 +1,38 @@
+src/noteforge/cli/renderer.py
+  s_747d4244292d45::t_48a50544f1dbf5 30,33,50,52,63-69,130
+tests/core/test_pipeline.py
+  s_747d4244292d45::t_4bdef477021f97 6,113-140
+src/noteforge/collector/bilibili.py
+  s_747d4244292d45::t_b05d1a1ee745aa 170-171,174,185-189,218,220-222,224-252,279
+src/noteforge/subtitle/downloader.py
+  s_747d4244292d45::t_b05d1a1ee745aa 35,39,81,91-115
+  s_747d4244292d45::t_f0e85e8042f1d9 116
+tests/cli/test_app.py
+  s_747d4244292d45::t_085b15fdc18f13 448-449
+src/noteforge/core/pipeline.py
+  s_747d4244292d45::t_4bdef477021f97 217
+  s_747d4244292d45::t_48a50544f1dbf5 154-159,167-170,214
+tests/collector/test_bilibili.py
+  s_747d4244292d45::t_e47ef959d86803 239-277,280-282
+  s_747d4244292d45::t_cd038b40d9da0b 2,278-279
+  s_747d4244292d45::t_bd0225469c7439 237-238
+tests/cli/test_renderer.py
+  s_747d4244292d45::t_48a50544f1dbf5 63,65,75-78,112-132
+  s_747d4244292d45::t_d3ce1a3fe8da9d 133-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "6e652853dfa84d71124dc8d16f1257874a083450",
+  "prompts": {},
+  "sessions": {
+    "s_747d4244292d45": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fcbc5-fac5-7663-b5c8-c16aa162303f",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
