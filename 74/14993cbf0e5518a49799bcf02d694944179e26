@@ -1,0 +1,21 @@
+src/noteforge/media/ytdlp/client.py
+  s_9e327caed26985::t_253b4798ba400a 37-38,79-85
+tests/media/test_media.py
+  s_9e327caed26985::t_253b4798ba400a 34-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "7414993cbf0e5518a49799bcf02d694944179e26",
+  "prompts": {},
+  "sessions": {
+    "s_9e327caed26985": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdb22-a500-7b83-9826-cad8a2ba78cb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
