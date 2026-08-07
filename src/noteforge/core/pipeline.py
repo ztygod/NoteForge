@@ -9,8 +9,7 @@ import re
 from time import perf_counter
 from typing import Any, Protocol
 
-from noteforge.collector import bilibili, inspection
-from noteforge.collector.models import VideoCollectionResult
+from noteforge.media.models import VideoResource
 from noteforge.core.events import EventHandler, PipelineEvent, PipelineStatus, null_event_handler
 from noteforge.document import generate_document
 from noteforge.exceptions import (
@@ -27,10 +26,12 @@ from noteforge.llm import LLMClient
 from noteforge.llm.models import (
     LLMMessage, LLMRequestOptions, LLMResponse, LLMTool, LLMToolResponse,
 )
+from noteforge.collector import collect_video
+from noteforge.collector import source as inspection
 from noteforge.renderer import MarkdownRenderer, write_markdown
 
 
-VideoCollector = Callable[..., VideoCollectionResult]
+VideoCollector = Callable[..., VideoResource]
 
 
 class ArtifactSink(Protocol):
@@ -99,7 +100,7 @@ class NoteGenerationPipeline:
         semantic_analyzer: SemanticAnalyzer,
         knowledge_extractor: KnowledgeExtractor,
         *,
-        collector: VideoCollector = bilibili.collect_bilibili_video,
+        collector: VideoCollector = collect_video,
         event_handler: EventHandler | None = None,
         measured_client: _MeasuredLLMClient | None = None,
         artifact_sink: ArtifactSink | None = None,
@@ -245,7 +246,7 @@ class NoteGenerationPipeline:
         subtitle_language: str | None = None,
         subtitle_output_dir: Path = Path(".cache/noteforge/subtitles"),
         debug_dir: Path | None = None,
-        precollected: VideoCollectionResult | None = None,
+        precollected: VideoResource | None = None,
     ) -> Path:
         snapshots: dict[str, Any] = {}
         current_stage = "input"
@@ -294,7 +295,10 @@ class NoteGenerationPipeline:
 
         try:
             inspected = sync_stage("input", "Input validated", lambda: inspection.inspect_source(source))
-            if inspected.platform is not inspection.InspectionPlatform.BILIBILI or inspected.normalized_source is None:
+            if inspected.platform not in {
+                inspection.InspectionPlatform.BILIBILI,
+                inspection.InspectionPlatform.YOUTUBE,
+            } or inspected.normalized_source is None:
                 raise UnsupportedSourceError(f"暂不支持该视频来源：{source}")
 
             collection = sync_stage(
@@ -308,7 +312,7 @@ class NoteGenerationPipeline:
                 ),
                 lambda result: {
                     "segments": (
-                        len(result.transcript.segments) if result.transcript else 0
+                        len(result.transcript) if result.transcript else 0
                     ),
                     "video_duration_minutes": (
                         round(result.metadata.duration / 60, 2)
@@ -317,7 +321,7 @@ class NoteGenerationPipeline:
                     ),
                 },
             )
-            if collection.transcript is None:
+            if not collection.transcript:
                 raise NoteForgeError("视频没有可供处理的受支持字幕")
             if precollected is None:
                 self._artifact("transcript", collection.transcript)

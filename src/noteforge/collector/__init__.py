@@ -1,4 +1,16 @@
-"""视频来源识别与元数据采集。
+"""视频资源采集应用层。"""
 
-子模块保持显式导入，避免仅使用本地来源识别时加载远程采集依赖。
-"""
+from noteforge.collector.factory import collect_video, create_video_collector, discover_video
+from noteforge.collector.platforms import BilibiliVideoCollector, YouTubeCollector
+from noteforge.collector.source import InspectionPlatform, InspectionResult, inspect_source
+
+__all__ = [
+    "BilibiliVideoCollector",
+    "YouTubeCollector",
+    "InspectionPlatform",
+    "InspectionResult",
+    "create_video_collector",
+    "collect_video",
+    "discover_video",
+    "inspect_source",
+]

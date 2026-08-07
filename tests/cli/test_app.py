@@ -1,28 +1,78 @@
 from importlib.metadata import version
 import importlib
 import json
+from dataclasses import dataclass
 
 from typer.testing import CliRunner
 
 from noteforge.cli.app import app
-from noteforge.collector import bilibili, inspection
-from noteforge.collector.models import (
-    SubtitleTrack,
-    VideoCollectionResult,
-    VideoMetadata,
-)
+from noteforge.collector import source as inspection
+from noteforge.media.models import Subtitle, SubtitleSegment, VideoMetadata as MediaMetadata, VideoResource
 from noteforge.config import LLMSettings
 from noteforge.exceptions import RiskControlError
 from noteforge.exceptions import RemoteCollectionError
 from noteforge.core import NoteGenerationPipeline
-from noteforge.subtitle.downloader import YtDlpSubtitleDownloader
-from noteforge.subtitle.models import SubtitleFile, Transcript, TranscriptSegment
+
+
+@dataclass(frozen=True)
+class TranscriptSegment:
+    """旧测试输入使用的临时字幕片段。"""
+
+    start_seconds: float
+    end_seconds: float
+    text: str
+
+
+@dataclass(frozen=True)
+class Transcript:
+    """旧测试输入使用的临时字幕集合。"""
+
+    language: str
+    segments: tuple[TranscriptSegment, ...]
+    source: str
+
+
+class VideoMetadata:
+    """把旧测试参数转换成当前媒体元数据。"""
+
+    def __new__(cls, **values):
+        return MediaMetadata(
+            id=values["id"], title=values["title"], uploader=values.get("uploader"),
+            duration=values.get("duration"), thumbnail=values.get("thumbnail"),
+            platform=str(values.get("extractor", "bilibili")).lower(),
+            webpage_url=values["webpage_url"], description=values.get("description"),
+        )
+
+
+class SubtitleTrack:
+    """把旧测试字幕参数转换成当前字幕模型。"""
+
+    def __new__(cls, language, extension, url, name=None, is_automatic=False):
+        del url, name
+        return Subtitle(language, extension, is_automatic=is_automatic)
+
+
+class VideoCollectionResult:
+    """把旧测试夹具转换成当前视频资源。"""
+
+    def __new__(cls, metadata, subtitle_tracks=(), selected_subtitle=None, transcript=None):
+        del selected_subtitle
+        segments = ()
+        source = None
+        if transcript:
+            segments = tuple(
+                SubtitleSegment(item.start_seconds, item.end_seconds, item.text)
+                for item in transcript.segments
+            )
+            source = transcript.source
+        return VideoResource(metadata, tuple(subtitle_tracks), segments, transcript_source=source)
 
 
 runner = CliRunner()
 doctor_module = importlib.import_module("noteforge.cli.commands.doctor")
 configure_module = importlib.import_module("noteforge.cli.commands.configure")
 generate_module = importlib.import_module("noteforge.cli.commands.generate")
+inspect_module = importlib.import_module("noteforge.cli.commands.inspect")
 
 
 def test_help_lists_inspect_command() -> None:
@@ -119,7 +169,7 @@ def test_doctor_checks_cookie_and_supported_subtitle(
             ),
         )
 
-    monkeypatch.setattr(doctor_module.bilibili, "get_bilibili_video_info", video_info)
+    monkeypatch.setattr(doctor_module, "discover_video", video_info)
 
     result = runner.invoke(app, ["doctor", source])
 
@@ -178,7 +228,7 @@ def test_doctor_reports_anonymous_failure_before_cookie_retry(
             ),
         )
 
-    monkeypatch.setattr(doctor_module.bilibili, "get_bilibili_video_info", video_info)
+    monkeypatch.setattr(doctor_module, "discover_video", video_info)
 
     result = runner.invoke(app, ["doctor", source])
 
@@ -243,7 +293,7 @@ def test_doctor_retries_with_cookie_when_anonymous_result_has_only_danmaku(
             subtitle_tracks=(track,),
         )
 
-    monkeypatch.setattr(doctor_module.bilibili, "get_bilibili_video_info", video_info)
+    monkeypatch.setattr(doctor_module, "discover_video", video_info)
 
     result = runner.invoke(app, ["doctor", source])
 
@@ -438,9 +488,7 @@ def test_generate_uses_video_id_default_and_stops_before_llm_without_subtitle(
         lambda: settings,
     )
     monkeypatch.setattr(
-        generate_module.bilibili,
-        "collect_bilibili_video",
-        lambda **kwargs: collection,
+        generate_module, "collect_video", lambda **kwargs: collection
     )
     monkeypatch.setattr(generate_module, "create_llm_client", create_client)
 
@@ -474,7 +522,6 @@ def test_inspect_requires_url() -> None:
 
 def test_inspect_calls_business_layer(monkeypatch) -> None:
     received = []
-    received_browsers = []
 
     def fake_inspect_source(url: str) -> inspection.InspectionResult:
         received.append(url)
@@ -486,22 +533,11 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
             page_number=2,
         )
 
-    monkeypatch.setattr(inspection, "inspect_source", fake_inspect_source)
+    monkeypatch.setattr(inspect_module.inspection, "inspect_source", fake_inspect_source)
 
-    def fake_init(
-        self: bilibili.BilibiliCollector,
-        cookies_from_browser: str | None = "chrome",
-        *,
-        downloader=None,
-    ) -> None:
-        received_browsers.append(cookies_from_browser)
-
-    monkeypatch.setattr(bilibili.BilibiliCollector, "__init__", fake_init)
-
-    def fake_collect(
-        self: bilibili.BilibiliCollector, source: str
-    ) -> VideoCollectionResult:
+    def fake_collect(*, source: str, **kwargs) -> VideoCollectionResult:
         received.append(source)
+        assert kwargs["cookies_from_browser"] == "chrome"
         return VideoCollectionResult(
             metadata=VideoMetadata(
                 id="BV1test",
@@ -521,7 +557,7 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
             subtitle_tracks=(),
         )
 
-    monkeypatch.setattr(bilibili.BilibiliCollector, "collect", fake_collect)
+    monkeypatch.setattr(inspect_module, "collect_video", fake_collect)
 
     result = runner.invoke(
         app,
@@ -538,7 +574,6 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
         "https://example.com/video",
         "https://www.bilibili.com/video/BV1test?p=2",
     ]
-    assert received_browsers == ["chrome"]
     assert "平台：bilibili" in result.stdout
     assert "视频 ID：BV1test" in result.stdout
     assert "分 P：2" in result.stdout
@@ -549,12 +584,10 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
 
 
 def test_inspect_does_not_collect_unknown_platform(monkeypatch) -> None:
-    def fail_if_called(
-        self: bilibili.BilibiliCollector, source: str
-    ) -> VideoCollectionResult:
+    def fail_if_called(**kwargs) -> VideoCollectionResult:
         raise AssertionError("未知平台不应调用 Bilibili collector")
 
-    monkeypatch.setattr(bilibili.BilibiliCollector, "collect", fail_if_called)
+    monkeypatch.setattr(inspect_module, "collect_video", fail_if_called)
 
     result = runner.invoke(app, ["inspect", "https://example.com/video"])
 
@@ -564,12 +597,10 @@ def test_inspect_does_not_collect_unknown_platform(monkeypatch) -> None:
 
 
 def test_inspect_displays_collection_error_without_traceback(monkeypatch) -> None:
-    def fake_collect(
-        self: bilibili.BilibiliCollector, source: str
-    ) -> VideoCollectionResult:
+    def fake_collect(**kwargs) -> VideoCollectionResult:
         raise RiskControlError("B站拒绝了本次请求（HTTP 412）。")
 
-    monkeypatch.setattr(bilibili.BilibiliCollector, "collect", fake_collect)
+    monkeypatch.setattr(inspect_module, "collect_video", fake_collect)
 
     result = runner.invoke(
         app,
@@ -604,29 +635,19 @@ def test_inspect_outputs_subtitle_preview(monkeypatch, tmp_path) -> None:
         url="https://example.com/subtitle.vtt",
     )
 
-    def fake_collect(self, url):
-        return VideoCollectionResult(metadata, (track,))
-
-    subtitle_path = tmp_path / "subtitle.vtt"
-    subtitle_path.write_text(
-        "WEBVTT\n\n00:00.000 --> 00:03.000\n大家好\n",
-        encoding="utf-8",
-    )
-
-    def fake_download(self, source, track, **kwargs):
-        return SubtitleFile(
-            path=subtitle_path,
-            language=track.language,
-            extension=track.extension,
-            is_automatic=track.is_automatic,
+    def fake_collect(**kwargs):
+        return VideoCollectionResult(
+            metadata,
+            (track,),
+            selected_subtitle=track,
+            transcript=Transcript(
+                language="zh-CN",
+                source="manual_subtitle",
+                segments=(TranscriptSegment(0, 3, "大家好"),),
+            ),
         )
 
-    monkeypatch.setattr(bilibili.BilibiliCollector, "collect", fake_collect)
-    monkeypatch.setattr(
-        YtDlpSubtitleDownloader,
-        "download",
-        fake_download,
-    )
+    monkeypatch.setattr(inspect_module, "collect_video", fake_collect)
 
     result = runner.invoke(app, ["inspect", source])
 
@@ -634,7 +655,7 @@ def test_inspect_outputs_subtitle_preview(monkeypatch, tmp_path) -> None:
     assert '"available_track_count": 1' in result.stdout
     assert '"selected_subtitle": {' in result.stdout
     assert '"language": "zh-CN"' in result.stdout
-    assert '"extension": "vtt"' in result.stdout
+    assert '"format": "vtt"' in result.stdout
     assert '"transcript": {' in result.stdout
     assert '"source": "manual_subtitle"' in result.stdout
     assert '"segment_count": 1' in result.stdout

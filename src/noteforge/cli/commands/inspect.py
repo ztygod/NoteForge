@@ -7,8 +7,9 @@ from pathlib import Path
 import typer
 
 from noteforge.cli.serialization import subtitle_debug_output
-from noteforge.collector import bilibili, inspection
 from noteforge.exceptions import CollectionError, SubtitleError
+from noteforge.collector import collect_video
+from noteforge.collector import source as inspection
 
 
 def inspect(
@@ -38,13 +39,15 @@ def inspect(
         "subtitle": None,
     }
 
-    # 目前只实现了 B 站视频信息采集，其他平台暂不支持远程采集。
     if (
-        inspect_result.platform is inspection.InspectionPlatform.BILIBILI
+        inspect_result.platform in {
+            inspection.InspectionPlatform.BILIBILI,
+            inspection.InspectionPlatform.YOUTUBE,
+        }
         and inspect_result.normalized_source is not None
     ):
         try:
-            collection = bilibili.collect_bilibili_video(
+            collection = collect_video(
                 source=inspect_result.normalized_source,
                 cookies_from_browser=cookies_from_browser,
                 subtitle_language=subtitle_language,
@@ -65,4 +68,3 @@ def inspect(
         typer.echo(f"分 P：{inspect_result.page_number}")
     typer.echo("结构化数据：")
     typer.echo(json.dumps(output, ensure_ascii=False, indent=2))
-

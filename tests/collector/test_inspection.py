@@ -1,6 +1,6 @@
 import pytest
 
-from noteforge.collector.inspection import InspectionPlatform, inspect_source
+from noteforge.collector.source import InspectionPlatform, inspect_source
 
 
 def test_inspect_standard_bilibili_url() -> None:
@@ -125,4 +125,3 @@ def test_inspect_rejects_non_video_or_invalid_youtube_url(source: str) -> None:
     assert result.platform is InspectionPlatform.UNKNOWN
     assert result.source_id is None
     assert result.normalized_source is None
-
