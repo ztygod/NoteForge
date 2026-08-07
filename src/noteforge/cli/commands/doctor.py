@@ -6,19 +6,19 @@ from dataclasses import dataclass
 import typer
 
 from noteforge.cli.ui import StatusUI
-from noteforge.collector import bilibili, inspection
-from noteforge.collector.models import VideoCollectionResult
+from noteforge.media.models import Subtitle, VideoResource
 from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.exceptions import CollectionError, LLMConfigurationError
 from noteforge.llm import LLMMessage, create_llm_client
-from noteforge.subtitle.selector import SubtitleSelector
+from noteforge.collector import source as inspection
+from noteforge.collector import discover_video
 
 
 @dataclass(frozen=True, slots=True)
 class _VideoCheckResult:
     """视频访问探测的最终状态。"""
 
-    collection: VideoCollectionResult | None
+    collection: VideoResource | None
     cookie_required: bool = False
     failed: bool = False
 
@@ -87,10 +87,7 @@ def _collect_with_browser(
     """使用浏览器 Cookie 重试采集；期间不启用 spinner。"""
 
     try:
-        collection = bilibili.get_bilibili_video_info(
-            source,
-            cookies_from_browser=browser,
-        )
+        collection = _discover_video(source, cookies_from_browser=browser)
     except CollectionError as error:
         ui.failure(failure_label, str(error))
         return _VideoCheckResult(None, failed=True)
@@ -107,10 +104,7 @@ def _check_video_access(
 
     try:
         with ui.running("匿名视频元数据", "正在检查 Bilibili..."):
-            anonymous = bilibili.get_bilibili_video_info(
-                source,
-                cookies_from_browser=None,
-            )
+            anonymous = _discover_video(source, cookies_from_browser=None)
     except CollectionError as error:
         if not browser:
             ui.failure("访问权限", str(error))
@@ -132,7 +126,7 @@ def _check_video_access(
         )
 
     ui.success("匿名视频元数据", "无需浏览器 Cookie")
-    if SubtitleSelector().select(anonymous.subtitle_tracks) is not None:
+    if _select_subtitle(anonymous.subtitles) is not None:
         ui.success("获取视频字幕", "无需浏览器 Cookie")
         return _VideoCheckResult(anonymous)
     if not browser:
@@ -162,29 +156,49 @@ def _check_video_access(
 
 def _render_video_and_subtitle(
     ui: StatusUI,
-    collection: VideoCollectionResult,
+    collection: VideoResource,
 ) -> bool:
     """展示视频与字幕并返回字幕是否不可用。"""
 
     ui.success("视频标题", collection.metadata.title)
-    selected = SubtitleSelector().select(collection.subtitle_tracks)
+    selected = _select_subtitle(collection.subtitles)
     if selected is not None:
         kind = "自动字幕" if selected.is_automatic else "人工字幕"
         ui.success(
             "字幕",
-            f"{selected.language} · {kind} · {selected.extension.upper()}",
+            f"{selected.language} · {kind} · {selected.format.upper()}",
         )
         return False
 
     discovered_formats = sorted({
-        track.extension.upper()
-        for track in collection.subtitle_tracks
+        track.format.upper()
+        for track in collection.subtitles
     })
     detail = "没有发现当前支持的 VTT 或 SRT 字幕"
     if discovered_formats:
         detail += f"（发现的其他轨道：{', '.join(discovered_formats)}）"
     ui.failure("字幕", detail)
     return True
+
+
+def _discover_video(
+    source: str,
+    *,
+    cookies_from_browser: str | None,
+) -> VideoResource:
+    """通过采集器工厂发现视频资源。"""
+
+    return discover_video(source, cookies_from_browser=cookies_from_browser)
+
+
+def _select_subtitle(subtitles: tuple[Subtitle, ...]) -> Subtitle | None:
+    """按人工优先和格式优先级选择可处理字幕。"""
+
+    formats = {"vtt": 0, "srt": 1, "ass": 2, "json3": 3}
+    candidates = [item for item in subtitles if item.format in formats]
+    if not candidates:
+        return None
+    return min(candidates, key=lambda item: (item.is_automatic, formats[item.format]))
 
 
 def _generation_command(
@@ -247,10 +261,13 @@ def doctor(
         ui.section("视频")
         inspected = inspection.inspect_source(url)
         if (
-            inspected.platform is not inspection.InspectionPlatform.BILIBILI
+            inspected.platform not in {
+                inspection.InspectionPlatform.BILIBILI,
+                inspection.InspectionPlatform.YOUTUBE,
+            }
             or inspected.normalized_source is None
         ):
-            ui.failure("视频来源", "当前只支持标准 B 站视频 URL")
+            ui.failure("视频来源", "当前只支持标准 Bilibili 或 YouTube 视频 URL")
             failed = True
         else:
             result = _check_video_access(

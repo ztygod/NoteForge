@@ -28,6 +28,19 @@
 
 ---
 
+## 视频采集配置
+
+Media Extractor 统一支持 Bilibili 与 YouTube。复制
+`config.example.yaml` 为 `config.yaml` 后，可分别配置代理、缓存、下载目录和
+Cookie。推荐同时设置 `cookie_file` 与 `cookies_from_browser`：首次运行从已登录
+浏览器导入 Cookie，之后只复用持久文件，不会反复读取浏览器 Cookie 或提示系统
+密码。`config.yaml`、`.noteforge/` 与 `.cache/` 已被 Git 忽略，请勿提交 Cookie。
+
+字幕 fallback 顺序为人工字幕、自动字幕、可选的音频转录器；媒体层目前可解析
+VTT、SRT、ASS 和 JSON3，并为 Whisper 实现保留了 `AudioTranscriber` 接口。
+
+---
+
 ## 为什么使用 NoteForge
 
 公开课视频内容丰富，但手工整理成方便复习的笔记往往很耗时。NoteForge 会获取

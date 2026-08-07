@@ -1,10 +1,10 @@
-"""负责 ``TranscriptSegment`` 到 ``RawChunk`` 的转换。"""
+"""负责 ``SubtitleSegment`` 到 ``RawChunk`` 的转换。"""
 
 from dataclasses import dataclass
 from math import isfinite
 from typing import Iterable
 
-from noteforge.subtitle.models import Transcript, TranscriptSegment
+from noteforge.media.models import SubtitleSegment
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,14 +39,14 @@ class RawChunk:
         return self.end_time - self.start_time
 
     @classmethod
-    def from_segment(cls, segment: TranscriptSegment) -> "RawChunk":
+    def from_segment(cls, segment: SubtitleSegment) -> "RawChunk":
         """从一个字幕片段创建原始文本块。"""
 
-        if not isinstance(segment, TranscriptSegment):
-            raise TypeError("segment 必须是 TranscriptSegment。")
+        if not isinstance(segment, SubtitleSegment):
+            raise TypeError("segment 必须是 SubtitleSegment。")
         return cls(
-            start_time=segment.start_seconds,
-            end_time=segment.end_seconds,
+            start_time=segment.start,
+            end_time=segment.end,
             text=segment.text,
         )
 
@@ -54,34 +54,36 @@ class RawChunk:
 class TranscriptChunker:
     """按字幕中的原有顺序生成原始文本块。"""
 
-    def chunk_segment(self, segment: TranscriptSegment) -> RawChunk:
+    def chunk_segment(self, segment: SubtitleSegment) -> RawChunk:
         """转换单个字幕片段。"""
 
         return RawChunk.from_segment(segment)
 
     def chunk_segments(
         self,
-        segments: Iterable[TranscriptSegment],
+        segments: Iterable[SubtitleSegment],
     ) -> tuple[RawChunk, ...]:
         """按输入顺序转换一组字幕片段。"""
 
         return tuple(self.chunk_segment(segment) for segment in segments)
 
-    def chunk(self, transcript: Transcript) -> tuple[RawChunk, ...]:
-        """转换一份完整字幕。"""
+    def chunk(self, segments: Iterable[SubtitleSegment]) -> tuple[RawChunk, ...]:
+        """转换一组完整字幕片段。"""
 
-        if not isinstance(transcript, Transcript):
-            raise TypeError("transcript 必须是 Transcript。")
-        return self.chunk_segments(transcript.segments)
+        if isinstance(segments, (str, bytes)):
+            raise TypeError("segments 必须是字幕片段集合。")
+        return self.chunk_segments(segments)
 
 
-def segment_to_raw_chunk(segment: TranscriptSegment) -> RawChunk:
+def segment_to_raw_chunk(segment: SubtitleSegment) -> RawChunk:
     """便捷函数：转换单个字幕片段。"""
 
     return TranscriptChunker().chunk_segment(segment)
 
 
-def transcript_to_raw_chunks(transcript: Transcript) -> tuple[RawChunk, ...]:
-    """便捷函数：转换一份完整字幕。"""
+def transcript_to_raw_chunks(
+    segments: Iterable[SubtitleSegment],
+) -> tuple[RawChunk, ...]:
+    """便捷函数：转换一组完整字幕片段。"""
 
-    return TranscriptChunker().chunk(transcript)
+    return TranscriptChunker().chunk(segments)
