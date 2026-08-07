@@ -34,6 +34,8 @@ class YTDLPClient:
         result: dict[str, Any] = {
             "quiet": True, "no_warnings": True, "logger": YTDLP_LOGGER,
             "ignoreconfig": True, "noplaylist": True, "skip_download": True,
+            # 元数据和字幕发现不应因为缺少可下载的媒体格式而失败。
+            "ignore_no_formats_error": True,
             "writesubtitles": True, "writeautomaticsub": True,
             "impersonate": ImpersonateTarget(client="chrome"),
         }
@@ -74,7 +76,13 @@ class YTDLPClient:
 
     def download_media(self, source: str, *, target_dir: Path, audio_only: bool) -> Mapping[str, Any]:
         target_dir.mkdir(parents=True, exist_ok=True)
-        options: dict[str, Any] = {"skip_download": False, "format": "bestaudio/best" if audio_only else "bestvideo+bestaudio/best", "outtmpl": str(target_dir / "%(id)s.%(ext)s")}
+        options: dict[str, Any] = {
+            "skip_download": False,
+            # 真正下载媒体时必须存在匹配格式，不能沿用发现阶段的宽松策略。
+            "ignore_no_formats_error": False,
+            "format": "bestaudio/best" if audio_only else "bestvideo+bestaudio/best",
+            "outtmpl": str(target_dir / "%(id)s.%(ext)s"),
+        }
         if audio_only:
             options["postprocessors"] = [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}]
         return self.extract_info(source, download=True, options=options)

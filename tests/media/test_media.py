@@ -31,6 +31,21 @@ def test_missing_cookie_file_bootstraps_from_browser_once(tmp_path: Path) -> Non
     assert cookie_file.parent.is_dir()
 
 
+def test_metadata_discovery_allows_missing_media_formats() -> None:
+    options = YTDLPClient().options()
+    assert options["skip_download"] is True
+    assert options["ignore_no_formats_error"] is True
+
+
+def test_media_download_requires_a_matching_format(tmp_path: Path) -> None:
+    client = YTDLPClient()
+    with patch.object(client, "extract_info", return_value={}) as extract_info:
+        client.download_media("https://example.com/video", target_dir=tmp_path, audio_only=True)
+    options = extract_info.call_args.kwargs["options"]
+    assert options["skip_download"] is False
+    assert options["ignore_no_formats_error"] is False
+
+
 def test_load_yaml_style_extractor_config(tmp_path: Path) -> None:
     path = tmp_path / "config.yaml"
     path.write_text(
