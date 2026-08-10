@@ -1,0 +1,183 @@
+src/noteforge/run/writer.py
+  s_9e327caed26985::t_514b03d09b1e9b 6
+src/noteforge/media/ytdlp/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 1
+src/noteforge/llm/providers/openai.py
+  s_9e327caed26985::t_514b03d09b1e9b 4,24
+  s_9e327caed26985::t_b4379b51d7574a 102-104,108-116
+src/noteforge/knowledge/prompts/knowledge_extraction.py
+  s_9e327caed26985::t_514b03d09b1e9b 6
+  s_9e327caed26985::t_b4379b51d7574a 77-84
+src/noteforge/knowledge/tools.py
+  s_9e327caed26985::t_b4379b51d7574a 20-24,27-30,59-66,68-71
+src/noteforge/knowledge/chunker.py
+  s_9e327caed26985::t_514b03d09b1e9b 3
+tests/cli/test_app.py
+  s_9e327caed26985::t_b4379b51d7574a 40-44,46-47,62-64,74-76,420-422,444,498,501-509,545-547
+  s_9e327caed26985::t_514b03d09b1e9b 4,12-14
+src/noteforge/llm/models.py
+  s_9e327caed26985::t_514b03d09b1e9b 3,5
+src/noteforge/collector/factory.py
+  s_9e327caed26985::t_b4379b51d7574a 18-20
+  s_9e327caed26985::t_514b03d09b1e9b 2-7,9-15
+src/noteforge/collector/platforms/bilibili.py
+  s_9e327caed26985::t_514b03d09b1e9b 4
+  s_9e327caed26985::t_b4379b51d7574a 17-20,25-30
+  s_9e327caed26985::t_bdde55baf565ca 8
+src/noteforge/collector/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 3-7,9-13
+src/noteforge/media/cache.py
+  s_9e327caed26985::t_b4379b51d7574a 19-21,34-37,39-41,50-56,68,73-76
+  s_9e327caed26985::t_514b03d09b1e9b 3-4
+src/noteforge/knowledge/extraction/validation.py
+  s_9e327caed26985::t_b4379b51d7574a 74,79,119,149,152
+src/noteforge/core/pipeline.py
+  s_9e327caed26985::t_514b03d09b1e9b 3-4,12-19,28-32,37-41,43
+  s_9e327caed26985::t_b4379b51d7574a 151-156,197-199,315-325,329-339,342,420-424,427-431,434-444,447-452,455-460,462-467,471-475,477-479,481-486
+src/noteforge/media/subtitle.py
+  s_9e327caed26985::t_b4379b51d7574a 63-68,96-99,118-119
+  s_9e327caed26985::t_514b03d09b1e9b 5
+src/noteforge/cli/commands/generate.py
+  s_9e327caed26985::t_b4379b51d7574a 45,59-60,132
+  s_9e327caed26985::t_514b03d09b1e9b 11,18
+tests/core/test_pipeline.py
+  s_9e327caed26985::t_b4379b51d7574a 115
+  s_9e327caed26985::t_514b03d09b1e9b 9-14
+src/noteforge/core/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 4
+src/noteforge/collector/source/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 3-7
+src/noteforge/exceptions/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 13,22
+pyproject.toml
+  s_9e327caed26985::t_40ec04dd6e30eb 65
+  s_9e327caed26985::t_611de7641266e6 58-64,66-70
+  s_9e327caed26985::t_e8d325cee2a319 49
+tests/llm/test_llm.py
+  s_9e327caed26985::t_514b03d09b1e9b 3,18
+  s_9e327caed26985::t_b4379b51d7574a 63-65,75,85-90,102-139,148-165,169-178,180-184,202-206,225-227,255-259
+src/noteforge/cli/serialization.py
+  s_9e327caed26985::t_b4379b51d7574a 15-19,32
+tests/collector/test_inspection.py
+  s_9e327caed26985::t_b4379b51d7574a 51,92
+src/noteforge/knowledge/prompts/base.py
+  s_9e327caed26985::t_b4379b51d7574a 66
+  s_9e327caed26985::t_514b03d09b1e9b 4-6
+src/noteforge/media/transcriber.py
+  s_9e327caed26985::t_b4379b51d7574a 10-12
+tests/run/test_recorder.py
+  s_9e327caed26985::t_b4379b51d7574a 30-38,46,55,66
+src/noteforge/collector/source/inspection.py
+  s_9e327caed26985::t_b4379b51d7574a 10-15,46-50,59-61,73-77,80-85
+  s_9e327caed26985::t_514b03d09b1e9b 3
+tests/knowledge/extraction/test_extraction.py
+  s_9e327caed26985::t_514b03d09b1e9b 3
+  s_9e327caed26985::t_b4379b51d7574a 170-172
+src/noteforge/knowledge/semantic/analyzer.py
+  s_9e327caed26985::t_b4379b51d7574a 57-61,114-119,121,138-144,147-148,151-166,168-171,176-190
+src/noteforge/knowledge/__init__.py
+  s_9e327caed26985::t_b4379b51d7574a 1
+src/noteforge/config/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 12
+src/noteforge/renderer/markdown.py
+  s_9e327caed26985::t_b4379b51d7574a 57,77
+src/noteforge/media/ytdlp/errors.py
+  s_9e327caed26985::t_514b03d09b1e9b 5-12
+  s_9e327caed26985::t_b4379b51d7574a 20-23,25-29,31-40
+src/noteforge/llm/providers/ollama.py
+  s_9e327caed26985::t_b4379b51d7574a 94-96,98-107,109-111,113-122,125-127,148-154
+  s_9e327caed26985::t_514b03d09b1e9b 4,19
+src/noteforge/knowledge/semantic/models.py
+  s_9e327caed26985::t_b4379b51d7574a 48
+tests/media/test_media.py
+  s_9e327caed26985::t_514b03d09b1e9b 5,8-18
+  s_9e327caed26985::t_b4379b51d7574a 24-30,35-37,59-61,81-83,116-120,129-131
+src/noteforge/media/config.py
+  s_9e327caed26985::t_b4379b51d7574a 43-48,75
+  s_9e327caed26985::t_514b03d09b1e9b 3,6
+src/noteforge/llm/base.py
+  s_9e327caed26985::t_514b03d09b1e9b 4-5
+src/noteforge/cli/renderer.py
+  s_9e327caed26985::t_b4379b51d7574a 222
+src/noteforge/knowledge/semantic/validation.py
+  s_9e327caed26985::t_b4379b51d7574a 26,77,115,123,126
+src/noteforge/config/llm.py
+  s_9e327caed26985::t_514b03d09b1e9b 6
+  s_9e327caed26985::t_b4379b51d7574a 52,74
+src/noteforge/knowledge/extraction/extractor.py
+  s_9e327caed26985::t_b4379b51d7574a 60-64,122-127,129,153-159,162-163,166-184,187-190,201-215,217-219
+src/noteforge/knowledge/preprocessor.py
+  s_9e327caed26985::t_514b03d09b1e9b 3-4
+  s_9e327caed26985::t_b4379b51d7574a 37,39,41,54,56,114-119,160,180
+src/noteforge/llm/providers/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 3,5
+src/noteforge/knowledge/prompts/utils.py
+  s_9e327caed26985::t_514b03d09b1e9b 4
+tests/config/test_dotenv.py
+  s_9e327caed26985::t_b4379b51d7574a 49,59
+src/noteforge/collector/platforms/youtube.py
+  s_9e327caed26985::t_b4379b51d7574a 17-20
+  s_9e327caed26985::t_514b03d09b1e9b 4
+src/noteforge/document/builder.py
+  s_9e327caed26985::t_b4379b51d7574a 90,105
+tests/document/test_document.py
+  s_9e327caed26985::t_b4379b51d7574a 154-157,183
+src/noteforge/knowledge/models.py
+  s_9e327caed26985::t_514b03d09b1e9b 16
+  s_9e327caed26985::t_b4379b51d7574a 2,31
+src/noteforge/media/ytdlp/client.py
+  s_9e327caed26985::t_b4379b51d7574a 17-27,36-41,47-52,55-56,59-63,76-82,97-99,101-112,114-116,126-128
+src/noteforge/cli/commands/configure.py
+  s_9e327caed26985::t_b4379b51d7574a 22-29,43-45
+  s_9e327caed26985::t_514b03d09b1e9b 4
+src/noteforge/config/dotenv.py
+  s_9e327caed26985::t_514b03d09b1e9b 6-7
+  s_9e327caed26985::t_b4379b51d7574a 71
+src/noteforge/document/models.py
+  s_9e327caed26985::t_b4379b51d7574a 36,39,61-62
+tests/cli/test_renderer.py
+  s_9e327caed26985::t_b4379b51d7574a 15-23,102-114,124-137,150-152
+src/noteforge/knowledge/extraction/models.py
+  s_9e327caed26985::t_b4379b51d7574a 37-38
+src/noteforge/llm/providers/anthropic.py
+  s_9e327caed26985::t_514b03d09b1e9b 3,21
+  s_9e327caed26985::t_b4379b51d7574a 123-124,129-138,147-150,155-171,181-187
+src/noteforge/knowledge/semantic/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 3
+tests/knowledge/prompts/test_prompts.py
+  s_9e327caed26985::t_b4379b51d7574a 24,69,72-74,97,121-123
+src/noteforge/collector/platforms/base.py
+  s_9e327caed26985::t_b4379b51d7574a 19-24,49-56,64-66,70-72,76-78,82-84,86-88,91-104,110,113-126,132-133,135-136,139-149,152-154,160-172,174-178,182,184-189,192-200,202-206
+  s_9e327caed26985::t_514b03d09b1e9b 10
+src/noteforge/media/__init__.py
+  s_9e327caed26985::t_514b03d09b1e9b 1-12
+  s_9e327caed26985::t_b4379b51d7574a 16-27
+src/noteforge/cli/commands/inspect.py
+  s_9e327caed26985::t_b4379b51d7574a 43-44
+  s_9e327caed26985::t_514b03d09b1e9b 4,12
+tests/knowledge/semantic/test_semantic.py
+  s_9e327caed26985::t_b4379b51d7574a 127,147-152,155-156
+  s_9e327caed26985::t_514b03d09b1e9b 3
+src/noteforge/run/recorder.py
+  s_9e327caed26985::t_b4379b51d7574a 183-192,197-202,212,233-244,353-358,371-381
+  s_9e327caed26985::t_514b03d09b1e9b 9-11,35
+src/noteforge/cli/commands/doctor.py
+  s_9e327caed26985::t_514b03d09b1e9b 9-10,14
+  s_9e327caed26985::t_b4379b51d7574a 31,70-72,116,171-173,261-262,278
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "9139bdd209339b3fcc44d5d23a47b61b759c8aa4",
+  "prompts": {},
+  "sessions": {
+    "s_9e327caed26985": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdb22-a500-7b83-9826-cad8a2ba78cb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
