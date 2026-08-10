@@ -1,22 +1,29 @@
-# 提交前自动整理代码，并在测试失败时阻止提交。
+# Keep hooks reproducible by pinning every external repository to an exact version.
+minimum_pre_commit_version: "4.0.0"
+default_language_version:
+  python: python3.11
+
 repos:
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.2
     hooks:
+      # Run lint fixes before formatting so the formatter sees the final imports.
       - id: ruff-check
-        name: Ruff 检查并修复
-        entry: uv run ruff check --fix
-        language: system
-        types: [python]
+        name: Ruff lint
+        args: [--fix]
+        types_or: [python, pyi]
 
       - id: ruff-format
-        name: Ruff 代码格式化
-        entry: uv run ruff format
-        language: system
-        types: [python]
+        name: Ruff format
+        types_or: [python, pyi]
 
+  - repo: local
+    hooks:
+      # Use the locked project environment instead of a separate hook environment.
       - id: pytest
-        name: Python 全量测试
+        name: Python tests
         entry: uv run pytest -q
         language: system
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
