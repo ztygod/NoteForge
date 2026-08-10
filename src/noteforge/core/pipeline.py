@@ -17,7 +17,7 @@ from noteforge.core.events import (
     PipelineStatus,
     null_event_handler,
 )
-from noteforge.document import generate_document
+from noteforge.document import MarkdownRenderer, generate_document, write_markdown
 from noteforge.exceptions import (
     NoteForgeError,
     PipelineErrorContext,
@@ -41,7 +41,6 @@ from noteforge.llm.models import (
     LLMToolResponse,
 )
 from noteforge.media.models import VideoResource
-from noteforge.renderer import MarkdownRenderer, write_markdown
 
 VideoCollector = Callable[..., VideoResource]
 

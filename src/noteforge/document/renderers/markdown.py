@@ -2,7 +2,7 @@
 
 import re
 
-from noteforge.document import LearningDocument
+from noteforge.document.models import LearningDocument
 from noteforge.knowledge.extraction import KnowledgePoint
 
 _MARKDOWN_SPECIAL_CHARACTERS = re.compile(r"([\\`*_{}\[\]()#+.!|>\-])")

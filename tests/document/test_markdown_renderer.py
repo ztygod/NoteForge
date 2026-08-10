@@ -2,12 +2,16 @@ from pathlib import Path
 
 import pytest
 
-from noteforge.document import DocumentSection, LearningDocument
+from noteforge.document import (
+    DocumentSection,
+    LearningDocument,
+    MarkdownRenderer,
+    write_markdown,
+)
 from noteforge.knowledge.chunker import RawChunk
 from noteforge.knowledge.extraction import KnowledgePoint, KnowledgePointType
 from noteforge.knowledge.preprocessor import PreprocessedChunk
 from noteforge.knowledge.semantic import SemanticChunk, SemanticChunkType
-from noteforge.renderer import MarkdownRenderer, write_markdown
 
 
 def make_point(
