@@ -1,0 +1,19 @@
+.pre-commit-config.yaml
+  s_9e327caed26985::t_2b76f22c72af1e 1-5,7-8,10,12-14,17-18,20-22,24,29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "f97d8ffc677778d952a9dfd17006b3f787960d4f",
+  "prompts": {},
+  "sessions": {
+    "s_9e327caed26985": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdb22-a500-7b83-9826-cad8a2ba78cb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
