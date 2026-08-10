@@ -21,9 +21,7 @@ class ExamplePrompt(BasePrompt):
 
 
 def test_base_prompt_injects_variables() -> None:
-    messages = ExamplePrompt().build_messages(
-        {"task": "分析", "content": "字幕"}
-    )
+    messages = ExamplePrompt().build_messages({"task": "分析", "content": "字幕"})
 
     assert messages[0].role == "system"
     assert messages[0].content == "任务：分析"
@@ -68,14 +66,12 @@ def test_concept_extraction_prompt_serializes_existing_evidence() -> None:
         ],
     )
 
-    system_message, user_message = (
-        ConceptExtractionPrompt().build_for_chunk(chunk)
-    )
+    system_message, user_message = ConceptExtractionPrompt().build_for_chunk(chunk)
 
     assert '"relationships"' in system_message.content
-    serialized = user_message.content.split(
-        "<knowledge_chunk>\n", 1
-    )[1].split("\n</knowledge_chunk>", 1)[0]
+    serialized = user_message.content.split("<knowledge_chunk>\n", 1)[1].split(
+        "\n</knowledge_chunk>", 1
+    )[0]
     payload = json.loads(serialized)
     assert payload["concepts"][0]["evidence"][0] == {
         "text": "原始字幕",
@@ -98,9 +94,7 @@ def test_semantic_analysis_prompt_assigns_stable_indexes() -> None:
         for chunk in raw_chunks
     )
 
-    system_message, user_message = (
-        SemanticAnalysisPrompt().build_for_chunks(chunks)
-    )
+    system_message, user_message = SemanticAnalysisPrompt().build_for_chunks(chunks)
 
     assert '"source_indexes"' in system_message.content
     assert "comparison" in system_message.content
@@ -124,11 +118,9 @@ def test_knowledge_extraction_prompt_contains_semantic_context() -> None:
         source_chunks=(preprocessed,),
     )
 
-    system_message, user_message = (
-        KnowledgeExtractionPrompt().build_for_chunks(
-            (chunk,),
-            start_index=3,
-        )
+    system_message, user_message = KnowledgeExtractionPrompt().build_for_chunks(
+        (chunk,),
+        start_index=3,
     )
 
     assert '"knowledge_points"' in system_message.content

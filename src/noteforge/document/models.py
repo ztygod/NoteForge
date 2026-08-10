@@ -33,12 +33,10 @@ class DocumentSection:
         if not self.knowledge_points:
             raise ValueError("DocumentSection 必须包含至少一个知识点")
         if not all(
-            isinstance(point, KnowledgePoint)
-            for point in self.knowledge_points
+            isinstance(point, KnowledgePoint) for point in self.knowledge_points
         ):
             raise TypeError(
-                "DocumentSection 的 knowledge_points "
-                "必须全部是 KnowledgePoint"
+                "DocumentSection 的 knowledge_points 必须全部是 KnowledgePoint"
             )
         point_ids = tuple(id(point) for point in self.knowledge_points)
         if len(point_ids) != len(set(point_ids)):
@@ -60,11 +58,5 @@ class LearningDocument:
             raise TypeError("LearningDocument 的 sections 必须是 tuple")
         if not self.sections:
             raise ValueError("LearningDocument 必须包含至少一个章节")
-        if not all(
-            isinstance(section, DocumentSection)
-            for section in self.sections
-        ):
-            raise TypeError(
-                "LearningDocument 的 sections "
-                "必须全部是 DocumentSection"
-            )
+        if not all(isinstance(section, DocumentSection) for section in self.sections):
+            raise TypeError("LearningDocument 的 sections 必须全部是 DocumentSection")

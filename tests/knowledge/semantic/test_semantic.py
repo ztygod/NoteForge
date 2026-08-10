@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Sequence
+from collections.abc import Sequence
 
 import pytest
 
@@ -124,9 +124,7 @@ def test_reports_progress_before_and_after_each_batch(monkeypatch) -> None:
 def test_batches_run_with_bounded_concurrency_and_keep_order() -> None:
     chunks = tuple(make_chunk(index, index + 1, str(index)) for index in range(4))
     client = ConcurrentClient(response(proposal([0])))
-    analyzer = LLMSemanticAnalyzer(
-        client, batch_size=1, max_concurrency=2
-    )
+    analyzer = LLMSemanticAnalyzer(client, batch_size=1, max_concurrency=2)
 
     result = asyncio.run(analyzer.analyze(chunks))
 
@@ -146,13 +144,16 @@ def test_single_input_produces_one_semantic_chunk() -> None:
 
 def test_validation_failure_is_retried_once_with_feedback() -> None:
     chunks = (make_chunk(0, 1, "一"), make_chunk(1, 2, "二"))
-    client = SequenceClient([
-        response(proposal([0])),
-        response(proposal([0, 1])),
-    ])
+    client = SequenceClient(
+        [
+            response(proposal([0])),
+            response(proposal([0, 1])),
+        ]
+    )
     activities: list[tuple[str, dict[str, object]]] = []
     analyzer = LLMSemanticAnalyzer(
-        client, activity_handler=lambda operation, data: activities.append((operation, data))
+        client,
+        activity_handler=lambda operation, data: activities.append((operation, data)),
     )
 
     result = asyncio.run(analyzer.analyze(chunks))

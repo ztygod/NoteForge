@@ -2,8 +2,8 @@
 
 from noteforge.knowledge.prompts.base import BasePrompt
 from noteforge.knowledge.prompts.utils import format_seconds
-from noteforge.knowledge.taxonomy import KnowledgePointType
 from noteforge.knowledge.semantic.models import SemanticChunk
+from noteforge.knowledge.taxonomy import KnowledgePointType
 from noteforge.llm.models import LLMMessage
 
 
@@ -74,9 +74,11 @@ class KnowledgeExtractionPrompt(BasePrompt):
                 f"摘要：{chunk.summary}\n"
                 f"正文：\n{chunk.text}"
             )
-        return self.build_messages({
-            "chunks": "\n\n".join(sections),
-            "allowed_point_types": "、".join(
-                item.value for item in KnowledgePointType
-            ),
-        })
+        return self.build_messages(
+            {
+                "chunks": "\n\n".join(sections),
+                "allowed_point_types": "、".join(
+                    item.value for item in KnowledgePointType
+                ),
+            }
+        )

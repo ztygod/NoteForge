@@ -3,7 +3,6 @@
 from noteforge.knowledge.taxonomy import KnowledgePointType, SemanticChunkType
 from noteforge.llm import LLMTool
 
-
 SEMANTIC_ANALYSIS_TOOL = LLMTool(
     name="submit_semantic_analysis",
     description="提交完整的语义切分结果。",
@@ -18,10 +17,17 @@ SEMANTIC_ANALYSIS_TOOL = LLMTool(
                     "type": "object",
                     "additionalProperties": False,
                     "required": [
-                        "source_indexes", "topic", "summary", "chunk_type", "importance"
+                        "source_indexes",
+                        "topic",
+                        "summary",
+                        "chunk_type",
+                        "importance",
                     ],
                     "properties": {
-                        "source_indexes": {"type": "array", "items": {"type": "integer"}},
+                        "source_indexes": {
+                            "type": "array",
+                            "items": {"type": "integer"},
+                        },
                         "topic": {"type": "string"},
                         "summary": {"type": "string"},
                         "chunk_type": {
@@ -50,9 +56,19 @@ KNOWLEDGE_POINTS_TOOL = LLMTool(
                 "items": {
                     "type": "object",
                     "additionalProperties": False,
-                    "required": ["source_indexes", "title", "explanation", "point_type", "keywords", "importance"],
+                    "required": [
+                        "source_indexes",
+                        "title",
+                        "explanation",
+                        "point_type",
+                        "keywords",
+                        "importance",
+                    ],
                     "properties": {
-                        "source_indexes": {"type": "array", "items": {"type": "integer"}},
+                        "source_indexes": {
+                            "type": "array",
+                            "items": {"type": "integer"},
+                        },
                         "title": {"type": "string"},
                         "explanation": {"type": "string"},
                         "point_type": {

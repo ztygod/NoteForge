@@ -1,8 +1,8 @@
 """负责 ``SubtitleSegment`` 到 ``RawChunk`` 的转换。"""
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from math import isfinite
-from typing import Iterable
 
 from noteforge.media.models import SubtitleSegment
 

@@ -54,7 +54,11 @@ class LLMSemanticAnalyzer:
         self._progress_handler = progress_handler
         self._activity_handler = activity_handler
         self._max_attempts = max_attempts
-        if isinstance(max_concurrency, bool) or not isinstance(max_concurrency, int) or max_concurrency <= 0:
+        if (
+            isinstance(max_concurrency, bool)
+            or not isinstance(max_concurrency, int)
+            or max_concurrency <= 0
+        ):
             raise ValueError("max_concurrency 必须是正整数")
         self._max_concurrency = max_concurrency
 
@@ -107,12 +111,14 @@ class LLMSemanticAnalyzer:
                     self._progress_handler(completed_batches, total_batches, True)
             return result
 
-        batches = await asyncio.gather(*(
-            process_batch(batch_number, start)
-            for batch_number, start in enumerate(
-                range(0, len(chunks), self._batch_size), start=1
+        batches = await asyncio.gather(
+            *(
+                process_batch(batch_number, start)
+                for batch_number, start in enumerate(
+                    range(0, len(chunks), self._batch_size), start=1
+                )
             )
-        ))
+        )
         return tuple(item for batch in batches for item in batch)
 
     async def _analyze_batch(
@@ -129,27 +135,59 @@ class LLMSemanticAnalyzer:
         messages = list(self._prompt.build_for_chunks(chunks))
         last_error: Exception | None = None
         for attempt in range(1, self._max_attempts + 1):
-            self._activity("requesting_model", batch_current=batch_number, batch_total=total_batches, attempt=attempt, max_attempts=self._max_attempts)
+            self._activity(
+                "requesting_model",
+                batch_current=batch_number,
+                batch_total=total_batches,
+                attempt=attempt,
+                max_attempts=self._max_attempts,
+            )
             try:
                 response = await self._client.call_tool(
-                    messages, tool=SEMANTIC_ANALYSIS_TOOL,
+                    messages,
+                    tool=SEMANTIC_ANALYSIS_TOOL,
                     options=LLMRequestOptions(temperature=0),
                 )
-                self._activity("tool_submitted", batch_current=batch_number, batch_total=total_batches, tool_name=response.tool_call.name, attempt=attempt)
-                self._activity("validating_response", batch_current=batch_number, batch_total=total_batches, attempt=attempt)
-                result = parse_semantic_analysis_result(dict(response.tool_call.arguments))
+                self._activity(
+                    "tool_submitted",
+                    batch_current=batch_number,
+                    batch_total=total_batches,
+                    tool_name=response.tool_call.name,
+                    attempt=attempt,
+                )
+                self._activity(
+                    "validating_response",
+                    batch_current=batch_number,
+                    batch_total=total_batches,
+                    attempt=attempt,
+                )
+                result = parse_semantic_analysis_result(
+                    dict(response.tool_call.arguments)
+                )
                 validate_semantic_analysis_result(result, len(chunks))
-                return tuple(build_semantic_chunk(chunks, proposal) for proposal in result.semantic_chunks)
+                return tuple(
+                    build_semantic_chunk(chunks, proposal)
+                    for proposal in result.semantic_chunks
+                )
             except (LLMJSONDecodeError, SemanticAnalysisError) as error:
                 last_error = error
                 if attempt >= self._max_attempts:
                     break
-                self._activity("retrying_validation", batch_current=batch_number, batch_total=total_batches, attempt=attempt + 1, max_attempts=self._max_attempts, reason=str(error))
-                messages.append(LLMMessage(
-                    "user",
-                    "上一次提交未通过验证：\n"
-                    f"{error}\n请调用 {SEMANTIC_ANALYSIS_TOOL.name} 重新提交完整修正结果。",
-                ))
+                self._activity(
+                    "retrying_validation",
+                    batch_current=batch_number,
+                    batch_total=total_batches,
+                    attempt=attempt + 1,
+                    max_attempts=self._max_attempts,
+                    reason=str(error),
+                )
+                messages.append(
+                    LLMMessage(
+                        "user",
+                        "上一次提交未通过验证：\n"
+                        f"{error}\n请调用 {SEMANTIC_ANALYSIS_TOOL.name} 重新提交完整修正结果。",
+                    )
+                )
         raise SemanticAnalysisError(
             f"Semantic analysis failed after {self._max_attempts} attempts: {last_error}"
         ) from last_error

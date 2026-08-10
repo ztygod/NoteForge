@@ -1,16 +1,22 @@
 """将视频来源转换为 Markdown 学习笔记，并发送各阶段事件。"""
 
+import json
+import re
 from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
 from enum import Enum
-import json
 from pathlib import Path
-import re
 from time import perf_counter
 from typing import Any, Protocol
 
-from noteforge.media.models import VideoResource
-from noteforge.core.events import EventHandler, PipelineEvent, PipelineStatus, null_event_handler
+from noteforge.collector import collect_video
+from noteforge.collector import source as inspection
+from noteforge.core.events import (
+    EventHandler,
+    PipelineEvent,
+    PipelineStatus,
+    null_event_handler,
+)
 from noteforge.document import generate_document
 from noteforge.exceptions import (
     NoteForgeError,
@@ -19,17 +25,23 @@ from noteforge.exceptions import (
     UnsupportedSourceError,
 )
 from noteforge.knowledge.chunker import TranscriptChunker
-from noteforge.knowledge.extraction import KnowledgeExtractor, KnowledgePointType, LLMKnowledgeExtractor
+from noteforge.knowledge.extraction import (
+    KnowledgeExtractor,
+    KnowledgePointType,
+    LLMKnowledgeExtractor,
+)
 from noteforge.knowledge.preprocessor import ChunkPreprocessor
 from noteforge.knowledge.semantic import LLMSemanticAnalyzer, SemanticAnalyzer
 from noteforge.llm import LLMClient
 from noteforge.llm.models import (
-    LLMMessage, LLMRequestOptions, LLMResponse, LLMTool, LLMToolResponse,
+    LLMMessage,
+    LLMRequestOptions,
+    LLMResponse,
+    LLMTool,
+    LLMToolResponse,
 )
-from noteforge.collector import collect_video
-from noteforge.collector import source as inspection
+from noteforge.media.models import VideoResource
 from noteforge.renderer import MarkdownRenderer, write_markdown
-
 
 VideoCollector = Callable[..., VideoResource]
 
@@ -136,8 +148,12 @@ class NoteGenerationPipeline:
         max_concurrency: int = 2,
     ) -> "NoteGenerationPipeline":
         measured = _MeasuredLLMClient(client)
-        semantic_analyzer = LLMSemanticAnalyzer(measured, max_concurrency=max_concurrency)
-        knowledge_extractor = LLMKnowledgeExtractor(measured, max_concurrency=max_concurrency)
+        semantic_analyzer = LLMSemanticAnalyzer(
+            measured, max_concurrency=max_concurrency
+        )
+        knowledge_extractor = LLMKnowledgeExtractor(
+            measured, max_concurrency=max_concurrency
+        )
         pipeline = cls(
             semantic_analyzer,
             knowledge_extractor,
@@ -178,7 +194,9 @@ class NoteGenerationPipeline:
         self._event(
             stage,
             PipelineStatus.RUNNING,
-            "Semantic chunks generated" if stage == "semantic" else "Knowledge generated",
+            "Semantic chunks generated"
+            if stage == "semantic"
+            else "Knowledge generated",
             progress=progress,
             metrics={
                 "operation": operation,
@@ -294,26 +312,34 @@ class NoteGenerationPipeline:
             return result
 
         try:
-            inspected = sync_stage("input", "Input validated", lambda: inspection.inspect_source(source))
-            if inspected.platform not in {
-                inspection.InspectionPlatform.BILIBILI,
-                inspection.InspectionPlatform.YOUTUBE,
-            } or inspected.normalized_source is None:
+            inspected = sync_stage(
+                "input", "Input validated", lambda: inspection.inspect_source(source)
+            )
+            if (
+                inspected.platform
+                not in {
+                    inspection.InspectionPlatform.BILIBILI,
+                    inspection.InspectionPlatform.YOUTUBE,
+                }
+                or inspected.normalized_source is None
+            ):
                 raise UnsupportedSourceError(f"暂不支持该视频来源：{source}")
 
             collection = sync_stage(
-                "transcript", "Transcript extracted",
-                lambda: precollected or self._collector(
-                    source=inspected.normalized_source,
-                    cookies_from_browser=cookies_from_browser,
-                    subtitle_language=subtitle_language,
-                    subtitle_output_dir=subtitle_output_dir,
-                    page_number=inspected.page_number,
+                "transcript",
+                "Transcript extracted",
+                lambda: (
+                    precollected
+                    or self._collector(
+                        source=inspected.normalized_source,
+                        cookies_from_browser=cookies_from_browser,
+                        subtitle_language=subtitle_language,
+                        subtitle_output_dir=subtitle_output_dir,
+                        page_number=inspected.page_number,
+                    )
                 ),
                 lambda result: {
-                    "segments": (
-                        len(result.transcript) if result.transcript else 0
-                    ),
+                    "segments": (len(result.transcript) if result.transcript else 0),
                     "video_duration_minutes": (
                         round(result.metadata.duration / 60, 2)
                         if result.metadata.duration is not None
@@ -391,31 +417,73 @@ class NoteGenerationPipeline:
                 raise NoteForgeError("未能从视频字幕中提取出知识点")
             snapshots["knowledge_points.json"] = knowledge_points
             self._artifact("knowledge_points", knowledge_points)
-            document = sync_stage("document", "Document built", lambda: generate_document(knowledge_points))
+            document = sync_stage(
+                "document",
+                "Document built",
+                lambda: generate_document(knowledge_points),
+            )
             snapshots["document.json"] = document
             self._artifact("document", document)
-            markdown = sync_stage("markdown", "Markdown rendered", lambda: MarkdownRenderer().render(document))
+            markdown = sync_stage(
+                "markdown",
+                "Markdown rendered",
+                lambda: MarkdownRenderer().render(document),
+            )
             if self._artifact_sink is not None:
                 self._artifact_sink.save_note(markdown)
-            result = sync_stage("output", "Markdown saved", lambda: write_markdown(markdown, output_path))
-            self._event("pipeline", PipelineStatus.SUCCESS, "Finished", duration=perf_counter() - started)
+            result = sync_stage(
+                "output",
+                "Markdown saved",
+                lambda: write_markdown(markdown, output_path),
+            )
+            self._event(
+                "pipeline",
+                PipelineStatus.SUCCESS,
+                "Finished",
+                duration=perf_counter() - started,
+            )
             return result
         except Exception as error:
-            self._event(current_stage, PipelineStatus.ERROR, str(error), duration=perf_counter() - started)
+            self._event(
+                current_stage,
+                PipelineStatus.ERROR,
+                str(error),
+                duration=perf_counter() - started,
+            )
             if debug_dir is not None:
                 debug_dir.mkdir(parents=True, exist_ok=True)
-                for filename in ("raw_chunks.json", "semantic_chunks.json", "knowledge_points.json", "document.json"):
+                for filename in (
+                    "raw_chunks.json",
+                    "semantic_chunks.json",
+                    "knowledge_points.json",
+                    "document.json",
+                ):
                     (debug_dir / filename).write_text(
-                        json.dumps(_json_value(snapshots.get(filename)), ensure_ascii=False, indent=2), encoding="utf-8"
+                        json.dumps(
+                            _json_value(snapshots.get(filename)),
+                            ensure_ascii=False,
+                            indent=2,
+                        ),
+                        encoding="utf-8",
                     )
             if isinstance(error, PipelineExecutionError):
                 raise
-            match = re.search(r"Knowledge point (\d+).*invalid point_type:\s*(.+)", str(error), re.IGNORECASE)
+            match = re.search(
+                r"Knowledge point (\d+).*invalid point_type:\s*(.+)",
+                str(error),
+                re.IGNORECASE,
+            )
             context = PipelineErrorContext(
-                stage={"knowledge": "KnowledgePointBuilder"}.get(current_stage, current_stage),
+                stage={"knowledge": "KnowledgePointBuilder"}.get(
+                    current_stage, current_stage
+                ),
                 object_name=f"KnowledgePoint #{match.group(1)}" if match else None,
-                reason=f"Invalid point_type:\n{match.group(2).strip()}" if match else str(error),
-                allowed_values=tuple(item.value for item in KnowledgePointType) if match else (),
+                reason=f"Invalid point_type:\n{match.group(2).strip()}"
+                if match
+                else str(error),
+                allowed_values=tuple(item.value for item in KnowledgePointType)
+                if match
+                else (),
                 source_text=current_source_text,
             )
             raise PipelineExecutionError(context, error) from error

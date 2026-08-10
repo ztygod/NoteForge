@@ -9,7 +9,6 @@ from noteforge.llm.providers.anthropic import AnthropicMessagesClient
 from noteforge.llm.providers.ollama import OllamaClient
 from noteforge.llm.providers.openai import OpenAICompatibleClient
 
-
 ClientFactory = Callable[[LLMSettings], LLMClient]
 
 _API_FORMATS: dict[str, ClientFactory] = {

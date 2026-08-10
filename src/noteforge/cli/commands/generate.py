@@ -8,14 +8,14 @@ import typer
 from noteforge.cli.commands.configure import load_configured_llm_settings
 from noteforge.cli.renderer import PipelineRenderer
 from noteforge.cli.ui import StatusUI
+from noteforge.collector import collect_video
 from noteforge.collector import source as inspection
-from noteforge.media.models import VideoResource
 from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.core import NoteGenerationPipeline
 from noteforge.core.events import compose_event_handlers
 from noteforge.exceptions import NoteForgeError, PipelineExecutionError
 from noteforge.llm import create_llm_client
-from noteforge.collector import collect_video
+from noteforge.media.models import VideoResource
 from noteforge.run import RunRecorder
 
 
@@ -42,10 +42,7 @@ def _subtitle_description(collection: VideoResource) -> str:
     if track is None or not transcript:
         return "没有可用字幕"
     kind = "自动字幕" if track.is_automatic else "人工字幕"
-    return (
-        f"{track.language} · {kind} · "
-        f"{len(transcript):,} 个片段"
-    )
+    return f"{track.language} · {kind} · {len(transcript):,} 个片段"
 
 
 def _run_preflight(
@@ -59,7 +56,8 @@ def _run_preflight(
     """在创建模型客户端前采集并验证视频字幕。"""
 
     if (
-        inspected.platform not in {
+        inspected.platform
+        not in {
             inspection.InspectionPlatform.BILIBILI,
             inspection.InspectionPlatform.YOUTUBE,
         }
@@ -131,9 +129,7 @@ def generate(
         "--subtitle-output-dir",
         help="字幕缓存根目录。",
     ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="显示阶段指标与耗时。"
-    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="显示阶段指标与耗时。"),
     debug: bool = typer.Option(
         False, "--debug", help="失败时保存中间数据并显示原始异常。"
     ),

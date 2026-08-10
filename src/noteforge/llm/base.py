@@ -1,8 +1,8 @@
 """统一的 LLM Client 接口与基础异常。"""
 
-from abc import ABC, abstractmethod
 import json
-from typing import Sequence
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
 from noteforge.exceptions import LLMJSONDecodeError
 from noteforge.llm.models import (

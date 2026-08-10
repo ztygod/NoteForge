@@ -1,12 +1,17 @@
 import asyncio
 from pathlib import Path
 
-from noteforge.media.models import Subtitle, SubtitleSegment, VideoMetadata, VideoResource
 from noteforge.core import NoteGenerationPipeline
 from noteforge.core.events import PipelineEvent
 from noteforge.knowledge.extraction import KnowledgePoint, KnowledgePointType
 from noteforge.knowledge.preprocessor import PreprocessedChunk
 from noteforge.knowledge.semantic import SemanticChunk, SemanticChunkType
+from noteforge.media.models import (
+    Subtitle,
+    SubtitleSegment,
+    VideoMetadata,
+    VideoResource,
+)
 
 
 class StaticSemanticAnalyzer:
@@ -107,9 +112,7 @@ def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
         )
     )
 
-    assert received == [
-        "https://www.bilibili.com/video/BV1CkArz1E4o"
-    ]
+    assert received == ["https://www.bilibili.com/video/BV1CkArz1E4o"]
     assert result == output_path
     content = result.read_text(encoding="utf-8")
     assert content.startswith("# TCP学习笔记")

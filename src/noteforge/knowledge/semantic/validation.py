@@ -10,7 +10,6 @@ from noteforge.knowledge.semantic.models import (
     SemanticChunkType,
 )
 
-
 _PROPOSAL_FIELDS = {
     "source_indexes",
     "topic",
@@ -24,9 +23,7 @@ def parse_semantic_analysis_result(value: object) -> SemanticAnalysisResult:
     """将 LLM JSON 转换为独立模型，并拒绝结构或字段错误。"""
 
     if not isinstance(value, dict):
-        raise SemanticAnalysisError(
-            "Semantic analysis result must be a JSON object"
-        )
+        raise SemanticAnalysisError("Semantic analysis result must be a JSON object")
     if set(value) != {"semantic_chunks"}:
         raise SemanticAnalysisError(
             "Semantic analysis result must contain only semantic_chunks"
@@ -77,9 +74,7 @@ def _parse_proposal(value: Any, position: int) -> SemanticChunkProposal:
         or not isfinite(importance)
         or not 0 <= importance <= 1
     ):
-        raise SemanticAnalysisError(
-            f"{prefix} importance must be between 0 and 1"
-        )
+        raise SemanticAnalysisError(f"{prefix} importance must be between 0 and 1")
     try:
         chunk_type = SemanticChunkType(value["chunk_type"])
     except (TypeError, ValueError) as error:
@@ -117,8 +112,7 @@ def validate_semantic_analysis_result(
             raise SemanticAnalysisError(f"{prefix} summary must not be empty")
         if not isinstance(proposal.chunk_type, SemanticChunkType):
             raise SemanticAnalysisError(
-                f"{prefix} contains invalid chunk_type: "
-                f"{proposal.chunk_type!r}"
+                f"{prefix} contains invalid chunk_type: {proposal.chunk_type!r}"
             )
         if (
             isinstance(proposal.importance, bool)
@@ -126,14 +120,10 @@ def validate_semantic_analysis_result(
             or not isfinite(proposal.importance)
             or not 0 <= proposal.importance <= 1
         ):
-            raise SemanticAnalysisError(
-                f"{prefix} importance must be between 0 and 1"
-            )
+            raise SemanticAnalysisError(f"{prefix} importance must be between 0 and 1")
         indexes = proposal.source_indexes
         if not indexes:
-            raise SemanticAnalysisError(
-                f"{prefix} contains empty source_indexes"
-            )
+            raise SemanticAnalysisError(f"{prefix} contains empty source_indexes")
         proposal_seen: set[int] = set()
         for index in indexes:
             if isinstance(index, bool) or not isinstance(index, int):

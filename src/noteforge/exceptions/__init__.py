@@ -10,6 +10,7 @@ from noteforge.exceptions.collect import (
     UnsupportedSourceError,
     VideoUnavailableError,
 )
+from noteforge.exceptions.knowledge import KnowledgeExtractionError
 from noteforge.exceptions.llm import (
     LLMConfigurationError,
     LLMError,
@@ -17,9 +18,8 @@ from noteforge.exceptions.llm import (
     LLMRequestError,
     LLMTimeoutError,
 )
-from noteforge.exceptions.knowledge import KnowledgeExtractionError
-from noteforge.exceptions.semantic import SemanticAnalysisError
 from noteforge.exceptions.pipeline import PipelineErrorContext, PipelineExecutionError
+from noteforge.exceptions.semantic import SemanticAnalysisError
 from noteforge.exceptions.subtitle import (
     InvalidSubtitleResponseError,
     SubtitleDownloadError,

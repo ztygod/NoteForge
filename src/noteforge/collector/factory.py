@@ -1,13 +1,23 @@
-from noteforge.collector.platforms import BilibiliVideoCollector, PlatformCollector, YouTubeCollector
-from noteforge.exceptions import UnsupportedSourceError
-from noteforge.media.config import ExtractorConfig
-from noteforge.media.config import PlatformConfig, load_extractor_config
-from noteforge.media.models import VideoResource
 from pathlib import Path
+
+from noteforge.collector.platforms import (
+    BilibiliVideoCollector,
+    PlatformCollector,
+    YouTubeCollector,
+)
 from noteforge.collector.source import inspect_source
+from noteforge.exceptions import UnsupportedSourceError
+from noteforge.media.config import (
+    ExtractorConfig,
+    PlatformConfig,
+    load_extractor_config,
+)
+from noteforge.media.models import VideoResource
 
 
-def create_video_collector(source: str, config: ExtractorConfig | None = None) -> PlatformCollector:
+def create_video_collector(
+    source: str, config: ExtractorConfig | None = None
+) -> PlatformCollector:
     for collector_type in (BilibiliVideoCollector, YouTubeCollector):
         collector = collector_type(config)
         if collector.supports(source):

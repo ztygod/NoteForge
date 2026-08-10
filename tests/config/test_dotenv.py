@@ -46,7 +46,7 @@ def test_write_dotenv_preserves_unrelated_values_and_is_private(
 
     content = path.read_text(encoding="utf-8")
     assert "OTHER_SETTING=keep" in content
-    assert "NOTEFORGE_LLM_MODEL=\"old\"" not in content
+    assert 'NOTEFORGE_LLM_MODEL="old"' not in content
     assert read_dotenv(path)["NOTEFORGE_LLM_MODEL"] == "new"
     assert path.stat().st_mode & 0o077 == 0
 
@@ -56,8 +56,7 @@ def test_llm_settings_loads_dotenv_from_working_directory(
     tmp_path: Path,
 ) -> None:
     (tmp_path / ".env").write_text(
-        "NOTEFORGE_LLM_PROVIDER=ollama\n"
-        "NOTEFORGE_LLM_MODEL=local-model\n",
+        "NOTEFORGE_LLM_PROVIDER=ollama\nNOTEFORGE_LLM_MODEL=local-model\n",
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)

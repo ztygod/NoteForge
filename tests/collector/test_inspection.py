@@ -48,9 +48,7 @@ def test_inspect_defaults_invalid_page_number_to_one(page: str) -> None:
 
     assert result.platform is InspectionPlatform.BILIBILI
     assert result.page_number == 1
-    assert result.normalized_source == (
-        "https://www.bilibili.com/video/BV1CkArz1E4o"
-    )
+    assert result.normalized_source == ("https://www.bilibili.com/video/BV1CkArz1E4o")
 
 
 @pytest.mark.parametrize(
@@ -91,9 +89,7 @@ def test_inspect_youtube_video_url(source: str) -> None:
     assert result.original_source == source
     assert result.platform is InspectionPlatform.YOUTUBE
     assert result.source_id == "M7lc1UVf-VE"
-    assert result.normalized_source == (
-        "https://www.youtube.com/watch?v=M7lc1UVf-VE"
-    )
+    assert result.normalized_source == ("https://www.youtube.com/watch?v=M7lc1UVf-VE")
     assert result.page_number is None
     assert result.requires_remote_resolution is False
 

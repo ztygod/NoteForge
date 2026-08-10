@@ -6,7 +6,6 @@ import typer
 
 from noteforge.cli.commands import configure, doctor, generate, inspect
 
-
 _DISTRIBUTION_NAME = "noteforge-cli"
 
 app = typer.Typer(

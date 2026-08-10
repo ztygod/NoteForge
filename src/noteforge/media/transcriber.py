@@ -7,4 +7,6 @@ from noteforge.media.models import SubtitleSegment
 
 
 class AudioTranscriber(Protocol):
-    def transcribe(self, audio_path: Path, *, language: str | None = None) -> tuple[SubtitleSegment, ...]: ...
+    def transcribe(
+        self, audio_path: Path, *, language: str | None = None
+    ) -> tuple[SubtitleSegment, ...]: ...

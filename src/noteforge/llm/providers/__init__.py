@@ -1,7 +1,8 @@
 """模型 API 格式适配器及共用异步 HTTP 传输层。"""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping, Protocol
+from typing import Protocol
 
 import httpx
 

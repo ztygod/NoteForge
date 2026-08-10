@@ -5,7 +5,6 @@ import re
 from noteforge.document import LearningDocument
 from noteforge.knowledge.extraction import KnowledgePoint
 
-
 _MARKDOWN_SPECIAL_CHARACTERS = re.compile(r"([\\`*_{}\[\]()#+.!|>\-])")
 
 
@@ -55,10 +54,7 @@ class MarkdownRenderer:
         """渲染一个知识点及其元数据。"""
 
         keywords = (
-            "\n".join(
-                f"- {_escape_markdown(keyword)}"
-                for keyword in point.keywords
-            )
+            "\n".join(f"- {_escape_markdown(keyword)}" for keyword in point.keywords)
             if point.keywords
             else "（无）"
         )
@@ -78,10 +74,7 @@ class MarkdownRenderer:
                 "",
                 "来源:",
                 "",
-                (
-                    f"{_format_time(point.start_time)} - "
-                    f"{_format_time(point.end_time)}"
-                ),
+                (f"{_format_time(point.start_time)} - {_format_time(point.end_time)}"),
                 "",
                 "---",
             )

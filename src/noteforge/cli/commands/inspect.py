@@ -1,15 +1,15 @@
 """inspect 子命令。"""
 
-from dataclasses import asdict
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 import typer
 
 from noteforge.cli.serialization import subtitle_debug_output
-from noteforge.exceptions import CollectionError, SubtitleError
 from noteforge.collector import collect_video
 from noteforge.collector import source as inspection
+from noteforge.exceptions import CollectionError, SubtitleError
 
 
 def inspect(
@@ -40,7 +40,8 @@ def inspect(
     }
 
     if (
-        inspect_result.platform in {
+        inspect_result.platform
+        in {
             inspection.InspectionPlatform.BILIBILI,
             inspection.InspectionPlatform.YOUTUBE,
         }

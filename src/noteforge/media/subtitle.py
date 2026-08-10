@@ -1,8 +1,8 @@
 """将 VTT、SRT、ASS 和 YouTube JSON3 统一解析为带时间戳的字幕片段。"""
 
-from html import unescape
 import json
 import re
+from html import unescape
 
 from noteforge.exceptions import SubtitleParseError
 from noteforge.media.models import Subtitle, SubtitleSegment
@@ -60,8 +60,12 @@ class SubtitleParser:
                 start = self._timestamp(parts[0].strip(), fmt)
                 end = self._timestamp(parts[1].strip().split()[0], fmt)
             except (ValueError, IndexError) as error:
-                raise SubtitleParseError(f"无效的 {fmt.upper()} 时间行：{timing}") from error
-            text = "\n".join(unescape(_TAG.sub("", line)) for line in lines[index + 1:]).strip()
+                raise SubtitleParseError(
+                    f"无效的 {fmt.upper()} 时间行：{timing}"
+                ) from error
+            text = "\n".join(
+                unescape(_TAG.sub("", line)) for line in lines[index + 1 :]
+            ).strip()
             if text:
                 segments.append(SubtitleSegment(start, end, text))
         return tuple(segments)
@@ -89,7 +93,10 @@ class SubtitleParser:
             if len(fields) != 10:
                 continue
             try:
-                start, end = self._timestamp(fields[1].strip(), "vtt"), self._timestamp(fields[2].strip(), "vtt")
+                start, end = (
+                    self._timestamp(fields[1].strip(), "vtt"),
+                    self._timestamp(fields[2].strip(), "vtt"),
+                )
             except ValueError:
                 continue
             text = unescape(_ASS_TAG.sub("", fields[9])).replace(r"\N", "\n").strip()
@@ -108,7 +115,8 @@ class SubtitleParser:
             if not isinstance(event, dict) or "tStartMs" not in event:
                 continue
             text = "".join(
-                part.get("utf8", "") for part in event.get("segs", [])
+                part.get("utf8", "")
+                for part in event.get("segs", [])
                 if isinstance(part, dict)
             ).strip()
             if text:

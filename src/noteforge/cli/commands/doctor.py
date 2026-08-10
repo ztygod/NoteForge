@@ -6,12 +6,12 @@ from dataclasses import dataclass
 import typer
 
 from noteforge.cli.ui import StatusUI
-from noteforge.media.models import Subtitle, VideoResource
+from noteforge.collector import discover_video
+from noteforge.collector import source as inspection
 from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.exceptions import CollectionError, LLMConfigurationError
 from noteforge.llm import LLMMessage, create_llm_client
-from noteforge.collector import source as inspection
-from noteforge.collector import discover_video
+from noteforge.media.models import Subtitle, VideoResource
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,9 +28,7 @@ async def _check_model(settings: LLMSettings) -> str:
 
     client = create_llm_client(settings)
     try:
-        response = await client.generate(
-            (LLMMessage("user", "只回复 OK。"),)
-        )
+        response = await client.generate((LLMMessage("user", "只回复 OK。"),))
     finally:
         await client.aclose()
     if not response.content.strip():
@@ -69,7 +67,9 @@ def _render_model_check(ui: StatusUI, settings: LLMSettings) -> bool:
                 f"    ollama pull {settings.model}"
             )
         else:
-            ui.console.print("  请检查 API Key、API 格式、模型名称、接口地址和网络连接。")
+            ui.console.print(
+                "  请检查 API Key、API 格式、模型名称、接口地址和网络连接。"
+            )
         return True
     ui.success("模型调用", f"可用（{responding_model}）")
     return False
@@ -113,9 +113,7 @@ def _check_video_access(
             "匿名访问",
             f"失败，正在使用 {browser} 浏览器 Cookie 重试",
         )
-        ui.console.print(
-            "  [dim]macOS 可能请求钥匙串授权，请按系统提示操作。[/dim]"
-        )
+        ui.console.print("  [dim]macOS 可能请求钥匙串授权，请按系统提示操作。[/dim]")
         return _collect_with_browser(
             ui,
             source,
@@ -170,10 +168,9 @@ def _render_video_and_subtitle(
         )
         return False
 
-    discovered_formats = sorted({
-        track.format.upper()
-        for track in collection.subtitles
-    })
+    discovered_formats = sorted(
+        {track.format.upper() for track in collection.subtitles}
+    )
     detail = "没有发现当前支持的 VTT 或 SRT 字幕"
     if discovered_formats:
         detail += f"（发现的其他轨道：{', '.join(discovered_formats)}）"
@@ -261,7 +258,8 @@ def doctor(
         ui.section("视频")
         inspected = inspection.inspect_source(url)
         if (
-            inspected.platform not in {
+            inspected.platform
+            not in {
                 inspection.InspectionPlatform.BILIBILI,
                 inspection.InspectionPlatform.YOUTUBE,
             }
@@ -277,10 +275,7 @@ def doctor(
             )
             failed = failed or result.failed
             if result.collection is not None:
-                failed = (
-                    _render_video_and_subtitle(ui, result.collection)
-                    or failed
-                )
+                failed = _render_video_and_subtitle(ui, result.collection) or failed
                 if not failed:
                     _render_ready(
                         ui,

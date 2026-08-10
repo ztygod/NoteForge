@@ -1,13 +1,12 @@
 """configure 子命令及首次配置逻辑。"""
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import typer
 
 from noteforge.config import LLMSettings, read_dotenv, write_llm_dotenv
 from noteforge.exceptions import LLMConfigurationError
-
 
 _API_FORMAT_DEFAULTS = {
     "ollama": ("qwen2.5:7b", "http://localhost:11434"),
@@ -20,10 +19,14 @@ def prompt_api_format(default: str = "ollama") -> str:
     """提示用户选择模型端点使用的 API 格式。"""
 
     while True:
-        api_format = typer.prompt(
-            "LLM API 格式（ollama/openai/anthropic）",
-            default=default,
-        ).strip().lower()
+        api_format = (
+            typer.prompt(
+                "LLM API 格式（ollama/openai/anthropic）",
+                default=default,
+            )
+            .strip()
+            .lower()
+        )
         if api_format in _API_FORMAT_DEFAULTS:
             return api_format
         typer.secho(
@@ -37,9 +40,9 @@ def run_configuration_wizard(path: Path = Path(".env")) -> LLMSettings:
     """交互收集、校验并保存 LLM 配置。"""
 
     existing = read_dotenv(path)
-    existing_api_format = existing.get(
-        "NOTEFORGE_LLM_PROVIDER", "ollama"
-    ).strip().lower()
+    existing_api_format = (
+        existing.get("NOTEFORGE_LLM_PROVIDER", "ollama").strip().lower()
+    )
     if existing_api_format not in _API_FORMAT_DEFAULTS:
         existing_api_format = "ollama"
 

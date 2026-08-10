@@ -46,6 +46,7 @@ noteforge = "noteforge.cli.app:main"
 [dependency-groups]
 dev = [
     "pytest>=8,<9",
+    "ruff>=0.16.2",
 ]
 
 [build-system]
@@ -54,3 +55,16 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-name = "noteforge"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"

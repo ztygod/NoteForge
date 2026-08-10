@@ -13,7 +13,6 @@ from rich.text import Text
 from noteforge.core.events import PipelineEvent, PipelineStatus
 from noteforge.exceptions import PipelineExecutionError
 
-
 _KEY_STAGES = {"semantic", "knowledge", "output"}
 
 _OPERATION_LABELS = {
@@ -220,6 +219,4 @@ class PipelineRenderer:
             if context.stage == "KnowledgePointBuilder"
             else "Generation Failed"
         )
-        self.console.print(
-            Panel(lines, title=f"❌ {title}", border_style="red")
-        )
+        self.console.print(Panel(lines, title=f"❌ {title}", border_style="red"))

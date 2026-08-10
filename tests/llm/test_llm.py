@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Mapping, Sequence
+from collections.abc import Mapping, Sequence
 
 import pytest
 
@@ -15,11 +15,11 @@ from noteforge.llm import (
     LLMTool,
     create_llm_client,
 )
+from noteforge.llm.models import RawJSON
 from noteforge.llm.providers import HTTPResult
 from noteforge.llm.providers.anthropic import AnthropicClient
 from noteforge.llm.providers.ollama import OllamaClient
 from noteforge.llm.providers.openai import OpenAIClient
-from noteforge.llm.models import RawJSON
 
 
 class FakeTransport:
@@ -60,7 +60,9 @@ def settings(provider: str, api_key: str | None = "secret") -> LLMSettings:
 
 
 def test_generate_json() -> None:
-    assert asyncio.run(StaticClient('{"answer": 42}').generate_json([])) == {"answer": 42}
+    assert asyncio.run(StaticClient('{"answer": 42}').generate_json([])) == {
+        "answer": 42
+    }
     with pytest.raises(LLMJSONDecodeError):
         asyncio.run(StaticClient("not json").generate_json([]))
 
@@ -70,9 +72,7 @@ def test_openai_adapter_maps_request_and_response() -> None:
         {
             "id": "req-1",
             "model": "returned-model",
-            "choices": [
-                {"message": {"content": "你好"}, "finish_reason": "stop"}
-            ],
+            "choices": [{"message": {"content": "你好"}, "finish_reason": "stop"}],
             "usage": {
                 "prompt_tokens": 2,
                 "completion_tokens": 3,
@@ -82,10 +82,12 @@ def test_openai_adapter_maps_request_and_response() -> None:
     )
     client = OpenAIClient(settings("openai"), transport=transport)
 
-    response = asyncio.run(client.generate(
-        [LLMMessage("user", "问题")],
-        options=LLMRequestOptions(temperature=0.2, max_tokens=100),
-    ))
+    response = asyncio.run(
+        client.generate(
+            [LLMMessage("user", "问题")],
+            options=LLMRequestOptions(temperature=0.2, max_tokens=100),
+        )
+    )
 
     assert response.content == "你好"
     assert response.usage.total_tokens == 5
@@ -97,25 +99,44 @@ def test_openai_adapter_maps_request_and_response() -> None:
 
 
 def test_openai_adapter_forces_and_parses_single_tool_call() -> None:
-    transport = FakeTransport({
-        "id": "req-tool",
-        "model": "returned-model",
-        "choices": [{
-            "message": {"tool_calls": [{"function": {
-                "name": "submit_result", "arguments": '{"answer": 42}'
-            }}]},
-            "finish_reason": "tool_calls",
-        }],
-        "usage": {"prompt_tokens": 2, "completion_tokens": 3, "total_tokens": 5},
-    })
-    tool = LLMTool("submit_result", "提交结果", {
-        "type": "object", "properties": {"answer": {"type": "integer"}},
-        "required": ["answer"], "additionalProperties": False,
-    })
+    transport = FakeTransport(
+        {
+            "id": "req-tool",
+            "model": "returned-model",
+            "choices": [
+                {
+                    "message": {
+                        "tool_calls": [
+                            {
+                                "function": {
+                                    "name": "submit_result",
+                                    "arguments": '{"answer": 42}',
+                                }
+                            }
+                        ]
+                    },
+                    "finish_reason": "tool_calls",
+                }
+            ],
+            "usage": {"prompt_tokens": 2, "completion_tokens": 3, "total_tokens": 5},
+        }
+    )
+    tool = LLMTool(
+        "submit_result",
+        "提交结果",
+        {
+            "type": "object",
+            "properties": {"answer": {"type": "integer"}},
+            "required": ["answer"],
+            "additionalProperties": False,
+        },
+    )
 
-    response = asyncio.run(OpenAIClient(settings("openai"), transport=transport).call_tool(
-        [LLMMessage("user", "问题")], tool=tool
-    ))
+    response = asyncio.run(
+        OpenAIClient(settings("openai"), transport=transport).call_tool(
+            [LLMMessage("user", "问题")], tool=tool
+        )
+    )
 
     assert response.tool_call.arguments == {"answer": 42}
     payload = transport.requests[0][2]
@@ -124,22 +145,43 @@ def test_openai_adapter_forces_and_parses_single_tool_call() -> None:
 
 
 def test_deepseek_tool_call_disables_thinking_and_omits_beta_strict() -> None:
-    transport = FakeTransport({
-        "choices": [{"message": {"tool_calls": [{"function": {
-            "name": "submit_result", "arguments": '{"answer": 42}'
-        }}]}}]
-    })
+    transport = FakeTransport(
+        {
+            "choices": [
+                {
+                    "message": {
+                        "tool_calls": [
+                            {
+                                "function": {
+                                    "name": "submit_result",
+                                    "arguments": '{"answer": 42}',
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    )
     deepseek_settings = LLMSettings(
         "openai", "deepseek-v4-flash", "secret", "https://api.deepseek.com", 5
     )
-    tool = LLMTool("submit_result", "提交结果", {
-        "type": "object", "properties": {"answer": {"type": "integer"}},
-        "required": ["answer"], "additionalProperties": False,
-    })
+    tool = LLMTool(
+        "submit_result",
+        "提交结果",
+        {
+            "type": "object",
+            "properties": {"answer": {"type": "integer"}},
+            "required": ["answer"],
+            "additionalProperties": False,
+        },
+    )
 
-    asyncio.run(OpenAIClient(deepseek_settings, transport=transport).call_tool(
-        [LLMMessage("user", "问题")], tool=tool
-    ))
+    asyncio.run(
+        OpenAIClient(deepseek_settings, transport=transport).call_tool(
+            [LLMMessage("user", "问题")], tool=tool
+        )
+    )
 
     payload = transport.requests[0][2]
     assert payload["thinking"] == {"type": "disabled"}
@@ -157,9 +199,11 @@ def test_ollama_adapter_maps_usage() -> None:
             "eval_count": 6,
         }
     )
-    response = asyncio.run(OllamaClient(
-        settings("ollama", None), transport=transport
-    ).generate([LLMMessage("user", "问题")]))
+    response = asyncio.run(
+        OllamaClient(settings("ollama", None), transport=transport).generate(
+            [LLMMessage("user", "问题")]
+        )
+    )
 
     assert response.content == "本地回答"
     assert response.usage.total_tokens == 10
@@ -178,9 +222,9 @@ def test_anthropic_adapter_separates_system_message() -> None:
     )
     client = AnthropicClient(settings("anthropic"), transport=transport)
 
-    response = asyncio.run(client.generate(
-        [LLMMessage("system", "规则"), LLMMessage("user", "问题")]
-    ))
+    response = asyncio.run(
+        client.generate([LLMMessage("system", "规则"), LLMMessage("user", "问题")])
+    )
 
     assert response.content == "回答"
     payload = transport.requests[0][2]
@@ -208,8 +252,10 @@ def test_api_key_is_not_serialized_into_payload() -> None:
             "choices": [{"message": {"content": json.dumps({"ok": True})}}],
         }
     )
-    asyncio.run(OpenAIClient(settings("openai"), transport=transport).generate(
-        [LLMMessage("user", "问题")]
-    ))
+    asyncio.run(
+        OpenAIClient(settings("openai"), transport=transport).generate(
+            [LLMMessage("user", "问题")]
+        )
+    )
 
     assert "secret" not in json.dumps(transport.requests[0][2])

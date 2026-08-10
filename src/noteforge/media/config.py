@@ -1,8 +1,9 @@
 """媒体提取配置和可复用的身份认证设置。"""
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,8 +40,12 @@ class ExtractorConfig:
             browser = item.get("cookies_from_browser")
             proxy = item.get("proxy") or root.get("proxy")
             platforms[name] = PlatformConfig(
-                cookie_file=Path(cookie) if isinstance(cookie, str) and cookie else None,
-                cookies_from_browser=(browser if isinstance(browser, str) and browser else None),
+                cookie_file=Path(cookie)
+                if isinstance(cookie, str) and cookie
+                else None,
+                cookies_from_browser=(
+                    browser if isinstance(browser, str) and browser else None
+                ),
                 proxy=proxy if isinstance(proxy, str) and proxy else None,
             )
         cache = root.get("cache_path", ".cache/noteforge/media")
@@ -67,7 +72,7 @@ def load_extractor_config(path: str | Path = "config.yaml") -> ExtractorConfig:
         while stack[-1][0] >= indent:
             stack.pop()
         parent = stack[-1][1]
-        text = raw_value.strip().strip('"\'')
+        text = raw_value.strip().strip("\"'")
         if not text:
             child: dict[str, Any] = {}
             parent[key] = child

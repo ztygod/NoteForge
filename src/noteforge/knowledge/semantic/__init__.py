@@ -1,11 +1,11 @@
 """PreprocessedChunk 到 SemanticChunk 的语义切分层。"""
 
+from noteforge.exceptions import SemanticAnalysisError
 from noteforge.knowledge.semantic.analyzer import (
     LLMSemanticAnalyzer,
     SemanticAnalyzer,
 )
 from noteforge.knowledge.semantic.builder import build_semantic_chunk
-from noteforge.exceptions import SemanticAnalysisError
 from noteforge.knowledge.semantic.models import (
     SemanticAnalysisResult,
     SemanticChunk,

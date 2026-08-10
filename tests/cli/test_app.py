@@ -1,17 +1,17 @@
-from importlib.metadata import version
 import importlib
 import json
 from dataclasses import dataclass
+from importlib.metadata import version
 
 from typer.testing import CliRunner
 
 from noteforge.cli.app import app
 from noteforge.collector import source as inspection
-from noteforge.media.models import Subtitle, SubtitleSegment, VideoMetadata as MediaMetadata, VideoResource
 from noteforge.config import LLMSettings
-from noteforge.exceptions import RiskControlError
-from noteforge.exceptions import RemoteCollectionError
 from noteforge.core import NoteGenerationPipeline
+from noteforge.exceptions import RemoteCollectionError, RiskControlError
+from noteforge.media.models import Subtitle, SubtitleSegment, VideoResource
+from noteforge.media.models import VideoMetadata as MediaMetadata
 
 
 @dataclass(frozen=True)
@@ -37,10 +37,14 @@ class VideoMetadata:
 
     def __new__(cls, **values):
         return MediaMetadata(
-            id=values["id"], title=values["title"], uploader=values.get("uploader"),
-            duration=values.get("duration"), thumbnail=values.get("thumbnail"),
+            id=values["id"],
+            title=values["title"],
+            uploader=values.get("uploader"),
+            duration=values.get("duration"),
+            thumbnail=values.get("thumbnail"),
             platform=str(values.get("extractor", "bilibili")).lower(),
-            webpage_url=values["webpage_url"], description=values.get("description"),
+            webpage_url=values["webpage_url"],
+            description=values.get("description"),
         )
 
 
@@ -55,7 +59,9 @@ class SubtitleTrack:
 class VideoCollectionResult:
     """把旧测试夹具转换成当前视频资源。"""
 
-    def __new__(cls, metadata, subtitle_tracks=(), selected_subtitle=None, transcript=None):
+    def __new__(
+        cls, metadata, subtitle_tracks=(), selected_subtitle=None, transcript=None
+    ):
         del selected_subtitle
         segments = ()
         source = None
@@ -65,7 +71,9 @@ class VideoCollectionResult:
                 for item in transcript.segments
             )
             source = transcript.source
-        return VideoResource(metadata, tuple(subtitle_tracks), segments, transcript_source=source)
+        return VideoResource(
+            metadata, tuple(subtitle_tracks), segments, transcript_source=source
+        )
 
 
 runner = CliRunner()
@@ -409,7 +417,9 @@ def test_generate_runs_pipeline_and_writes_output(
         "_run_preflight",
         lambda *args, **kwargs: precollected,
     )
-    monkeypatch.setattr(generate_module, "create_llm_client", lambda settings: FakeClient())
+    monkeypatch.setattr(
+        generate_module, "create_llm_client", lambda settings: FakeClient()
+    )
     monkeypatch.setattr(
         NoteGenerationPipeline,
         "from_llm_client",
@@ -431,9 +441,7 @@ def test_generate_runs_pipeline_and_writes_output(
     assert result.exit_code == 0
     assert output_path.exists()
     assert output_path.read_text(encoding="utf-8") == "# 已生成\n"
-    assert received[0][0] == (
-        "https://www.bilibili.com/video/BV1CkArz1E4o"
-    )
+    assert received[0][0] == ("https://www.bilibili.com/video/BV1CkArz1E4o")
     assert received[0][1] == output_path
     assert received[0][2]["precollected"] is precollected
     assert str(output_path) in result.output
@@ -487,17 +495,18 @@ def test_generate_uses_video_id_default_and_stops_before_llm_without_subtitle(
         "load_configured_llm_settings",
         lambda: settings,
     )
-    monkeypatch.setattr(
-        generate_module, "collect_video", lambda **kwargs: collection
-    )
+    monkeypatch.setattr(generate_module, "collect_video", lambda **kwargs: collection)
     monkeypatch.setattr(generate_module, "create_llm_client", create_client)
 
-    result = runner.invoke(app, [
-        "generate",
-        source,
-        "--run-dir",
-        str(tmp_path / "runs"),
-    ])
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            source,
+            "--run-dir",
+            str(tmp_path / "runs"),
+        ],
+    )
 
     assert result.exit_code == 1
     assert client_created is False
@@ -533,7 +542,9 @@ def test_inspect_calls_business_layer(monkeypatch) -> None:
             page_number=2,
         )
 
-    monkeypatch.setattr(inspect_module.inspection, "inspect_source", fake_inspect_source)
+    monkeypatch.setattr(
+        inspect_module.inspection, "inspect_source", fake_inspect_source
+    )
 
     def fake_collect(*, source: str, **kwargs) -> VideoCollectionResult:
         received.append(source)

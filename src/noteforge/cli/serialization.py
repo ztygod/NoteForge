@@ -4,7 +4,6 @@ from dataclasses import asdict
 
 from noteforge.media.models import VideoResource
 
-
 _SUBTITLE_PREVIEW_LIMIT = 5
 
 
@@ -13,7 +12,11 @@ def subtitle_debug_output(
 ) -> dict[str, object]:
     """构造字幕轨道、选择结果和字幕片段预览。"""
 
-    selected = collection.subtitles[0] if collection.transcript and collection.subtitles else None
+    selected = (
+        collection.subtitles[0]
+        if collection.transcript and collection.subtitles
+        else None
+    )
     transcript = collection.transcript
     return {
         "available_track_count": len(collection.subtitles),
@@ -26,8 +29,7 @@ def subtitle_debug_output(
                 "segment_count": len(transcript),
                 "preview_limit": _SUBTITLE_PREVIEW_LIMIT,
                 "preview": [
-                    asdict(segment)
-                    for segment in transcript[:_SUBTITLE_PREVIEW_LIMIT]
+                    asdict(segment) for segment in transcript[:_SUBTITLE_PREVIEW_LIMIT]
                 ],
             }
             if transcript
