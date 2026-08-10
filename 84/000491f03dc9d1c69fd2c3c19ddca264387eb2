@@ -1,0 +1,25 @@
+pyproject.toml
+  s_9e327caed26985::t_2de79739eecad2 48
+.pre-commit-config.yaml
+  s_9e327caed26985::t_326f591f031415 1-22
+README.zh-CN.md
+  s_9e327caed26985::t_326f591f031415 344-362
+uv.lock
+  s_9e327caed26985::t_722c86f3eb8dc9 134-142,185-202,240-248,288-296,310,325,339-347,357-372,407-473,545-559
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "84000491f03dc9d1c69fd2c3c19ddca264387eb2",
+  "prompts": {},
+  "sessions": {
+    "s_9e327caed26985": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019fdb22-a500-7b83-9826-cad8a2ba78cb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
