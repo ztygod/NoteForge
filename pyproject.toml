@@ -45,6 +45,7 @@ noteforge = "noteforge.cli.app:main"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.6.1",
     "pytest>=8,<9",
     "ruff>=0.16.2",
 ]

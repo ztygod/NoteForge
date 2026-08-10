@@ -1,0 +1,22 @@
+# 提交前自动整理代码，并在测试失败时阻止提交。
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff 检查并修复
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+
+      - id: ruff-format
+        name: Ruff 代码格式化
+        entry: uv run ruff format
+        language: system
+        types: [python]
+
+      - id: pytest
+        name: Python 全量测试
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true

@@ -341,6 +341,25 @@ NOTEFORGE_LLM_TIMEOUT_SECONDS=180
 
 ## 开发
 
+### 提交前检查
+
+项目使用 `pre-commit` 在每次提交前自动执行 Ruff 检查、代码格式化和全量
+测试。首次克隆仓库后安装 Git hook：
+
+```bash
+uv sync --dev
+uv run pre-commit install
+```
+
+手动检查所有文件：
+
+```bash
+uv run pre-commit run --all-files
+```
+
+如果 Ruff 修改了文件，提交会暂停。检查改动并重新执行 `git add` 和
+`git commit` 即可。
+
 ```bash
 git clone https://github.com/ztygod/NoteForge.git
 cd NoteForge
