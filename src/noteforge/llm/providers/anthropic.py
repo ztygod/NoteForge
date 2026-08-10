@@ -1,6 +1,6 @@
 """Anthropic Messages-compatible API 适配器。"""
 
-from typing import Sequence
+from collections.abc import Sequence
 
 from noteforge.config import LLMSettings
 from noteforge.exceptions import (
@@ -8,7 +8,6 @@ from noteforge.exceptions import (
     LLMRequestError,
 )
 from noteforge.llm.base import LLMClient
-from noteforge.llm.providers import HTTPTransport, HttpxHTTPTransport
 from noteforge.llm.models import (
     LLMMessage,
     LLMRequestOptions,
@@ -19,6 +18,7 @@ from noteforge.llm.models import (
     LLMUsage,
     RawJSON,
 )
+from noteforge.llm.providers import HTTPTransport, HttpxHTTPTransport
 
 
 class AnthropicMessagesClient(LLMClient):
@@ -120,13 +120,22 @@ class AnthropicMessagesClient(LLMClient):
         system_parts = [item.content for item in messages if item.role == "system"]
         chat_messages = [
             {"role": item.role, "content": item.content}
-            for item in messages if item.role != "system"
+            for item in messages
+            if item.role != "system"
         ]
         payload: RawJSON = {
             "model": self._settings.model,
             "messages": chat_messages,
-            "max_tokens": options.max_tokens if options and options.max_tokens else 4096,
-            "tools": [{"name": tool.name, "description": tool.description, "input_schema": dict(tool.parameters)}],
+            "max_tokens": options.max_tokens
+            if options and options.max_tokens
+            else 4096,
+            "tools": [
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "input_schema": dict(tool.parameters),
+                }
+            ],
             "tool_choice": {"type": "tool", "name": tool.name},
         }
         if system_parts:
@@ -135,16 +144,31 @@ class AnthropicMessagesClient(LLMClient):
             payload["temperature"] = options.temperature
         result = await self._transport.post_json(
             f"{self._settings.base_url}/messages",
-            headers={"x-api-key": self._settings.api_key, "anthropic-version": "2023-06-01"},
+            headers={
+                "x-api-key": self._settings.api_key,
+                "anthropic-version": "2023-06-01",
+            },
             payload=payload,
             timeout_seconds=self._settings.timeout_seconds,
         )
         blocks = result.data.get("content")
-        block = next(
-            (item for item in blocks if isinstance(item, dict) and item.get("type") == "tool_use"),
-            None,
-        ) if isinstance(blocks, list) else None
-        if not block or block.get("name") != tool.name or not isinstance(block.get("input"), dict):
+        block = (
+            next(
+                (
+                    item
+                    for item in blocks
+                    if isinstance(item, dict) and item.get("type") == "tool_use"
+                ),
+                None,
+            )
+            if isinstance(blocks, list)
+            else None
+        )
+        if (
+            not block
+            or block.get("name") != tool.name
+            or not isinstance(block.get("input"), dict)
+        ):
             raise LLMRequestError(
                 f"Anthropic Messages 端点未调用要求的工具：{tool.name}"
             )
@@ -154,7 +178,13 @@ class AnthropicMessagesClient(LLMClient):
         return LLMToolResponse(
             LLMToolCall(tool.name, block["input"]),
             model=str(result.data.get("model", self._settings.model)),
-            usage=LLMUsage(input_tokens, output_tokens, input_tokens + output_tokens if input_tokens is not None and output_tokens is not None else None),
+            usage=LLMUsage(
+                input_tokens,
+                output_tokens,
+                input_tokens + output_tokens
+                if input_tokens is not None and output_tokens is not None
+                else None,
+            ),
             finish_reason=_str_or_none(result.data.get("stop_reason")),
             request_id=_str_or_none(result.data.get("id")),
         )

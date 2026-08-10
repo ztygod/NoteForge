@@ -151,9 +151,10 @@ def test_builder_groups_types_in_fixed_order_and_preserves_input_order() -> None
         "对比分析",
         "其他知识",
     ]
-    assert [
-        point.title for point in document.sections[2].knowledge_points
-    ] == ["流程一", "流程二"]
+    assert [point.title for point in document.sections[2].knowledge_points] == [
+        "流程一",
+        "流程二",
+    ]
     assert document.sections[-1].knowledge_points == (points[-1],)
 
 
@@ -179,9 +180,7 @@ def test_builder_infers_title_and_summary_deterministically() -> None:
     document = generate_document(points)
 
     assert document.title == "TCP学习笔记"
-    assert document.summary == (
-        "本文档整理了 2 个知识点，涵盖基础概念、工作流程。"
-    )
+    assert document.summary == ("本文档整理了 2 个知识点，涵盖基础概念、工作流程。")
 
 
 def test_title_falls_back_to_first_point_when_keywords_are_empty() -> None:

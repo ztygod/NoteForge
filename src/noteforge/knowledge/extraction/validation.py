@@ -10,7 +10,6 @@ from noteforge.knowledge.extraction.models import (
     KnowledgePointType,
 )
 
-
 _PROPOSAL_FIELDS = {
     "source_indexes",
     "title",
@@ -72,16 +71,12 @@ def _parse_proposal(value: Any, position: int) -> KnowledgePointProposal:
 
     indexes = value["source_indexes"]
     if not isinstance(indexes, list):
-        raise KnowledgeExtractionError(
-            f"{prefix} source_indexes must be an array"
-        )
+        raise KnowledgeExtractionError(f"{prefix} source_indexes must be an array")
     keywords = value["keywords"]
     if not isinstance(keywords, list) or any(
         not isinstance(keyword, str) for keyword in keywords
     ):
-        raise KnowledgeExtractionError(
-            f"{prefix} keywords must be an array of strings"
-        )
+        raise KnowledgeExtractionError(f"{prefix} keywords must be an array of strings")
     raw_point_type = value["point_type"]
     try:
         point_type = KnowledgePointType(raw_point_type)
@@ -121,9 +116,7 @@ def validate_knowledge_proposals(
         prefix = f"Knowledge point {position}"
         indexes = proposal.source_indexes
         if not indexes:
-            raise KnowledgeExtractionError(
-                f"{prefix} contains empty source_indexes"
-            )
+            raise KnowledgeExtractionError(f"{prefix} contains empty source_indexes")
         seen_indexes: set[int] = set()
         for index in indexes:
             if isinstance(index, bool) or not isinstance(index, int):
@@ -153,13 +146,10 @@ def validate_knowledge_proposals(
             not isinstance(proposal.explanation, str)
             or not proposal.explanation.strip()
         ):
-            raise KnowledgeExtractionError(
-                f"{prefix} explanation must not be empty"
-            )
+            raise KnowledgeExtractionError(f"{prefix} explanation must not be empty")
         if not isinstance(proposal.point_type, KnowledgePointType):
             raise KnowledgeExtractionError(
-                f"{prefix} contains invalid point_type: "
-                f"{proposal.point_type!r}"
+                f"{prefix} contains invalid point_type: {proposal.point_type!r}"
             )
         if (
             isinstance(proposal.importance, bool)

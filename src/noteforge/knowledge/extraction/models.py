@@ -34,12 +34,8 @@ class KnowledgePoint:
             raise ValueError("KnowledgePoint 的 importance 必须位于 [0, 1]")
         if not self.source_chunks:
             raise ValueError("KnowledgePoint 必须保留至少一个来源块")
-        if not all(
-            isinstance(chunk, SemanticChunk) for chunk in self.source_chunks
-        ):
-            raise TypeError(
-                "KnowledgePoint 的 source_chunks 必须全部是 SemanticChunk"
-            )
+        if not all(isinstance(chunk, SemanticChunk) for chunk in self.source_chunks):
+            raise TypeError("KnowledgePoint 的 source_chunks 必须全部是 SemanticChunk")
         if any(
             current.start_time < previous.start_time
             or current.end_time < previous.end_time

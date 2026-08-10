@@ -1,12 +1,12 @@
 """Prompt 模板的统一接口。"""
 
-from abc import ABC
 import re
-from typing import ClassVar, Mapping
+from abc import ABC
+from collections.abc import Mapping
+from typing import ClassVar
 
 from noteforge.knowledge.prompts.utils import stringify_prompt_value
 from noteforge.llm.models import LLMMessage
-
 
 _VARIABLE_PATTERN = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
@@ -63,8 +63,7 @@ class BasePrompt(ABC):
             raise ValueError(f"Prompt 缺少变量：{names}")
 
         rendered_variables = {
-            name: stringify_prompt_value(value)
-            for name, value in variables.items()
+            name: stringify_prompt_value(value) for name, value in variables.items()
         }
         return _VARIABLE_PATTERN.sub(
             lambda match: rendered_variables[match.group(1)],

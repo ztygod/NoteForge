@@ -9,8 +9,7 @@ from noteforge.config.dotenv import (
     read_dotenv,
     write_llm_dotenv,
 )
-from noteforge.config.llm import LLMSettings
-from noteforge.config.llm import llm_api_format_label
+from noteforge.config.llm import LLMSettings, llm_api_format_label
 
 __all__ = [
     "DEFAULT_ENV_PATH",

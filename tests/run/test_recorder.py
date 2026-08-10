@@ -27,13 +27,15 @@ def test_records_events_artifacts_and_success_manifest(tmp_path: Path) -> None:
         subtitle_language=None,
         cookie_strategy="chrome",
     )
-    recorder.handle_event(PipelineEvent(
-        "semantic",
-        PipelineStatus.RUNNING,
-        "Semantic chunks generated",
-        progress=0.5,
-        metrics={"batch_completed": 2, "batch_total": 4},
-    ))
+    recorder.handle_event(
+        PipelineEvent(
+            "semantic",
+            PipelineStatus.RUNNING,
+            "Semantic chunks generated",
+            progress=0.5,
+            metrics={"batch_completed": 2, "batch_total": 4},
+        )
+    )
     recorder.save_artifact("semantic_chunks", ("first", "second"))
     recorder.save_note("# Note\n")
     recorder.complete(Path("output/BV18fcozAEsy.md"))
@@ -41,9 +43,7 @@ def test_records_events_artifacts_and_success_manifest(tmp_path: Path) -> None:
     manifest = json.loads(recorder.manifest_path.read_text(encoding="utf-8"))
     assert manifest["status"] == "success"
     assert manifest["configuration"]["api_format"] == "openai"
-    assert manifest["configuration"]["base_url_origin"] == (
-        "https://api.deepseek.com"
-    )
+    assert manifest["configuration"]["base_url_origin"] == ("https://api.deepseek.com")
     assert manifest["stages"]["semantic"]["progress"] == 0.5
     assert manifest["artifacts"]["semantic_chunks"]["item_count"] == 2
     assert (recorder.artifacts_dir / "note.md").read_text() == "# Note\n"
@@ -52,9 +52,7 @@ def test_records_events_artifacts_and_success_manifest(tmp_path: Path) -> None:
         json.loads(line)
         for line in recorder.events_path.read_text(encoding="utf-8").splitlines()
     ]
-    assert [event["sequence"] for event in events] == list(
-        range(1, len(events) + 1)
-    )
+    assert [event["sequence"] for event in events] == list(range(1, len(events) + 1))
     assert events[0]["type"] == "run.started"
     assert any(event["type"] == "stage.started" for event in events)
     assert events[-1]["type"] == "run.completed"
@@ -65,9 +63,7 @@ def test_failure_writes_redacted_error_record(tmp_path: Path) -> None:
     recorder.fail(RuntimeError("Authorization: Bearer sk-supersecret123"))
 
     manifest = json.loads(recorder.manifest_path.read_text(encoding="utf-8"))
-    error = json.loads(
-        (recorder.logs_dir / "error.json").read_text(encoding="utf-8")
-    )
+    error = json.loads((recorder.logs_dir / "error.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "failed"
     assert "supersecret" not in json.dumps(manifest)
     assert "supersecret" not in json.dumps(error)

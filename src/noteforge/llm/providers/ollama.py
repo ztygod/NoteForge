@@ -1,13 +1,11 @@
 """Ollama 本地 Chat API 适配器。"""
 
 import json
-
-from typing import Sequence
+from collections.abc import Sequence
 
 from noteforge.config import LLMSettings
 from noteforge.exceptions import LLMJSONDecodeError, LLMRequestError
 from noteforge.llm.base import LLMClient
-from noteforge.llm.providers import HTTPTransport, HttpxHTTPTransport
 from noteforge.llm.models import (
     LLMMessage,
     LLMRequestOptions,
@@ -18,6 +16,7 @@ from noteforge.llm.models import (
     LLMUsage,
     RawJSON,
 )
+from noteforge.llm.providers import HTTPTransport, HttpxHTTPTransport
 
 
 class OllamaClient(LLMClient):
@@ -92,21 +91,40 @@ class OllamaClient(LLMClient):
     ) -> LLMToolResponse:
         payload: RawJSON = {
             "model": self._settings.model,
-            "messages": [{"role": item.role, "content": item.content} for item in messages],
+            "messages": [
+                {"role": item.role, "content": item.content} for item in messages
+            ],
             "stream": False,
-            "tools": [{"type": "function", "function": {
-                "name": tool.name,
-                "description": tool.description,
-                "parameters": dict(tool.parameters),
-            }}],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "parameters": dict(tool.parameters),
+                    },
+                }
+            ],
         }
-        if options and (options.temperature is not None or options.max_tokens is not None):
+        if options and (
+            options.temperature is not None or options.max_tokens is not None
+        ):
             payload["options"] = {
-                **({"temperature": options.temperature} if options.temperature is not None else {}),
-                **({"num_predict": options.max_tokens} if options.max_tokens is not None else {}),
+                **(
+                    {"temperature": options.temperature}
+                    if options.temperature is not None
+                    else {}
+                ),
+                **(
+                    {"num_predict": options.max_tokens}
+                    if options.max_tokens is not None
+                    else {}
+                ),
             }
         result = await self._transport.post_json(
-            f"{self._settings.base_url}/api/chat", headers={}, payload=payload,
+            f"{self._settings.base_url}/api/chat",
+            headers={},
+            payload=payload,
             timeout_seconds=self._settings.timeout_seconds,
         )
         try:
@@ -127,7 +145,13 @@ class OllamaClient(LLMClient):
         return LLMToolResponse(
             LLMToolCall(name, arguments),
             model=str(result.data.get("model", self._settings.model)),
-            usage=LLMUsage(input_tokens, output_tokens, input_tokens + output_tokens if input_tokens is not None and output_tokens is not None else None),
+            usage=LLMUsage(
+                input_tokens,
+                output_tokens,
+                input_tokens + output_tokens
+                if input_tokens is not None and output_tokens is not None
+                else None,
+            ),
             finish_reason="stop" if result.data.get("done") is True else None,
         )
 

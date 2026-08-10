@@ -1,11 +1,10 @@
 """NoteForge 本地 ``.env`` 配置的读取与安全写入。"""
 
-from collections.abc import Mapping
 import json
 import os
-from pathlib import Path
 import tempfile
-
+from collections.abc import Mapping
+from pathlib import Path
 
 LLM_ENV_PREFIX = "NOTEFORGE_LLM_"
 DEFAULT_ENV_PATH = Path(".env")
@@ -69,9 +68,7 @@ def write_llm_dotenv(
         existing_lines = []
 
     retained_lines = [
-        line
-        for line in existing_lines
-        if not line.lstrip().startswith(LLM_ENV_PREFIX)
+        line for line in existing_lines if not line.lstrip().startswith(LLM_ENV_PREFIX)
     ]
     while retained_lines and not retained_lines[-1].strip():
         retained_lines.pop()

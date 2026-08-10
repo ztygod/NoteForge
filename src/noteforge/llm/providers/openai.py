@@ -1,8 +1,7 @@
 """OpenAI-compatible Chat Completions API 适配器。"""
 
 import json
-
-from typing import Sequence
+from collections.abc import Sequence
 from urllib.parse import urlparse
 
 from noteforge.config import LLMSettings
@@ -12,7 +11,6 @@ from noteforge.exceptions import (
     LLMRequestError,
 )
 from noteforge.llm.base import LLMClient
-from noteforge.llm.providers import HTTPTransport, HttpxHTTPTransport
 from noteforge.llm.models import (
     LLMMessage,
     LLMRequestOptions,
@@ -23,6 +21,7 @@ from noteforge.llm.models import (
     LLMUsage,
     RawJSON,
 )
+from noteforge.llm.providers import HTTPTransport, HttpxHTTPTransport
 
 
 class OpenAICompatibleClient(LLMClient):
@@ -100,15 +99,21 @@ class OpenAICompatibleClient(LLMClient):
             "parameters": dict(tool.parameters),
         }
         # DeepSeek 的 strict tool schema 只在 /beta endpoint 开放。
-        if not is_deepseek or urlparse(self._settings.base_url).path.rstrip("/").endswith("/beta"):
+        if not is_deepseek or urlparse(self._settings.base_url).path.rstrip(
+            "/"
+        ).endswith("/beta"):
             function["strict"] = True
         payload: RawJSON = {
             "model": self._settings.model,
-            "messages": [{"role": item.role, "content": item.content} for item in messages],
-            "tools": [{
-                "type": "function",
-                "function": function,
-            }],
+            "messages": [
+                {"role": item.role, "content": item.content} for item in messages
+            ],
+            "tools": [
+                {
+                    "type": "function",
+                    "function": function,
+                }
+            ],
             "tool_choice": {"type": "function", "function": {"name": tool.name}},
         }
         if is_deepseek:

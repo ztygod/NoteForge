@@ -1,0 +1,13 @@
+# 复制为 config.yaml。Cookie 文件属于敏感信息，请勿提交到版本库。
+extractor:
+  cache_path: .cache/noteforge/media
+  download_path: .cache/noteforge/downloads
+  proxy:
+  youtube:
+    # 首次运行时，从已登录的浏览器导入 Cookie 到此文件。
+    # 后续运行只使用持久化文件，不会再次提示授权。
+    cookie_file: .noteforge/cookies/youtube.txt
+    cookies_from_browser: chrome
+  bilibili:
+    cookie_file: .noteforge/cookies/bilibili.txt
+    cookies_from_browser: chrome

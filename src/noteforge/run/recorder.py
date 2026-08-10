@@ -1,21 +1,20 @@
 """Run manifest、事件与阶段产物记录器。"""
 
-from datetime import datetime, timezone
 import hashlib
-from importlib.metadata import PackageNotFoundError, version
 import os
-from pathlib import Path
 import re
 import secrets
 import socket
 import traceback
+from datetime import UTC, datetime
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
 from noteforge.core.events import PipelineEvent, PipelineStatus
 from noteforge.run.serialization import json_value
 from noteforge.run.writer import append_jsonl, atomic_write_json, atomic_write_text
-
 
 # run 目录名只允许跨平台安全的 ASCII 字母、数字及少量分隔符，避免来源 ID
 # 中的空格、斜杠或控制字符改变目录层级。
@@ -33,7 +32,7 @@ _SECRET_PATTERNS = (
 def _now() -> datetime:
     """返回带时区的 UTC 时间，避免运行记录依赖本机时区。"""
 
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _timestamp(value: datetime | None = None) -> str:
@@ -181,22 +180,26 @@ class RunRecorder:
         subtitle_language: str | None,
         cookie_strategy: str | None,
     ) -> None:
-        self.manifest["configuration"].update({
-            "api_format": api_format,
-            "model": model,
-            "base_url_origin": _endpoint_origin(base_url),
-            "llm_concurrency": llm_concurrency,
-            "subtitle_language": subtitle_language,
-            "cookie_strategy": cookie_strategy,
-        })
+        self.manifest["configuration"].update(
+            {
+                "api_format": api_format,
+                "model": model,
+                "base_url_origin": _endpoint_origin(base_url),
+                "llm_concurrency": llm_concurrency,
+                "subtitle_language": subtitle_language,
+                "cookie_strategy": cookie_strategy,
+            }
+        )
         self._write_manifest()
 
     def update_source(self, collection: Any) -> None:
         metadata = collection.metadata
-        self.manifest["source"].update({
-            "title": metadata.title,
-            "duration_seconds": metadata.duration,
-        })
+        self.manifest["source"].update(
+            {
+                "title": metadata.title,
+                "duration_seconds": metadata.duration,
+            }
+        )
         self._write_manifest()
 
     def handle_event(self, event: PipelineEvent) -> None:
@@ -206,8 +209,7 @@ class RunRecorder:
         event_type = {
             PipelineStatus.RUNNING: (
                 "stage.started"
-                if existing_stage is None
-                or existing_stage["started_at"] is None
+                if existing_stage is None or existing_stage["started_at"] is None
                 else "stage.progress"
             ),
             PipelineStatus.SUCCESS: "stage.completed",
@@ -228,15 +230,18 @@ class RunRecorder:
             duration_seconds=event.duration,
         )
 
-        stage = stages.setdefault(event.stage, {
-            "status": "pending",
-            "started_at": None,
-            "completed_at": None,
-            "duration_seconds": None,
-            "progress": None,
-            "metrics": {},
-            "error": None,
-        })
+        stage = stages.setdefault(
+            event.stage,
+            {
+                "status": "pending",
+                "started_at": None,
+                "completed_at": None,
+                "duration_seconds": None,
+                "progress": None,
+                "metrics": {},
+                "error": None,
+            },
+        )
         if event.status is PipelineStatus.RUNNING and stage["started_at"] is None:
             stage["started_at"] = timestamp
         stage["status"] = recorded_status
@@ -345,10 +350,12 @@ class RunRecorder:
         causes = []
         current: BaseException | None = error
         while current is not None:
-            causes.append({
-                "type": type(current).__name__,
-                "message": _redact(str(current)),
-            })
+            causes.append(
+                {
+                    "type": type(current).__name__,
+                    "message": _redact(str(current)),
+                }
+            )
             current = current.__cause__
         return {
             "schema_version": 1,
@@ -361,14 +368,17 @@ class RunRecorder:
 
     def _event(self, event_type: str, **fields: Any) -> None:
         self._sequence += 1
-        append_jsonl(self.events_path, {
-            "schema_version": 1,
-            "sequence": self._sequence,
-            "timestamp": fields.pop("timestamp", _timestamp()),
-            "type": event_type,
-            "run_id": self.run_id,
-            **json_value(fields),
-        })
+        append_jsonl(
+            self.events_path,
+            {
+                "schema_version": 1,
+                "sequence": self._sequence,
+                "timestamp": fields.pop("timestamp", _timestamp()),
+                "type": event_type,
+                "run_id": self.run_id,
+                **json_value(fields),
+            },
+        )
 
     def _write_manifest(self) -> None:
         atomic_write_json(self.manifest_path, json_value(self.manifest))

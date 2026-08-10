@@ -8,13 +8,14 @@ import typer
 from noteforge.cli.commands.configure import load_configured_llm_settings
 from noteforge.cli.renderer import PipelineRenderer
 from noteforge.cli.ui import StatusUI
-from noteforge.collector import bilibili, inspection
-from noteforge.collector.models import VideoCollectionResult
+from noteforge.collector import collect_video
+from noteforge.collector import source as inspection
 from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.core import NoteGenerationPipeline
 from noteforge.core.events import compose_event_handlers
 from noteforge.exceptions import NoteForgeError, PipelineExecutionError
 from noteforge.llm import create_llm_client
+from noteforge.media.models import VideoResource
 from noteforge.run import RunRecorder
 
 
@@ -35,16 +36,13 @@ def _format_duration(seconds: float | None) -> str:
     return f"{hours}h {minutes:02d}m" if hours else f"{minutes}m"
 
 
-def _subtitle_description(collection: VideoCollectionResult) -> str:
-    track = collection.selected_subtitle
+def _subtitle_description(collection: VideoResource) -> str:
+    track = collection.subtitles[0] if collection.subtitles else None
     transcript = collection.transcript
-    if track is None or transcript is None:
+    if track is None or not transcript:
         return "没有可用字幕"
     kind = "自动字幕" if track.is_automatic else "人工字幕"
-    return (
-        f"{track.language} · {kind} · "
-        f"{len(transcript.segments):,} 个片段"
-    )
+    return f"{track.language} · {kind} · {len(transcript):,} 个片段"
 
 
 def _run_preflight(
@@ -54,17 +52,21 @@ def _run_preflight(
     cookies_from_browser: str | None,
     subtitle_language: str | None,
     subtitle_output_dir: Path,
-) -> VideoCollectionResult:
+) -> VideoResource:
     """在创建模型客户端前采集并验证视频字幕。"""
 
     if (
-        inspected.platform is not inspection.InspectionPlatform.BILIBILI
+        inspected.platform
+        not in {
+            inspection.InspectionPlatform.BILIBILI,
+            inspection.InspectionPlatform.YOUTUBE,
+        }
         or inspected.normalized_source is None
     ):
-        raise NoteForgeError("当前只支持标准 B 站视频 URL")
+        raise NoteForgeError("当前只支持标准 Bilibili 或 YouTube 视频 URL")
 
     with ui.running("检查输入", "正在获取视频和字幕信息..."):
-        collection = bilibili.collect_bilibili_video(
+        collection = collect_video(
             source=inspected.normalized_source,
             cookies_from_browser=cookies_from_browser,
             subtitle_language=subtitle_language,
@@ -76,7 +78,7 @@ def _run_preflight(
         f"{collection.metadata.title} · "
         f"{_format_duration(collection.metadata.duration)}",
     )
-    if collection.transcript is None:
+    if not collection.transcript:
         ui.failure("字幕", _subtitle_description(collection))
         raise NoteForgeError(
             "视频没有可供处理的 VTT 或 SRT 字幕；"
@@ -113,9 +115,9 @@ def generate(
         help="生成的 Markdown 文件路径；默认根据视频 ID 命名。",
     ),
     cookies_from_browser: str | None = typer.Option(
-        "chrome",
+        None,
         "--cookies-from-browser",
-        help="从指定浏览器读取 Cookie；传入空字符串可禁用。",
+        help="临时覆盖配置并从指定浏览器复用 Cookie；默认读取 config.yaml。",
     ),
     subtitle_language: str | None = typer.Option(
         None,
@@ -127,9 +129,7 @@ def generate(
         "--subtitle-output-dir",
         help="字幕缓存根目录。",
     ),
-    verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="显示阶段指标与耗时。"
-    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="显示阶段指标与耗时。"),
     debug: bool = typer.Option(
         False, "--debug", help="失败时保存中间数据并显示原始异常。"
     ),

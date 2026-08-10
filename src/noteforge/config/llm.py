@@ -3,11 +3,10 @@
 配置只在应用边界从环境变量读取，LLM API 适配器不直接访问环境变量。
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from noteforge.config.dotenv import merged_environment
-
 
 _DEFAULT_BASE_URLS = {
     "openai": "https://api.openai.com/v1",
@@ -50,11 +49,7 @@ class LLMSettings:
     ) -> "LLMSettings":
         """从 ``NOTEFORGE_LLM_*`` 环境变量加载配置。"""
 
-        values = (
-            merged_environment()
-            if environ is None
-            else environ
-        )
+        values = merged_environment() if environ is None else environ
         provider = values.get("NOTEFORGE_LLM_PROVIDER", "").strip().lower()
         model = values.get("NOTEFORGE_LLM_MODEL", "").strip()
         api_key = values.get("NOTEFORGE_LLM_API_KEY") or None
@@ -76,9 +71,7 @@ class LLMSettings:
         try:
             timeout_seconds = float(timeout_value)
         except ValueError as error:
-            raise ValueError(
-                "NOTEFORGE_LLM_TIMEOUT_SECONDS 必须是数字"
-            ) from error
+            raise ValueError("NOTEFORGE_LLM_TIMEOUT_SECONDS 必须是数字") from error
         if timeout_seconds <= 0:
             raise ValueError("LLM 超时时间必须大于 0")
 

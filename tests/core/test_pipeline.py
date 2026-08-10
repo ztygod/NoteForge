@@ -1,13 +1,17 @@
 import asyncio
 from pathlib import Path
 
-from noteforge.collector.models import VideoCollectionResult, VideoMetadata
 from noteforge.core import NoteGenerationPipeline
 from noteforge.core.events import PipelineEvent
 from noteforge.knowledge.extraction import KnowledgePoint, KnowledgePointType
 from noteforge.knowledge.preprocessor import PreprocessedChunk
 from noteforge.knowledge.semantic import SemanticChunk, SemanticChunkType
-from noteforge.subtitle.models import Transcript, TranscriptSegment
+from noteforge.media.models import (
+    Subtitle,
+    SubtitleSegment,
+    VideoMetadata,
+    VideoResource,
+)
 
 
 class StaticSemanticAnalyzer:
@@ -63,34 +67,26 @@ class MemoryArtifactSink:
         return Path("note.md")
 
 
-def make_collection(source: str) -> VideoCollectionResult:
+def make_collection(source: str) -> VideoResource:
     """创建带结构化字幕的采集结果。"""
 
-    return VideoCollectionResult(
+    return VideoResource(
         metadata=VideoMetadata(
             id="BV1CkArz1E4o",
             title="TCP 教程",
-            description=None,
             uploader=None,
-            uploader_id=None,
             duration=10,
-            webpage_url=source,
             thumbnail=None,
-            upload_date=None,
-            view_count=None,
-            like_count=None,
-            extractor="BiliBili",
-            extractor_key="BiliBili",
+            platform="bilibili",
+            webpage_url=source,
+            description=None,
         ),
-        subtitle_tracks=(),
-        transcript=Transcript(
-            language="zh-CN",
-            segments=(
-                TranscriptSegment(0, 5, "TCP 是传输层协议"),
-                TranscriptSegment(5, 10, "TCP 提供可靠传输"),
-            ),
-            source="manual_subtitle",
+        subtitles=(Subtitle("zh-CN", "vtt"),),
+        transcript=(
+            SubtitleSegment(0, 5, "TCP 是传输层协议"),
+            SubtitleSegment(5, 10, "TCP 提供可靠传输"),
         ),
+        transcript_source="manual_subtitle",
     )
 
 
@@ -99,7 +95,7 @@ def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
     received: list[str] = []
     sink = MemoryArtifactSink()
 
-    def collect(*, source: str, **_: object) -> VideoCollectionResult:
+    def collect(*, source: str, **_: object) -> VideoResource:
         received.append(source)
         return make_collection(source)
 
@@ -116,9 +112,7 @@ def test_pipeline_runs_video_to_markdown_flow(tmp_path: Path) -> None:
         )
     )
 
-    assert received == [
-        "https://www.bilibili.com/video/BV1CkArz1E4o"
-    ]
+    assert received == ["https://www.bilibili.com/video/BV1CkArz1E4o"]
     assert result == output_path
     content = result.read_text(encoding="utf-8")
     assert content.startswith("# TCP学习笔记")

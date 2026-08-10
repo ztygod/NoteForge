@@ -28,6 +28,19 @@
 
 ---
 
+## 视频采集配置
+
+Media Extractor 统一支持 Bilibili 与 YouTube。复制
+`config.example.yaml` 为 `config.yaml` 后，可分别配置代理、缓存、下载目录和
+Cookie。推荐同时设置 `cookie_file` 与 `cookies_from_browser`：首次运行从已登录
+浏览器导入 Cookie，之后只复用持久文件，不会反复读取浏览器 Cookie 或提示系统
+密码。`config.yaml`、`.noteforge/` 与 `.cache/` 已被 Git 忽略，请勿提交 Cookie。
+
+字幕 fallback 顺序为人工字幕、自动字幕、可选的音频转录器；媒体层目前可解析
+VTT、SRT、ASS 和 JSON3，并为 Whisper 实现保留了 `AudioTranscriber` 接口。
+
+---
+
 ## 为什么使用 NoteForge
 
 公开课视频内容丰富，但手工整理成方便复习的笔记往往很耗时。NoteForge 会获取
@@ -327,6 +340,25 @@ NOTEFORGE_LLM_TIMEOUT_SECONDS=180
 ---
 
 ## 开发
+
+### 提交前检查
+
+项目使用 `pre-commit` 在每次提交前自动执行 Ruff 检查、代码格式化和全量
+测试。首次克隆仓库后安装 Git hook：
+
+```bash
+uv sync --dev
+uv run pre-commit install
+```
+
+手动检查所有文件：
+
+```bash
+uv run pre-commit run --all-files
+```
+
+如果 Ruff 修改了文件，提交会暂停。检查改动并重新执行 `git add` 和
+`git commit` 即可。
 
 ```bash
 git clone https://github.com/ztygod/NoteForge.git

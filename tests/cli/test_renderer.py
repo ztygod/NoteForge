@@ -12,9 +12,15 @@ def make_renderer(*, verbose: bool = False) -> tuple[PipelineRenderer, Console]:
 
 def test_default_renderer_only_prints_key_success_stages() -> None:
     renderer, console = make_renderer()
-    renderer.handle(PipelineEvent("chunk", PipelineStatus.SUCCESS, "Raw chunks created"))
-    renderer.handle(PipelineEvent("transcript", PipelineStatus.SUCCESS, "Transcript extracted"))
-    renderer.handle(PipelineEvent("knowledge", PipelineStatus.SUCCESS, "Knowledge generated"))
+    renderer.handle(
+        PipelineEvent("chunk", PipelineStatus.SUCCESS, "Raw chunks created")
+    )
+    renderer.handle(
+        PipelineEvent("transcript", PipelineStatus.SUCCESS, "Transcript extracted")
+    )
+    renderer.handle(
+        PipelineEvent("knowledge", PipelineStatus.SUCCESS, "Knowledge generated")
+    )
     renderer.handle(PipelineEvent("output", PipelineStatus.SUCCESS, "Markdown saved"))
 
     output = console.export_text()
@@ -93,15 +99,19 @@ def test_running_events_update_one_live_stage_until_success() -> None:
 
 def test_running_event_carries_tool_operation_details() -> None:
     renderer, _ = make_renderer()
-    renderer.handle(PipelineEvent(
-        "semantic", PipelineStatus.RUNNING, "Semantic chunks generated",
-        metrics={
-            "operation": "retrying_validation",
-            "attempt": 2,
-            "max_attempts": 2,
-            "tool_name": "submit_semantic_analysis",
-        },
-    ))
+    renderer.handle(
+        PipelineEvent(
+            "semantic",
+            PipelineStatus.RUNNING,
+            "Semantic chunks generated",
+            metrics={
+                "operation": "retrying_validation",
+                "attempt": 2,
+                "max_attempts": 2,
+                "tool_name": "submit_semantic_analysis",
+            },
+        )
+    )
 
     assert renderer._running is not None
     assert renderer._running.metrics["operation"] == "retrying_validation"
@@ -111,18 +121,20 @@ def test_running_event_carries_tool_operation_details() -> None:
 
 def test_default_progress_does_not_present_active_batch_as_completion() -> None:
     renderer, console = make_renderer()
-    renderer.handle(PipelineEvent(
-        "semantic",
-        PipelineStatus.RUNNING,
-        "Semantic chunks generated",
-        progress=2 / 6,
-        metrics={
-            "batch_completed": 2,
-            "batch_total": 6,
-            "active_batch": 5,
-            "operation": "requesting_model",
-        },
-    ))
+    renderer.handle(
+        PipelineEvent(
+            "semantic",
+            PipelineStatus.RUNNING,
+            "Semantic chunks generated",
+            progress=2 / 6,
+            metrics={
+                "batch_completed": 2,
+                "batch_total": 6,
+                "active_batch": 5,
+                "operation": "requesting_model",
+            },
+        )
+    )
 
     assert renderer._running is not None
     console.print(renderer._running)
@@ -135,7 +147,9 @@ def test_default_progress_does_not_present_active_batch_as_completion() -> None:
 
 def test_structured_error_includes_context_and_original_in_debug() -> None:
     renderer, console = make_renderer()
-    original = ValueError("Knowledge point 14 contains invalid point_type: 'definition'")
+    original = ValueError(
+        "Knowledge point 14 contains invalid point_type: 'definition'"
+    )
     error = PipelineExecutionError(
         PipelineErrorContext(
             stage="KnowledgePointBuilder",

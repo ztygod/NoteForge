@@ -1,8 +1,7 @@
 """Prompt 构建过程中的通用格式化工具。"""
 
-from dataclasses import asdict, is_dataclass
 import json
-from typing import Any
+from dataclasses import asdict, is_dataclass
 
 from noteforge.knowledge.models import KnowledgeChunk
 

@@ -27,4 +27,3 @@ def test_pipeline_event_is_immutable_and_validates_progress() -> None:
         event.message = "Changed"  # type: ignore[misc]
     with pytest.raises(ValueError, match="between 0 and 1"):
         PipelineEvent("chunk", PipelineStatus.RUNNING, "Work", progress=1.1)
-

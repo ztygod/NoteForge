@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Sequence
+from collections.abc import Sequence
 
 import pytest
 
@@ -10,7 +10,6 @@ from noteforge.exceptions import (
 )
 from noteforge.knowledge.chunker import RawChunk
 from noteforge.knowledge.extraction import (
-    KnowledgeExtractionResult,
     KnowledgePointProposal,
     KnowledgePointType,
     LLMKnowledgeExtractor,
@@ -168,9 +167,9 @@ def test_known_semantic_type_aliases_are_normalized(
 
 
 def test_knowledge_tool_enum_is_derived_from_domain_enum() -> None:
-    point_schema = KNOWLEDGE_POINTS_TOOL.parameters["properties"][
-        "knowledge_points"
-    ]["items"]["properties"]["point_type"]
+    point_schema = KNOWLEDGE_POINTS_TOOL.parameters["properties"]["knowledge_points"][
+        "items"
+    ]["properties"]["point_type"]
 
     assert point_schema["enum"] == [item.value for item in KnowledgePointType]
 

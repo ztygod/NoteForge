@@ -87,8 +87,7 @@ class KnowledgeDocumentBuilder:
         return LearningDocument(
             title=f"{subject}学习笔记",
             summary=(
-                f"本文档整理了 {len(knowledge_points)} 个知识点，"
-                f"涵盖{section_titles}。"
+                f"本文档整理了 {len(knowledge_points)} 个知识点，涵盖{section_titles}。"
             ),
             sections=sections,
         )
@@ -103,9 +102,7 @@ class KnowledgeDocumentBuilder:
             raise TypeError("knowledge_points 必须是 tuple")
         if not knowledge_points:
             raise ValueError("knowledge_points 不能为空")
-        if not all(
-            isinstance(point, KnowledgePoint) for point in knowledge_points
-        ):
+        if not all(isinstance(point, KnowledgePoint) for point in knowledge_points):
             raise TypeError("knowledge_points 必须全部是 KnowledgePoint")
 
     @staticmethod

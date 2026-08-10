@@ -1,6 +1,6 @@
 """NoteForge 内部真正理解的知识节点。"""
+
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass
@@ -13,7 +13,7 @@ class Evidence:
 class Concept:
     name: str
     description: str
-    evidence: List[Evidence]
+    evidence: list[Evidence]
 
 
 @dataclass
@@ -28,4 +28,4 @@ class KnowledgeChunk:
     topic: str
     summary: str
 
-    concepts: List[Concept]
+    concepts: list[Concept]
