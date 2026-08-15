@@ -1,0 +1,131 @@
+src/noteforge/media/__init__.py
+  s_a34bb8baeb4757::t_b8da496628524c 31,43
+  s_a34bb8baeb4757::t_b8647325140f98 19
+  s_a34bb8baeb4757::t_8cbcc2f9bd0066 1-3,9,11-18,20-21,23,25,28
+  s_a34bb8baeb4757::t_c4d157645a24ea 32-38,71-76
+  s_a34bb8baeb4757::t_d99c7dcb864fb7 42,44-51,53-58,60-61,64,66,69
+tests/media/test_media.py
+  s_a34bb8baeb4757::t_679e12e297cbce 1-2,11-12,15,23,33-35,39-43,61-64,137-146,150-161
+  s_a34bb8baeb4757::t_b03ff99eb34e8d 29
+  s_a34bb8baeb4757::t_711609526f84da 44-60,136
+  s_a34bb8baeb4757::t_d167f3c8809aa0 22,191-192,197-200
+  s_a34bb8baeb4757::t_1cb7fbbd618057 21,28,30,88,93
+  s_a34bb8baeb4757::t_7c676f2a9f227a 14,162-188
+  s_a34bb8baeb4757::t_a43045a1b15995 6
+  s_a34bb8baeb4757::t_5d4420cf577244 189-190
+src/noteforge/media/ytdlp/errors.py
+  s_a34bb8baeb4757::t_4cb1cbb7ff33b0 16-17
+src/noteforge/media/protocols.py
+  s_a34bb8baeb4757::t_8fadde436c49b0 1,3,5,11-12,16-23
+src/noteforge/media/subtitle.py
+  s_a34bb8baeb4757::t_ac948a356989a5 15-16,18-19
+README.zh-CN.md
+  s_a34bb8baeb4757::t_ba7032f53b42bb 421
+  s_a34bb8baeb4757::t_96ce44660e2e83 33-41
+  s_a34bb8baeb4757::t_da7e81f6531a75 418
+src/noteforge/cli/commands/doctor.py
+  s_a34bb8baeb4757::t_ce112faf00de02 12-13
+src/noteforge/media/models.py
+  s_a34bb8baeb4757::t_799eda8bc68368 12-13,22-23,30-31,37-38,53-58,61-63,66-67,69,78-80,87-88,93-95,98-100,105-106,113-118,124-125,134-135,143-145,152-156,161-162,169-172,178-179,185
+  s_a34bb8baeb4757::t_f579864a589ce3 1-4,18-21,24-29,32-36,39-52,73-77,81-86,89-92,96-97,101-104,107-110,122-123,126-133,136-142,146-151,157-160,163-164
+  s_a34bb8baeb4757::t_fd36bcb6a02412 165-166
+src/noteforge/media/platforms/__init__.py
+  s_a34bb8baeb4757::t_de743f2d706c55 1-5
+tests/cli/test_app.py
+  s_a34bb8baeb4757::t_ce112faf00de02 12
+config.example.yaml
+  s_a34bb8baeb4757::t_96ce44660e2e83 1,4-6,9,11
+src/noteforge/media/cookies/policy.py
+  s_a34bb8baeb4757::t_f579864a589ce3 1-9,12,14-15,18-38,41
+  s_a34bb8baeb4757::t_3eba1ef5f76a7e 10-11,13,16-17,39-40
+src/noteforge/media/cookies/service.py
+  s_a34bb8baeb4757::t_168aab3c9d3a71 214,217-262,324-341
+  s_a34bb8baeb4757::t_3eba1ef5f76a7e 23,28-30,36,38-39,43,56-57,63-64,70-71,101,105-106,115-116,208-209,215-216,264-265,281-282,304-305,320,346-347
+  s_a34bb8baeb4757::t_f579864a589ce3 1-12,14-22,24-27,31-35,37,40-42,44,54,59,61-62,65-69,72-73,79-96,100,102-104,107-114,117-129,132,159-207,210-213,263,266-280,283-303,306-319,321-323,342-345,348-366
+  s_a34bb8baeb4757::t_d99c7dcb864fb7 97-99
+  s_a34bb8baeb4757::t_d5d75e1d3d75f5 13,45-53,55,58,60,74-78,130-131,133-158
+src/noteforge/media/source.py
+  s_a34bb8baeb4757::t_c4d157645a24ea 51-55,76-79
+  s_a34bb8baeb4757::t_b03ff99eb34e8d 75
+  s_a34bb8baeb4757::t_d99c7dcb864fb7 50,60-65
+  s_a34bb8baeb4757::t_ac948a356989a5 13-14,22-23,33-34
+  s_a34bb8baeb4757::t_de743f2d706c55 1,8-9,21,32,39-42,46,58-59,66-68,70-74
+src/noteforge/media/cookies/__init__.py
+  s_a34bb8baeb4757::t_f579864a589ce3 1-4,7
+src/noteforge/cli/commands/inspect.py
+  s_a34bb8baeb4757::t_da7e81f6531a75 11-12
+tests/collector/test_inspection.py
+  s_a34bb8baeb4757::t_1cb7fbbd618057 3
+src/noteforge/media/platforms/base.py
+  s_a34bb8baeb4757::t_de743f2d706c55 1,3,7-17,21,26,31,34,41-42,45-47,60,69,95,98-103,107-110,136,153,155,158-167
+  s_a34bb8baeb4757::t_ce112faf00de02 18
+  s_a34bb8baeb4757::t_3eba1ef5f76a7e 22,24,27-28,32-33,43-44,48,70-71,96-97,156-157
+  s_a34bb8baeb4757::t_c4d157645a24ea 29,35-36,40
+  s_a34bb8baeb4757::t_d99c7dcb864fb7 37-38,104-106,111-135,137-152,168-181
+src/noteforge/media/platforms/youtube.py
+  s_a34bb8baeb4757::t_4cb1cbb7ff33b0 6
+  s_a34bb8baeb4757::t_de743f2d706c55 2,5,8
+src/noteforge/media/ytdlp/client.py
+  s_a34bb8baeb4757::t_de743f2d706c55 69,74-75,96,112,123,138
+  s_a34bb8baeb4757::t_d99c7dcb864fb7 90-95,116-122,132-133,140-142
+  s_a34bb8baeb4757::t_ac948a356989a5 16-17,45-46,71-72,98-99,125-126
+src/noteforge/media/worker.py
+  s_a34bb8baeb4757::t_ac948a356989a5 14,46,54-55,63-64,81-82
+  s_a34bb8baeb4757::t_405a6698b815ac 1-7,9-13,15-45,47-48,51-53,56-57,60-62,65-66,69-80,83-86
+  s_a34bb8baeb4757::t_d167f3c8809aa0 8
+  s_a34bb8baeb4757::t_da36f79d1bbc7f 49-50,58-59,67-68
+src/noteforge/media/platforms/bilibili.py
+  s_a34bb8baeb4757::t_4cb1cbb7ff33b0 9,14
+  s_a34bb8baeb4757::t_de743f2d706c55 1-2,5,8,11,13
+src/noteforge/media/config.py
+  s_a34bb8baeb4757::t_c4d157645a24ea 11
+  s_a34bb8baeb4757::t_799eda8bc68368 13,18-20,22-24,27-28,33-34
+  s_a34bb8baeb4757::t_d99c7dcb864fb7 40-44,63-67
+  s_a34bb8baeb4757::t_8cbcc2f9bd0066 39,45,56-62,68
+src/noteforge/media/repository.py
+  s_a34bb8baeb4757::t_8fadde436c49b0 1,13-15
+  s_a34bb8baeb4757::t_026c651c8e6632 20-21,29-30,40-41,50-51,63-64,79-80
+README.md
+  s_a34bb8baeb4757::t_96ce44660e2e83 53-65
+  s_a34bb8baeb4757::t_da7e81f6531a75 409
+  s_a34bb8baeb4757::t_ba7032f53b42bb 412
+src/noteforge/cli/commands/generate.py
+  s_a34bb8baeb4757::t_da7e81f6531a75 16-17
+src/noteforge/core/pipeline.py
+  s_a34bb8baeb4757::t_ce112faf00de02 41-42
+src/noteforge/media/assets.py
+  s_a34bb8baeb4757::t_f579864a589ce3 1-16,18-21,25,27-39,42-47,50-55,58-68,71-84
+  s_a34bb8baeb4757::t_026c651c8e6632 17,22-24,26,40-41,48-49,56-57,69-70
+tests/collector/test_bilibili.py
+  s_a34bb8baeb4757::t_1cb7fbbd618057 1,3,6-7,9-10,13-14
+pyproject.toml
+  s_a34bb8baeb4757::t_168aab3c9d3a71 34
+  s_a34bb8baeb4757::t_8cbcc2f9bd0066 32
+src/noteforge/media/service.py
+  s_a34bb8baeb4757::t_405a6698b815ac 1-9,11,13-14,16-19,21-28,30,33,35,37,40-49,52-57,59-62,64,67-71,74-76,78-82,85-90,93-98,101-106,108-116,119-127,130-138,141-145,157,163-173,175-178,180-190,193-194,198-199,205-220,225-228,233-237,241-254,257-260,271-272,288-289,295-303,306-318,321,332-339,342-346,362,366-398,406-413
+  s_a34bb8baeb4757::t_d167f3c8809aa0 31-32,34,51,77,179,195-197,221,232
+  s_a34bb8baeb4757::t_c4d157645a24ea 20,414-417,428,431-437,439-444,448,450,452-453
+  s_a34bb8baeb4757::t_ce112faf00de02 15
+  s_a34bb8baeb4757::t_8cbcc2f9bd0066 58,238-240,292-294
+  s_a34bb8baeb4757::t_d99c7dcb864fb7 146-156,158-162,200-204,222-224,229-231,261-270,322-331,347-361,363-365,399-405
+  s_a34bb8baeb4757::t_026c651c8e6632 38,50,65,72-73,83-84,91-92,99-100,117-118,128-129,139-140,174,191-192,255-256,273-274,290-291,304-305,319-320,340-341
+  s_a34bb8baeb4757::t_9e0b5dbe33ec17 275-287
+uv.lock
+  s_a34bb8baeb4757::t_95cbc3fd2db2cf 27-35,50,161-219,326-337,347-409,431-439,454,456,471,473,575-583,677-689,751-759
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "fefd041d5310a5b54395ec8b3bb70e757ef855c2",
+  "prompts": {},
+  "sessions": {
+    "s_a34bb8baeb4757": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a002ef-739c-71f2-9a84-daab918ecb07",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
