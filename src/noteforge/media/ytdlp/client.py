@@ -9,11 +9,12 @@ from yt_dlp.networking.impersonate import ImpersonateTarget
 from yt_dlp.utils import DownloadError
 
 from noteforge.exceptions import CollectionError, RemoteCollectionError
-from noteforge.media.config import PlatformConfig
 from noteforge.media.ytdlp.errors import translate_download_error
 
 
 class _QuietLogger:
+    """阻止 yt-dlp 把可能含 URL 或认证上下文的信息写入应用日志。"""
+
     def debug(self, _: str) -> None:
         pass
 
@@ -35,14 +36,14 @@ class YTDLPClient:
 
     def __init__(
         self,
-        settings: PlatformConfig | None = None,
         *,
         extra_options: Mapping[str, Any] | None = None,
     ) -> None:
-        self.settings = settings or PlatformConfig()
         self.extra_options = dict(extra_options or {})
 
     def options(self) -> dict[str, Any]:
+        """构造安全默认选项；调用方无法直接传入该结构。"""
+
         result: dict[str, Any] = {
             "quiet": True,
             "no_warnings": True,
@@ -56,20 +57,6 @@ class YTDLPClient:
             "writeautomaticsub": True,
             "impersonate": ImpersonateTarget(client="chrome"),
         }
-        cookie_file = (
-            self.settings.cookie_file.expanduser()
-            if self.settings.cookie_file
-            else None
-        )
-        if cookie_file:
-            result["cookiefile"] = str(cookie_file)
-            if not cookie_file.exists() and self.settings.cookies_from_browser:
-                cookie_file.parent.mkdir(parents=True, exist_ok=True)
-                result["cookiesfrombrowser"] = (self.settings.cookies_from_browser,)
-        elif self.settings.cookies_from_browser:
-            result["cookiesfrombrowser"] = (self.settings.cookies_from_browser,)
-        if self.settings.proxy:
-            result["proxy"] = self.settings.proxy
         result.update(self.extra_options)
         return result
 
@@ -79,8 +66,13 @@ class YTDLPClient:
         *,
         download: bool = False,
         options: Mapping[str, Any] | None = None,
+        cookie_file: Path | None = None,
     ) -> Mapping[str, Any]:
+        """执行一次 yt-dlp 提取，并统一翻译后端异常。"""
+
         params = self.options() | dict(options or {})
+        if cookie_file is not None:
+            params["cookiefile"] = str(cookie_file)
         try:
             with yt_dlp.YoutubeDL(params) as downloader:
                 info = downloader.extract_info(source, download=download)
@@ -95,8 +87,16 @@ class YTDLPClient:
         return info
 
     def download_subtitle(
-        self, source: str, *, language: str, subtitle_format: str, target_dir: Path
+        self,
+        source: str,
+        *,
+        language: str,
+        subtitle_format: str,
+        target_dir: Path,
+        cookie_file: Path | None = None,
     ) -> Mapping[str, Any]:
+        """下载单条指定字幕到 Worker 分配的临时目录。"""
+
         target_dir.mkdir(parents=True, exist_ok=True)
         return self.extract_info(
             source,
@@ -109,21 +109,34 @@ class YTDLPClient:
                     "subtitle": str(target_dir / "subtitle.%(ext)s"),
                 },
             },
+            cookie_file=cookie_file,
         )
 
     def download_media(
-        self, source: str, *, target_dir: Path, audio_only: bool
+        self,
+        source: str,
+        *,
+        target_dir: Path,
+        audio_only: bool,
+        format_id: str | None = None,
+        codec: str = "mp3",
+        cookie_file: Path | None = None,
     ) -> Mapping[str, Any]:
+        """下载视频或提取音频；格式选择由领域请求映射而来。"""
+
         target_dir.mkdir(parents=True, exist_ok=True)
         options: dict[str, Any] = {
             "skip_download": False,
             # 真正下载媒体时必须存在匹配格式，不能沿用发现阶段的宽松策略。
             "ignore_no_formats_error": False,
-            "format": "bestaudio/best" if audio_only else "bestvideo+bestaudio/best",
+            "format": format_id
+            or ("bestaudio/best" if audio_only else "bestvideo+bestaudio/best"),
             "outtmpl": str(target_dir / "%(id)s.%(ext)s"),
         }
         if audio_only:
             options["postprocessors"] = [
-                {"key": "FFmpegExtractAudio", "preferredcodec": "mp3"}
+                {"key": "FFmpegExtractAudio", "preferredcodec": codec}
             ]
-        return self.extract_info(source, download=True, options=options)
+        return self.extract_info(
+            source, download=True, options=options, cookie_file=cookie_file
+        )

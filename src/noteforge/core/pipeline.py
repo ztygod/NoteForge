@@ -9,8 +9,6 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any, Protocol
 
-from noteforge.collector import collect_video
-from noteforge.collector import source as inspection
 from noteforge.core.events import (
     EventHandler,
     PipelineEvent,
@@ -40,6 +38,8 @@ from noteforge.llm.models import (
     LLMTool,
     LLMToolResponse,
 )
+from noteforge.media import collect_video
+from noteforge.media import source as inspection
 from noteforge.media.models import VideoResource
 
 VideoCollector = Callable[..., VideoResource]

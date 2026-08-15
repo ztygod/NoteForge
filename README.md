@@ -50,6 +50,19 @@ Structured Markdown notes with timestamps
 
 NoteForge downloads subtitles only. It does not download the video or audio.
 
+## Media service and credentials
+
+`noteforge.media.MediaService` is the sole media boundary for YouTube and
+Bilibili. It exposes metadata, formats, playlists, subtitles, audio, and video
+without leaking yt-dlp options. yt-dlp runs in isolated worker processes, while
+downloaded assets live in expiring leases and are removed when `MediaAsset` is
+closed. Persistence requires an explicit `export_to()` call.
+
+Browser credentials are handled by `CookieService`. A task receives a private,
+short-lived Cookie lease that is deleted by default. Opt-in retained credentials
+are AEAD-encrypted and their master key is stored in the operating-system
+keyring; plaintext Cookie files are never retained.
+
 ---
 
 ## Capabilities
@@ -393,12 +406,10 @@ Project structure:
 noteforge/
 ├── src/noteforge/
 │   ├── cli/          # Typer commands
-│   ├── collector/    # Source inspection and Bilibili collection
-│   ├── subtitle/     # Subtitle selection, parsing, and normalization
+│   ├── media/        # Unified media, Cookie, platform, and worker service
 │   ├── knowledge/    # Chunking, semantic analysis, and extraction
 │   ├── llm/          # OpenAI-compatible, Anthropic Messages, and Ollama adapters
-│   ├── document/     # Learning-document construction
-│   ├── renderer/     # Markdown rendering and writing
+│   ├── document/     # Learning-document construction and Markdown rendering
 │   └── core/         # End-to-end pipeline
 ├── tests/
 ├── .github/workflows/publish.yml

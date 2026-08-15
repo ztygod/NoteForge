@@ -6,11 +6,11 @@ from dataclasses import dataclass
 import typer
 
 from noteforge.cli.ui import StatusUI
-from noteforge.collector import discover_video
-from noteforge.collector import source as inspection
 from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.exceptions import CollectionError, LLMConfigurationError
 from noteforge.llm import LLMMessage, create_llm_client
+from noteforge.media import discover_video
+from noteforge.media import source as inspection
 from noteforge.media.models import Subtitle, VideoResource
 
 

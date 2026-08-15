@@ -7,9 +7,9 @@ from pathlib import Path
 import typer
 
 from noteforge.cli.serialization import subtitle_debug_output
-from noteforge.collector import collect_video
-from noteforge.collector import source as inspection
 from noteforge.exceptions import CollectionError, SubtitleError
+from noteforge.media import collect_video
+from noteforge.media import source as inspection
 
 
 def inspect(
