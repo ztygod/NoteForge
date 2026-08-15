@@ -6,10 +6,10 @@ from importlib.metadata import version
 from typer.testing import CliRunner
 
 from noteforge.cli.app import app
-from noteforge.collector import source as inspection
 from noteforge.config import LLMSettings
 from noteforge.core import NoteGenerationPipeline
 from noteforge.exceptions import RemoteCollectionError, RiskControlError
+from noteforge.media import source as inspection
 from noteforge.media.models import Subtitle, SubtitleSegment, VideoResource
 from noteforge.media.models import VideoMetadata as MediaMetadata
 

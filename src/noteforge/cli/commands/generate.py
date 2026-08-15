@@ -8,13 +8,13 @@ import typer
 from noteforge.cli.commands.configure import load_configured_llm_settings
 from noteforge.cli.renderer import PipelineRenderer
 from noteforge.cli.ui import StatusUI
-from noteforge.collector import collect_video
-from noteforge.collector import source as inspection
 from noteforge.config import LLMSettings, llm_api_format_label
 from noteforge.core import NoteGenerationPipeline
 from noteforge.core.events import compose_event_handlers
 from noteforge.exceptions import NoteForgeError, PipelineExecutionError
 from noteforge.llm import create_llm_client
+from noteforge.media import collect_video
+from noteforge.media import source as inspection
 from noteforge.media.models import VideoResource
 from noteforge.run import RunRecorder
 

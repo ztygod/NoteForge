@@ -12,7 +12,11 @@ _ASS_TAG = re.compile(r"\{[^}]*\}")
 
 
 class SubtitleParser:
+    """将平台字幕解析为统一时间片，并清理标签和重复文本。"""
+
     def parse(self, subtitle: Subtitle) -> tuple[SubtitleSegment, ...]:
+        """按格式解析字幕正文；路径仅允许指向有效临时资产。"""
+
         content = subtitle.content
         if content is None and subtitle.path is not None:
             try:

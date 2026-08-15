@@ -1,4 +1,4 @@
-"""Markdown 文件输出工具。"""
+"""学习文档文件输出工具。"""
 
 from pathlib import Path
 

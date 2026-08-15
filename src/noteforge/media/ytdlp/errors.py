@@ -13,6 +13,8 @@ from noteforge.exceptions import (
 
 
 def translate_download_error(error: DownloadError) -> CollectionError:
+    """将不稳定的后端错误文本归类为可供应用处理的异常。"""
+
     message = str(error)
     normalized = message.casefold()
     if "unsupported url" in normalized or "no suitable extractor" in normalized:

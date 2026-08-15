@@ -1,50 +1,67 @@
+import http.cookiejar
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
-from noteforge.collector.factory import create_video_collector
-from noteforge.collector.platforms.bilibili import BilibiliVideoCollector
-from noteforge.collector.platforms.youtube import YouTubeCollector
-from noteforge.media.cache import MediaCache
+from noteforge.media.assets import AssetReference, MediaAsset
 from noteforge.media.config import (
     ExtractorConfig,
-    PlatformConfig,
     load_extractor_config,
 )
+from noteforge.media.cookies.policy import policy_for
+from noteforge.media.cookies.service import CookieService
 from noteforge.media.models import (
+    AudioRequest,
+    MediaType,
     Subtitle,
     SubtitleSegment,
     VideoMetadata,
     VideoPlatform,
 )
+from noteforge.media.platforms import BilibiliAdapter, YouTubeAdapter
+from noteforge.media.repository import MediaRepository
+from noteforge.media.service import MediaService
 from noteforge.media.subtitle import SubtitleParser
 from noteforge.media.ytdlp import YTDLPClient
 
 
-def test_collector_factory_recognizes_bilibili_and_youtube() -> None:
-    assert isinstance(
-        create_video_collector("https://www.bilibili.com/video/BV1CkArz1E4o"),
-        BilibiliVideoCollector,
-    )
-    assert isinstance(
-        create_video_collector("https://youtu.be/M7lc1UVf-VE"), YouTubeCollector
-    )
+def test_platform_adapters_recognize_bilibili_and_youtube() -> None:
+    assert BilibiliAdapter().supports("https://www.bilibili.com/video/BV1CkArz1E4o")
+    assert YouTubeAdapter().supports("https://youtu.be/M7lc1UVf-VE")
 
 
-def test_cookie_file_has_priority_over_browser_cookie(tmp_path: Path) -> None:
-    (tmp_path / "cookies.txt").touch()
-    options = YTDLPClient(
-        PlatformConfig(tmp_path / "cookies.txt", "chrome", None)
-    ).options()
-    assert options["cookiefile"] == str(tmp_path / "cookies.txt")
+def test_ytdlp_options_cannot_read_browser_cookies_directly() -> None:
+    options = YTDLPClient().options()
+    assert "cookiefile" not in options
     assert "cookiesfrombrowser" not in options
 
 
-def test_missing_cookie_file_bootstraps_from_browser_once(tmp_path: Path) -> None:
-    cookie_file = tmp_path / "private" / "cookies.txt"
-    options = YTDLPClient(PlatformConfig(cookie_file, "chrome", None)).options()
-    assert options["cookiefile"] == str(cookie_file)
-    assert options["cookiesfrombrowser"] == ("chrome",)
-    assert cookie_file.parent.is_dir()
+def test_cookie_service_filters_non_platform_domains() -> None:
+    source = http.cookiejar.CookieJar()
+    for domain in (".youtube.com", ".example.com"):
+        source.set_cookie(
+            http.cookiejar.Cookie(
+                0,
+                "session",
+                "secret",
+                None,
+                False,
+                domain,
+                True,
+                True,
+                "/",
+                True,
+                False,
+                None,
+                False,
+                None,
+                None,
+                {},
+                False,
+            )
+        )
+    filtered = CookieService._filter(source, policy_for(VideoPlatform.YOUTUBE))
+    assert [cookie.domain for cookie in filtered] == [".youtube.com"]
 
 
 def test_metadata_discovery_allows_missing_media_formats() -> None:
@@ -68,13 +85,12 @@ def test_load_yaml_style_extractor_config(tmp_path: Path) -> None:
     path = tmp_path / "config.yaml"
     path.write_text(
         "extractor:\n  cache_path: .cache/media\n  youtube:\n"
-        "    cookie_file: .secrets/youtube.txt\n"
-        "    cookies_from_browser: chrome\n",
+        "    proxy: http://127.0.0.1:7890\n",
         encoding="utf-8",
     )
     config = load_extractor_config(path)
     assert config.cache_path == Path(".cache/media")
-    assert config.for_platform("youtube").cookie_file == Path(".secrets/youtube.txt")
+    assert config.for_platform("youtube").proxy == "http://127.0.0.1:7890"
 
 
 def test_subtitle_parser_supports_ass_and_json3() -> None:
@@ -112,25 +128,73 @@ def test_subtitle_parser_normalizes_and_removes_duplicates() -> None:
 
 
 def test_platform_collector_maps_metadata(tmp_path: Path) -> None:
-    collector = YouTubeCollector(ExtractorConfig(cache_path=tmp_path))
     info = {
         "id": "M7lc1UVf-VE",
         "title": "Demo",
         "webpage_url": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
     }
-    with patch.object(collector.client, "extract_info", return_value=info) as request:
-        resource = collector.discover(info["webpage_url"])
+
+    class Worker:
+        def execute(self, payload):
+            assert payload["operation"] == "extract"
+            return info
+
+        def close(self):
+            pass
+
+    service = MediaService(ExtractorConfig(cache_path=tmp_path), worker=Worker())
+    resource = service.discover(info["webpage_url"])
     assert resource.metadata.id == "M7lc1UVf-VE"
-    request.assert_called_once()
 
 
-def test_cache_round_trip(tmp_path: Path) -> None:
-    cache = MediaCache(tmp_path)
+def test_media_asset_removes_lease_on_close(tmp_path: Path) -> None:
+    root = tmp_path / "lease"
+    root.mkdir()
+    path = root / "audio.mp3"
+    path.write_bytes(b"audio")
+    metadata = VideoMetadata("id", "title", None, 1, None, "youtube", "url")
+    reference = AssetReference(
+        "asset", MediaType.AUDIO, datetime.now(UTC) + timedelta(minutes=1), metadata
+    )
+    with MediaAsset(reference, path, root) as asset:
+        assert asset.path.read_bytes() == b"audio"
+    assert not root.exists()
+
+
+def test_media_service_download_returns_expiring_asset(tmp_path: Path) -> None:
+    info = {
+        "id": "M7lc1UVf-VE",
+        "title": "Demo",
+        "webpage_url": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
+    }
+
+    class Worker:
+        def execute(self, payload):
+            if payload["operation"] == "extract":
+                return info
+            path = Path(payload["target_dir"]) / "M7lc1UVf-VE.mp3"
+            path.write_bytes(b"audio")
+            return {"requested_downloads": [{"filepath": str(path)}]}
+
+        def close(self):
+            pass
+
+    config = ExtractorConfig(cache_path=tmp_path / "cache", runtime_path=tmp_path)
+    service = MediaService(config, worker=Worker())
+    asset = service.download_audio(info["webpage_url"], AudioRequest(codec="mp3"))
+    lease_root = asset.path.parent
+    assert asset.path.read_bytes() == b"audio"
+    asset.close()
+    assert not lease_root.exists()
+
+
+def test_repository_round_trip(tmp_path: Path) -> None:
+    repository = MediaRepository(tmp_path)
     metadata = VideoMetadata(
         "id", "title", None, 10, None, VideoPlatform.YOUTUBE, "url"
     )
     segments = (SubtitleSegment(0, 1, "text"),)
-    cache.save_metadata(metadata)
-    cache.save_transcript(metadata, segments)
-    assert cache.load_metadata(VideoPlatform.YOUTUBE, "id") == metadata
-    assert cache.load_transcript(VideoPlatform.YOUTUBE, "id") == segments
+    repository.save_metadata(metadata)
+    repository.save_transcript(metadata, segments)
+    assert repository.load_metadata(VideoPlatform.YOUTUBE, "id") == metadata
+    assert repository.load_transcript(VideoPlatform.YOUTUBE, "id") == segments

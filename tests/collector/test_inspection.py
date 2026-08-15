@@ -1,6 +1,6 @@
 import pytest
 
-from noteforge.collector.source import InspectionPlatform, inspect_source
+from noteforge.media.source import InspectionPlatform, inspect_source
 
 
 def test_inspect_standard_bilibili_url() -> None:

@@ -30,11 +30,15 @@
 
 ## 视频采集配置
 
-Media Extractor 统一支持 Bilibili 与 YouTube。复制
-`config.example.yaml` 为 `config.yaml` 后，可分别配置代理、缓存、下载目录和
-Cookie。推荐同时设置 `cookie_file` 与 `cookies_from_browser`：首次运行从已登录
-浏览器导入 Cookie，之后只复用持久文件，不会反复读取浏览器 Cookie 或提示系统
-密码。`config.yaml`、`.noteforge/` 与 `.cache/` 已被 Git 忽略，请勿提交 Cookie。
+`noteforge.media.MediaService` 是 Bilibili 与 YouTube 的唯一媒体入口，统一提供
+元数据、格式、播放列表、字幕、音频和视频 API。yt-dlp 在独立 Worker 进程中执行，
+调用方不会接触其参数或下载路径。媒体默认保存在有 TTL 的临时租约中，退出
+`MediaAsset` 上下文后立即删除；只有显式调用 `export_to()` 才会持久化。
+
+浏览器身份由独立 `CookieService` 管理。每个任务只获得权限为 `0600` 的短期
+Cookie 租约，任务结束默认销毁。用户显式选择 `CookiePersistence.RETAIN` 时，
+目标平台 Cookie 使用 AEAD 加密保存，主密钥进入系统 Keyring；不会持久化明文
+`cookies.txt`。`config.yaml`、`.noteforge/` 与 `.cache/` 已被 Git 忽略。
 
 字幕 fallback 顺序为人工字幕、自动字幕、可选的音频转录器；媒体层目前可解析
 VTT、SRT、ASS 和 JSON3，并为 Whisper 实现保留了 `AudioTranscriber` 接口。
@@ -411,12 +415,10 @@ GitHub 中不需要保存长期 PyPI Token。
 noteforge/
 ├── src/noteforge/
 │   ├── cli/          # Typer 命令
-│   ├── collector/    # 来源检查与 B 站采集
-│   ├── subtitle/     # 字幕选择、解析与规范化
+│   ├── media/        # 统一媒体、Cookie、平台适配与 Worker 服务
 │   ├── knowledge/    # 分块、语义分析与知识提取
 │   ├── llm/          # OpenAI-compatible、Anthropic Messages 和 Ollama 适配器
-│   ├── document/     # 学习文档构建
-│   ├── renderer/     # Markdown 渲染与写入
+│   ├── document/     # 学习文档构建与 Markdown 渲染
 │   └── core/         # 端到端流水线
 ├── tests/
 ├── .github/workflows/publish.yml
