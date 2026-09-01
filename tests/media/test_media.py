@@ -3,6 +3,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
+from noteforge.auth import AuthRequiredError
 from noteforge.media.assets import AssetReference, MediaAsset
 from noteforge.media.config import (
     ExtractorConfig,
@@ -23,6 +24,18 @@ from noteforge.media.repository import MediaRepository
 from noteforge.media.service import MediaService
 from noteforge.media.subtitle import SubtitleParser
 from noteforge.media.ytdlp import YTDLPClient
+
+
+class AnonymousAuthManager:
+    """媒体测试专用认证替身，确保不会读取本机浏览器。"""
+
+    def get_cookie(self, platform):
+        del platform
+        raise AuthRequiredError("测试使用匿名请求。")
+
+    def refresh(self, platform, *, browser=None):
+        del platform, browser
+        raise AuthRequiredError("测试禁止刷新真实浏览器 Cookie。")
 
 
 def test_platform_adapters_recognize_bilibili_and_youtube() -> None:
@@ -142,7 +155,11 @@ def test_platform_collector_maps_metadata(tmp_path: Path) -> None:
         def close(self):
             pass
 
-    service = MediaService(ExtractorConfig(cache_path=tmp_path), worker=Worker())
+    service = MediaService(
+        ExtractorConfig(cache_path=tmp_path),
+        auth_manager=AnonymousAuthManager(),
+        worker=Worker(),
+    )
     resource = service.discover(info["webpage_url"])
     assert resource.metadata.id == "M7lc1UVf-VE"
 
@@ -180,7 +197,11 @@ def test_media_service_download_returns_expiring_asset(tmp_path: Path) -> None:
             pass
 
     config = ExtractorConfig(cache_path=tmp_path / "cache", runtime_path=tmp_path)
-    service = MediaService(config, worker=Worker())
+    service = MediaService(
+        config,
+        auth_manager=AnonymousAuthManager(),
+        worker=Worker(),
+    )
     asset = service.download_audio(info["webpage_url"], AudioRequest(codec="mp3"))
     lease_root = asset.path.parent
     assert asset.path.read_bytes() == b"audio"
