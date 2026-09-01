@@ -6,13 +6,12 @@ from noteforge.media.config import (
     PlatformConfig,
     load_extractor_config,
 )
-from noteforge.media.cookies import CookieLease, CookieService, CredentialInfo
+from noteforge.media.cookies import CookieLease, CookieService
 from noteforge.media.models import (
     AudioFormat,
     AudioRequest,
     AuthRequest,
     Browser,
-    CookiePersistence,
     MediaFormats,
     MediaType,
     Metadata,
@@ -20,6 +19,7 @@ from noteforge.media.models import (
     Playlist,
     PlaylistEntry,
     Subtitle,
+    SubtitleAccessStatus,
     SubtitleRequest,
     SubtitleSegment,
     VideoFormat,
@@ -46,9 +46,7 @@ __all__ = [
     "AuthRequest",
     "Browser",
     "CookieLease",
-    "CookiePersistence",
     "CookieService",
-    "CredentialInfo",
     "ExtractorConfig",
     "MediaAsset",
     "MediaFormats",
@@ -60,6 +58,7 @@ __all__ = [
     "Playlist",
     "PlaylistEntry",
     "Subtitle",
+    "SubtitleAccessStatus",
     "SubtitleParser",
     "SubtitleRequest",
     "SubtitleSegment",

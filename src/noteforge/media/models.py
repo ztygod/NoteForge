@@ -26,11 +26,16 @@ class MediaType(StrEnum):
     SUBTITLE = "subtitle"
 
 
-class CookiePersistence(StrEnum):
-    """Cookie 在任务结束后的处理策略。"""
+class SubtitleAccessStatus(StrEnum):
+    """字幕发现结果，避免把匿名空列表误判成无字幕。"""
 
-    EPHEMERAL = "ephemeral"
-    RETAIN = "retain"
+    AVAILABLE = "available"
+    NO_SUBTITLE = "no_subtitle"
+    LOGIN_REQUIRED = "login_required"
+    COOKIE_EXPIRED = "cookie_expired"
+    VIDEO_NOT_FOUND = "video_not_found"
+    NETWORK_ERROR = "network_error"
+    UNKNOWN_ERROR = "unknown_error"
 
 
 class Browser(StrEnum):
@@ -48,12 +53,10 @@ class Browser(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class AuthRequest:
-    """请求使用浏览器身份；不包含任何 Cookie 明文。"""
+    """兼容媒体 API 的浏览器偏好；不包含任何 Cookie 明文。"""
 
     browser: Browser | str  # Cookie 来源浏览器。
     profile: str | None = None  # 可选的浏览器配置目录。
-    persistence: CookiePersistence = CookiePersistence.EPHEMERAL  # 默认用后即删。
-    credential_id: str | None = None  # 已保留凭据 ID；设置后不再读取浏览器。
 
 
 @dataclass(frozen=True, slots=True)
@@ -183,3 +186,4 @@ class VideoResource:
     audio_path: Path | None = None
     video_path: Path | None = None
     transcript_source: str | None = None  # cache/manual/automatic/whisper。
+    subtitle_status: SubtitleAccessStatus = SubtitleAccessStatus.AVAILABLE

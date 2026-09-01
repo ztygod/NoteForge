@@ -58,10 +58,13 @@ without leaking yt-dlp options. yt-dlp runs in isolated worker processes, while
 downloaded assets live in expiring leases and are removed when `MediaAsset` is
 closed. Persistence requires an explicit `export_to()` call.
 
-Browser credentials are handled by `CookieService`. A task receives a private,
-short-lived Cookie lease that is deleted by default. Opt-in retained credentials
-are AEAD-encrypted and their master key is stored in the operating-system
-keyring; plaintext Cookie files are never retained.
+Browser credentials are handled by `AuthManager`. It validates encrypted stored
+cookies and can refresh them from Chrome, Edge, Brave, Arc, Chromium, Firefox,
+or Safari. Authentication failures are refreshed and retried at most once. Each
+task receives a private `0600` Cookie lease that is deleted immediately after
+use; retained credentials are AEAD-encrypted with a key stored in the operating
+system keyring. Run `noteforge auth --help` for browser, JSON, stdin, and
+interactive login options.
 
 ---
 

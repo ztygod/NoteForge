@@ -8,7 +8,7 @@ from typing import Any
 
 @dataclass(frozen=True, slots=True)
 class PlatformConfig:
-    """平台网络配置；身份认证由 CookieService 独立管理。"""
+    """平台网络配置；身份认证由 AuthManager 独立管理。"""
 
     proxy: str | None = None  # 仅作用于该平台；不包含认证信息。
 
