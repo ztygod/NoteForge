@@ -1,0 +1,21 @@
+tests/media/test_media.py
+  s_37e07d4efe0045::t_d39d2cccc0aec4 6,29-40,158-162,200-204
+tests/conftest.py
+  s_37e07d4efe0045::t_d39d2cccc0aec4 1-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "ee3a96b52dd84a468157daf4efa1c5ed63adfa48",
+  "prompts": {},
+  "sessions": {
+    "s_37e07d4efe0045": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a05a84-af8b-7820-856f-242d4701a7f3",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
