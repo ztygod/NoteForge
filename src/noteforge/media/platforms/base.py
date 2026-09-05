@@ -50,20 +50,21 @@ class PlatformAdapter(ABC):
         video_id, title = info.get("id"), info.get("title")
         if not isinstance(video_id, str) or not isinstance(title, str):
             raise RemoteCollectionError("视频元数据缺少 id 或 title。")
+
+        uploader = info.get("uploader")
         duration = info.get("duration")
+        thumbnail = info.get("thumbnail")
+        webpage_url = info.get("webpage_url")
+        description = info.get("description")
         return VideoMetadata(
-            video_id,
-            title,
-            info.get("uploader") if isinstance(info.get("uploader"), str) else None,
-            int(duration) if isinstance(duration, (int, float)) else None,
-            info.get("thumbnail") if isinstance(info.get("thumbnail"), str) else None,
-            self.platform.value,
-            info.get("webpage_url")
-            if isinstance(info.get("webpage_url"), str)
-            else source,
-            info.get("description")
-            if isinstance(info.get("description"), str)
-            else None,
+            id=video_id,
+            title=title,
+            uploader=uploader if isinstance(uploader, str) else None,
+            duration=int(duration) if isinstance(duration, (int, float)) else None,
+            thumbnail=thumbnail if isinstance(thumbnail, str) else None,
+            platform=self.platform.value,
+            webpage_url=webpage_url if isinstance(webpage_url, str) else source,
+            description=description if isinstance(description, str) else None,
         )
 
     def subtitles(self, info: Mapping[str, Any]) -> tuple[Subtitle, ...]:

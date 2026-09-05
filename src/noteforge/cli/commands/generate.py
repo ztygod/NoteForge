@@ -15,7 +15,7 @@ from noteforge.exceptions import NoteForgeError, PipelineExecutionError
 from noteforge.llm import create_llm_client
 from noteforge.media import collect_video
 from noteforge.media import source as inspection
-from noteforge.media.models import VideoResource
+from noteforge.media.models import SubtitleAccessStatus, VideoResource
 from noteforge.run import RunRecorder
 
 
@@ -80,6 +80,15 @@ def _run_preflight(
     )
     if not collection.transcript:
         ui.failure("字幕", _subtitle_description(collection))
+        if collection.subtitle_status is SubtitleAccessStatus.LOGIN_REQUIRED:
+            raise NoteForgeError(
+                "匿名状态下未发现字幕；请先运行 "
+                "`noteforge auth login --platform bilibili` 后重试。"
+            )
+        if collection.subtitle_status is SubtitleAccessStatus.COOKIE_EXPIRED:
+            raise NoteForgeError(
+                "Cookie 已过期且自动刷新失败；请重新登录或手动导入 Cookie。"
+            )
         raise NoteForgeError(
             "视频没有可供处理的 VTT 或 SRT 字幕；"
             "可先运行 `noteforge doctor <视频URL>` 检查访问权限。"

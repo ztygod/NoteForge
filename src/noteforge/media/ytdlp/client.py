@@ -2,7 +2,7 @@
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yt_dlp
 from yt_dlp.networking.impersonate import ImpersonateTarget
@@ -74,7 +74,10 @@ class YTDLPClient:
         if cookie_file is not None:
             params["cookiefile"] = str(cookie_file)
         try:
-            with yt_dlp.YoutubeDL(params) as downloader:
+            # yt-dlp 的公开 Python API 接受动态参数字典，但其类型信息把参数
+            # 标注为不可公开导入的内部 _Params。仅在第三方库边界放宽类型，
+            # 避免让 Any 扩散到本模块的参数构造与业务返回值中。
+            with yt_dlp.YoutubeDL(cast(Any, params)) as downloader:
                 info = downloader.extract_info(source, download=download)
         except DownloadError as error:
             raise translate_download_error(error) from error

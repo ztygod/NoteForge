@@ -10,10 +10,22 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from noteforge.exceptions import RemoteCollectionError, UnsupportedSourceError
+from noteforge.auth import (
+    AuthError,
+    AuthManager,
+    AuthPlatform,
+    AuthRequiredError,
+    CookieExpiredError,
+    EncryptedCookieStore,
+)
+from noteforge.exceptions import (
+    LoginRequiredError,
+    RemoteCollectionError,
+    UnsupportedSourceError,
+)
 from noteforge.media.assets import AssetReference, MediaAsset
 from noteforge.media.config import ExtractorConfig, load_extractor_config
-from noteforge.media.cookies import CookieService
+from noteforge.media.cookies import CookieLease, CookieService
 from noteforge.media.models import (
     AudioRequest,
     AuthRequest,
@@ -22,6 +34,7 @@ from noteforge.media.models import (
     MediaType,
     Playlist,
     Subtitle,
+    SubtitleAccessStatus,
     SubtitleRequest,
     VideoMetadata,
     VideoRequest,
@@ -42,6 +55,7 @@ class MediaService:
         config: ExtractorConfig | None = None,
         *,
         cookie_service: CookieService | None = None,
+        auth_manager: AuthManager | None = None,
         worker: MediaWorker | None = None,
         transcriber: AudioTranscriber | None = None,
         asset_ttl: timedelta = timedelta(hours=1),
@@ -50,12 +64,18 @@ class MediaService:
         # Repository 只持久化元数据/文本；媒体二进制始终进入临时资产目录。
         self.repository = MediaRepository(self.config.cache_path)
         self.cookies = cookie_service or CookieService(
-            vault_root=self.config.credential_vault_path
+            runtime_root=self.config.runtime_path / "credentials"
+        )
+        self.auth = auth_manager or AuthManager(
+            EncryptedCookieStore(self.config.credential_vault_path),
+            cookie_service=self.cookies,
         )
         self.worker = worker or ProcessMediaWorker(self.config.worker_count)
         self.transcriber = transcriber
         self.asset_ttl = asset_ttl
         self._legacy_assets: list[MediaAsset] = []
+        self._last_request_authenticated = False
+        self._last_auth_error: AuthError | None = None
         self._adapters: tuple[PlatformAdapter, ...] = (
             BilibiliAdapter(),
             YouTubeAdapter(),
@@ -142,18 +162,18 @@ class MediaService:
         metadata = self.extract_metadata(normalized, auth=auth)
         root = self._asset_root()
         try:
-            with self.cookies.acquire(adapter.platform, auth) as credential:
-                info = self.worker.execute(
-                    {
-                        "operation": "download_subtitle",
-                        "source": normalized,
-                        "target_dir": str(root),
-                        "language": request.language,
-                        "subtitle_format": request.format,
-                        "cookie_file": self._credential_path(credential),
-                        "platform_options": dict(adapter.backend_options()),
-                    }
-                )
+            info = self._execute_with_auth(
+                adapter,
+                auth,
+                {
+                    "operation": "download_subtitle",
+                    "source": normalized,
+                    "target_dir": str(root),
+                    "language": request.language,
+                    "subtitle_format": request.format,
+                    "platform_options": dict(adapter.backend_options()),
+                },
+            )
             requested = info.get("requested_subtitles")
             item = (
                 requested.get(request.language)
@@ -177,7 +197,20 @@ class MediaService:
         info = self._extract(adapter, normalized, auth=auth)
         metadata = adapter.metadata(info, normalized)
         self.repository.save_metadata(metadata)
-        return VideoResource(metadata=metadata, subtitles=adapter.subtitles(info))
+        subtitles = adapter.subtitles(info)
+        if subtitles:
+            status = SubtitleAccessStatus.AVAILABLE
+        elif isinstance(self._last_auth_error, CookieExpiredError):
+            status = SubtitleAccessStatus.COOKIE_EXPIRED
+        elif self._last_request_authenticated:
+            status = SubtitleAccessStatus.NO_SUBTITLE
+        else:
+            status = SubtitleAccessStatus.LOGIN_REQUIRED
+        return VideoResource(
+            metadata=metadata,
+            subtitles=subtitles,
+            subtitle_status=status,
+        )
 
     def extract(
         self,
@@ -318,17 +351,17 @@ class MediaService:
     ) -> Mapping[str, Any]:
         """在 Cookie 租约范围内执行只读发现操作。"""
 
-        with self.cookies.acquire(adapter.platform, auth) as credential:
-            return self.worker.execute(
-                {
-                    "operation": "extract",
-                    "source": source,
-                    "options": dict(options or {}),
-                    "cookie_file": self._credential_path(credential),
-                    "platform_options": dict(adapter.backend_options())
-                    | self._proxy_options(adapter),
-                }
-            )
+        return self._execute_with_auth(
+            adapter,
+            auth,
+            {
+                "operation": "extract",
+                "source": source,
+                "options": dict(options or {}),
+                "platform_options": dict(adapter.backend_options())
+                | self._proxy_options(adapter),
+            },
+        )
 
     def _download_media(
         self,
@@ -343,22 +376,22 @@ class MediaService:
         metadata = self.extract_metadata(normalized, auth=auth)
         root = self._asset_root()
         try:
-            with self.cookies.acquire(adapter.platform, auth) as credential:
-                info = self.worker.execute(
-                    {
-                        "operation": "download_media",
-                        "source": normalized,
-                        "target_dir": str(root),
-                        "audio_only": audio_only,
-                        "format_id": request.format_id,
-                        "codec": request.codec
-                        if isinstance(request, AudioRequest)
-                        else "mp3",
-                        "cookie_file": self._credential_path(credential),
-                        "platform_options": dict(adapter.backend_options())
-                        | self._proxy_options(adapter),
-                    }
-                )
+            info = self._execute_with_auth(
+                adapter,
+                auth,
+                {
+                    "operation": "download_media",
+                    "source": normalized,
+                    "target_dir": str(root),
+                    "audio_only": audio_only,
+                    "format_id": request.format_id,
+                    "codec": request.codec
+                    if isinstance(request, AudioRequest)
+                    else "mp3",
+                    "platform_options": dict(adapter.backend_options())
+                    | self._proxy_options(adapter),
+                },
+            )
             path = self._downloaded_path(info, audio_only, request)
             return self._asset(
                 MediaType.AUDIO if audio_only else MediaType.VIDEO, metadata, path, root
@@ -371,30 +404,100 @@ class MediaService:
         proxy = self.config.for_platform(adapter.platform.value).proxy
         return {"proxy": proxy} if proxy else {}
 
+    def _execute_with_auth(
+        self,
+        adapter: PlatformAdapter,
+        auth: AuthRequest | None,
+        payload: dict[str, Any],
+    ) -> Mapping[str, Any]:
+        """携带可用 Cookie 执行任务，登录失效时刷新并重试一次。"""
+
+        platform = AuthPlatform(adapter.platform.value)
+        browser = str(auth.browser) if auth is not None else None
+        self._last_auth_error = None
+
+        # 第一次请求优先使用已有凭据。调用方指定浏览器时，则强制从该浏览器
+        # 重新导入 Cookie；凭据不可用时仍允许公开资源以匿名方式继续访问。
+        credential = self._initial_credential(platform, browser)
+        try:
+            return self._execute_worker(payload, credential)
+        except LoginRequiredError:
+            pass
+
+        # Worker 明确认定需要登录，说明第一次使用的 Cookie 无效或匿名访问受限。
+        # 此时强制从浏览器刷新凭据，并且只重试一次，避免无限重试。
+        refreshed = self.auth.refresh_from_browser(platform, browser=browser)
+        try:
+            return self._execute_worker(payload, refreshed)
+        except LoginRequiredError as error:
+            raise AuthRequiredError(
+                f"{platform.value} 登录态刷新后仍无法访问该资源。"
+            ) from error
+
+    def _initial_credential(
+        self, platform: AuthPlatform, browser: str | None
+    ) -> CookieLease:
+        """准备首次请求的凭据；认证不可用时安全降级为匿名租约。"""
+
+        try:
+            if browser:
+                return self.auth.refresh_from_browser(platform, browser=browser)
+            return self.auth.get_cookie(platform)
+        except AuthError as error:
+            # 保存认证失败原因，供 discover() 区分“Cookie 过期”和“确实无字幕”。
+            self._last_auth_error = error
+            return self.cookies.anonymous()
+
+    def _execute_worker(
+        self, payload: dict[str, Any], credential: CookieLease
+    ) -> Mapping[str, Any]:
+        """为单次 Worker 请求注入 Cookie，并在请求结束后销毁明文租约。"""
+
+        with credential:
+            cookie_path = self._credential_path(credential)
+            request_payload = dict(payload)
+            request_payload["cookie_file"] = cookie_path
+            self._last_request_authenticated = cookie_path is not None
+            return self.worker.execute(request_payload)
+
     @staticmethod
-    def _credential_path(credential: Any) -> str | None:
-        path = credential._materialize_for_backend()
+    def _credential_path(credential: CookieLease) -> str | None:
+        """把 Cookie 租约路径转换为 Worker 接受的字符串；匿名租约返回 None。"""
+
+        # backend_path() 只暴露租约有效期内的临时文件，不读取 Cookie 内容。
+        path = credential.backend_path()
         return str(path) if path else None
 
     def _asset_root(self) -> Path:
+        """为一次下载创建独立的临时资产目录，避免并发任务相互覆盖。"""
+
+        # 先确保统一的运行时根目录存在，再创建带随机后缀的 asset-* 子目录。
         self.config.runtime_path.mkdir(parents=True, exist_ok=True)
         return Path(tempfile.mkdtemp(prefix="asset-", dir=self.config.runtime_path))
 
     def _asset(
         self, media_type: MediaType, metadata: VideoMetadata, path: Path, root: Path
     ) -> MediaAsset:
+        """将下载文件及其临时目录包装为具有过期时间的媒体资产。"""
+
+        # 资产引用只保存非敏感描述信息，并使用随机 ID 标识本次下载结果。
         reference = AssetReference(
             uuid.uuid4().hex,
             media_type,
             datetime.now(UTC) + self.asset_ttl,
             metadata,
         )
+        # MediaAsset 关闭时会负责清理 root；需要长期保存时应先调用 export_to()。
         return MediaAsset(reference, path, root)
 
     @staticmethod
     def _downloaded_path(
         info: Mapping[str, Any], audio_only: bool, request: VideoRequest | AudioRequest
     ) -> Path:
+        """从 Worker 返回信息中解析最终可供调用方使用的下载文件路径。"""
+
+        # yt-dlp 通常把实际下载路径放在 requested_downloads；部分提取结果只会
+        # 提供兼容字段 _filename，因此在前者不存在时使用后者作为回退。
         downloads = info.get("requested_downloads")
         value = (
             downloads[0].get("filepath")
@@ -406,6 +509,9 @@ class MediaService:
         if not isinstance(value, str) or not value:
             raise RemoteCollectionError("媒体 Worker 未返回下载文件路径。")
         path = Path(value)
+
+        # 音频提取经过 FFmpeg 后扩展名可能已经变成请求的目标编码，而 yt-dlp
+        # 返回的仍是转换前路径；目标文件确实存在时应优先返回转换后的文件。
         if audio_only and isinstance(request, AudioRequest):
             converted = path.with_suffix(f".{request.codec}")
             if converted.exists():

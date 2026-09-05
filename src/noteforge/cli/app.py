@@ -4,7 +4,7 @@ from importlib.metadata import version
 
 import typer
 
-from noteforge.cli.commands import configure, doctor, generate, inspect
+from noteforge.cli.commands import auth, configure, doctor, generate, inspect
 
 _DISTRIBUTION_NAME = "noteforge-cli"
 
@@ -39,6 +39,7 @@ app.command()(configure)
 app.command()(doctor)
 app.command()(inspect)
 app.command()(generate)
+app.add_typer(auth.app, name="auth")
 
 
 def main() -> None:

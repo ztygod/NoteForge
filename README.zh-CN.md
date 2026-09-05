@@ -35,10 +35,27 @@
 调用方不会接触其参数或下载路径。媒体默认保存在有 TTL 的临时租约中，退出
 `MediaAsset` 上下文后立即删除；只有显式调用 `export_to()` 才会持久化。
 
-浏览器身份由独立 `CookieService` 管理。每个任务只获得权限为 `0600` 的短期
-Cookie 租约，任务结束默认销毁。用户显式选择 `CookiePersistence.RETAIN` 时，
-目标平台 Cookie 使用 AEAD 加密保存，主密钥进入系统 Keyring；不会持久化明文
-`cookies.txt`。`config.yaml`、`.noteforge/` 与 `.cache/` 已被 Git 忽略。
+浏览器身份由独立 `AuthManager` 管理。它会验证加密 Store 中的 Cookie，失效时
+从 Chrome、Edge、Brave、Arc、Chromium、Firefox 或 Safari 重新导入，并让认证
+失败的业务请求最多自动重试一次。每个任务只获得权限为 `0600` 的短期 Cookie
+租约，任务结束立即销毁；持久凭据使用 AEAD 加密，主密钥进入系统 Keyring。
+不会持久化明文 `cookies.txt`，也不会在日志和错误中输出 Cookie。
+
+```bash
+# 自动发现浏览器，也可用 --browser chrome 指定来源
+noteforge auth login --platform bilibili
+
+# 支持扩展 JSON、标准输入和交互式网页登录
+noteforge auth login --platform bilibili ~/Downloads/cookies.json
+noteforge auth login --platform bilibili --raw-stdin
+noteforge auth login --platform youtube --qr
+
+noteforge auth status
+noteforge auth logout --platform bilibili
+```
+
+交互登录首次使用前需要运行 `playwright install chromium`。命令行 `--raw` 可能被
+Shell history 记录，推荐使用 `--raw-stdin`。
 
 字幕 fallback 顺序为人工字幕、自动字幕、可选的音频转录器；媒体层目前可解析
 VTT、SRT、ASS 和 JSON3，并为 Whisper 实现保留了 `AudioTranscriber` 接口。

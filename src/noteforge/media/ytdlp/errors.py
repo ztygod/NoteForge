@@ -18,18 +18,18 @@ def translate_download_error(error: DownloadError) -> CollectionError:
     message = str(error)
     normalized = message.casefold()
     if "unsupported url" in normalized or "no suitable extractor" in normalized:
-        return UnsupportedSourceError(f"不支持的视频 URL：{message}")
+        return UnsupportedSourceError("yt-dlp 不支持该视频 URL。")
     if any(
         item in normalized
         for item in ("login required", "sign in", "cookies", "扫码登录", "登录后")
     ):
-        return LoginRequiredError(f"该视频需要登录后访问：{message}")
+        return LoginRequiredError("该视频需要登录后访问。")
     if (
         "http error 412" in normalized
         or "risk control" in normalized
         or "风控" in message
     ):
-        return RiskControlError(f"视频平台触发访问风控：{message}")
+        return RiskControlError("视频平台触发访问风控。")
     if any(
         item in normalized
         for item in (
@@ -40,5 +40,6 @@ def translate_download_error(error: DownloadError) -> CollectionError:
             "不存在",
         )
     ):
-        return VideoUnavailableError(f"视频不存在或不可访问：{message}")
-    return RemoteCollectionError(f"视频资源提取失败：{message}")
+        return VideoUnavailableError("视频不存在或当前不可访问。")
+    # 原始后端消息可能包含 URL 或认证上下文，只通过异常链保留给调试器。
+    return RemoteCollectionError("视频资源提取失败。")
