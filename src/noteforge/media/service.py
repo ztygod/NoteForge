@@ -25,7 +25,7 @@ from noteforge.exceptions import (
 )
 from noteforge.media.assets import AssetReference, MediaAsset
 from noteforge.media.config import ExtractorConfig, load_extractor_config
-from noteforge.media.cookies import CookieService
+from noteforge.media.cookies import CookieLease, CookieService
 from noteforge.media.models import (
     AudioRequest,
     AuthRequest,
@@ -410,64 +410,94 @@ class MediaService:
         auth: AuthRequest | None,
         payload: dict[str, Any],
     ) -> Mapping[str, Any]:
-        """统一注入认证，并在明确认证失败时最多刷新重试一次。"""
+        """携带可用 Cookie 执行任务，登录失效时刷新并重试一次。"""
 
         platform = AuthPlatform(adapter.platform.value)
         browser = str(auth.browser) if auth is not None else None
         self._last_auth_error = None
+
+        # 第一次请求优先使用已有凭据。调用方指定浏览器时，则强制从该浏览器
+        # 重新导入 Cookie；凭据不可用时仍允许公开资源以匿名方式继续访问。
+        credential = self._initial_credential(platform, browser)
         try:
-            credential = (
-                self.auth.refresh(platform, browser=browser)
-                if browser
-                else self.auth.get_cookie(platform)
-            )
-        except AuthError as error:
-            self._last_auth_error = error
-            credential = self.cookies.anonymous()
+            return self._execute_worker(payload, credential)
+        except LoginRequiredError:
+            pass
+
+        # Worker 明确认定需要登录，说明第一次使用的 Cookie 无效或匿名访问受限。
+        # 此时强制从浏览器刷新凭据，并且只重试一次，避免无限重试。
+        refreshed = self.auth.refresh_from_browser(platform, browser=browser)
+        try:
+            return self._execute_worker(payload, refreshed)
+        except LoginRequiredError as error:
+            raise AuthRequiredError(
+                f"{platform.value} 登录态刷新后仍无法访问该资源。"
+            ) from error
+
+    def _initial_credential(
+        self, platform: AuthPlatform, browser: str | None
+    ) -> CookieLease:
+        """准备首次请求的凭据；认证不可用时安全降级为匿名租约。"""
 
         try:
-            with credential:
-                first = dict(payload)
-                first["cookie_file"] = self._credential_path(credential)
-                self._last_request_authenticated = first["cookie_file"] is not None
-                return self.worker.execute(first)
-        except LoginRequiredError:
-            # 只有后端明确认定认证失败时才刷新，且整个调用最多重试一次。
-            with self.auth.refresh(platform, browser=browser) as refreshed:
-                second = dict(payload)
-                second["cookie_file"] = self._credential_path(refreshed)
-                self._last_request_authenticated = True
-                try:
-                    return self.worker.execute(second)
-                except LoginRequiredError as error:
-                    raise AuthRequiredError(
-                        f"{platform.value} 登录态刷新后仍无法访问该资源。"
-                    ) from error
+            if browser:
+                return self.auth.refresh_from_browser(platform, browser=browser)
+            return self.auth.get_cookie(platform)
+        except AuthError as error:
+            # 保存认证失败原因，供 discover() 区分“Cookie 过期”和“确实无字幕”。
+            self._last_auth_error = error
+            return self.cookies.anonymous()
+
+    def _execute_worker(
+        self, payload: dict[str, Any], credential: CookieLease
+    ) -> Mapping[str, Any]:
+        """为单次 Worker 请求注入 Cookie，并在请求结束后销毁明文租约。"""
+
+        with credential:
+            cookie_path = self._credential_path(credential)
+            request_payload = dict(payload)
+            request_payload["cookie_file"] = cookie_path
+            self._last_request_authenticated = cookie_path is not None
+            return self.worker.execute(request_payload)
 
     @staticmethod
-    def _credential_path(credential: Any) -> str | None:
+    def _credential_path(credential: CookieLease) -> str | None:
+        """把 Cookie 租约路径转换为 Worker 接受的字符串；匿名租约返回 None。"""
+
+        # backend_path() 只暴露租约有效期内的临时文件，不读取 Cookie 内容。
         path = credential.backend_path()
         return str(path) if path else None
 
     def _asset_root(self) -> Path:
+        """为一次下载创建独立的临时资产目录，避免并发任务相互覆盖。"""
+
+        # 先确保统一的运行时根目录存在，再创建带随机后缀的 asset-* 子目录。
         self.config.runtime_path.mkdir(parents=True, exist_ok=True)
         return Path(tempfile.mkdtemp(prefix="asset-", dir=self.config.runtime_path))
 
     def _asset(
         self, media_type: MediaType, metadata: VideoMetadata, path: Path, root: Path
     ) -> MediaAsset:
+        """将下载文件及其临时目录包装为具有过期时间的媒体资产。"""
+
+        # 资产引用只保存非敏感描述信息，并使用随机 ID 标识本次下载结果。
         reference = AssetReference(
             uuid.uuid4().hex,
             media_type,
             datetime.now(UTC) + self.asset_ttl,
             metadata,
         )
+        # MediaAsset 关闭时会负责清理 root；需要长期保存时应先调用 export_to()。
         return MediaAsset(reference, path, root)
 
     @staticmethod
     def _downloaded_path(
         info: Mapping[str, Any], audio_only: bool, request: VideoRequest | AudioRequest
     ) -> Path:
+        """从 Worker 返回信息中解析最终可供调用方使用的下载文件路径。"""
+
+        # yt-dlp 通常把实际下载路径放在 requested_downloads；部分提取结果只会
+        # 提供兼容字段 _filename，因此在前者不存在时使用后者作为回退。
         downloads = info.get("requested_downloads")
         value = (
             downloads[0].get("filepath")
@@ -479,6 +509,9 @@ class MediaService:
         if not isinstance(value, str) or not value:
             raise RemoteCollectionError("媒体 Worker 未返回下载文件路径。")
         path = Path(value)
+
+        # 音频提取经过 FFmpeg 后扩展名可能已经变成请求的目标编码，而 yt-dlp
+        # 返回的仍是转换前路径；目标文件确实存在时应优先返回转换后的文件。
         if audio_only and isinstance(request, AudioRequest):
             converted = path.with_suffix(f".{request.codec}")
             if converted.exists():

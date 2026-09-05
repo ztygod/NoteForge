@@ -61,30 +61,33 @@ class AuthManager:
         platform = AuthPlatform(platform)
         with self._locks[platform]:
             stored = self.store.load(platform)
+            stored_status: AuthStatus | None = None
             if stored is not None:
                 result = self.validator.validate(platform, stored)
+                stored_status = result.status
                 if result.status is AuthStatus.AUTHENTICATED:
                     return self.cookie_service.lease(platform.value, stored)
-            return self.refresh(platform, browser=browser)
-
-    def refresh(
-        self, platform: AuthPlatform, *, browser: str | None = None
-    ) -> CookieLease:
-        """优先从本机浏览器重新导入、验证并持久化 Cookie。"""
-
-        platform = AuthPlatform(platform)
-        with self._locks[platform]:
-            provider = self._browser_provider_factory(browser)
             try:
-                cookies = provider.load(platform)
+                return self.refresh_from_browser(platform, browser=browser)
             except CookieImportError as error:
-                if self.store.exists(platform):
+                # 只有远程验证明确判定旧 Cookie 失效时，才报告“已过期”。
+                if stored_status is AuthStatus.COOKIE_EXPIRED:
                     raise CookieExpiredError(
                         f"{platform.value} Cookie 已过期，自动刷新未成功。"
                     ) from error
                 raise AuthRequiredError(
                     f"未找到有效的 {platform.value} 浏览器登录态。"
                 ) from error
+
+    def refresh_from_browser(
+        self, platform: AuthPlatform, *, browser: str | None = None
+    ) -> CookieLease:
+        """强制从本机浏览器重新导入、验证并持久化 Cookie。"""
+
+        platform = AuthPlatform(platform)
+        with self._locks[platform]:
+            provider = self._browser_provider_factory(browser)
+            cookies = provider.load(platform)
             self._validate_required(platform, cookies)
             source = provider.source or CookieSource("browser", browser)
             self.store.save(platform, cookies, source)

@@ -33,7 +33,7 @@ class AnonymousAuthManager:
         del platform
         raise AuthRequiredError("测试使用匿名请求。")
 
-    def refresh(self, platform, *, browser=None):
+    def refresh_from_browser(self, platform, *, browser=None):
         del platform, browser
         raise AuthRequiredError("测试禁止刷新真实浏览器 Cookie。")
 

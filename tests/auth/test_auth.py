@@ -285,7 +285,7 @@ class FakeAuthManager:
             raise AuthRequiredError("没有 Cookie")
         return self.service.lease(platform.value, _cookies(platform))
 
-    def refresh(self, platform, *, browser=None):
+    def refresh_from_browser(self, platform, *, browser=None):
         del browser
         self.refresh_calls += 1
         return self.service.lease(platform.value, _cookies(platform))

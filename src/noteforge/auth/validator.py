@@ -91,4 +91,11 @@ class CookieValidator:
 
     @staticmethod
     def _cookie_dict(cookies: http.cookiejar.CookieJar) -> dict[str, str]:
-        return {cookie.name: cookie.value for cookie in cookies}
+        """转换 CookieJar，并忽略没有字符串值的无效 Cookie。"""
+
+        result: dict[str, str] = {}
+        for cookie in cookies:
+            value = cookie.value
+            if isinstance(value, str):
+                result[cookie.name] = value
+        return result
