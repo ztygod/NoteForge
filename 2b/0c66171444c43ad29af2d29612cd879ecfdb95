@@ -1,0 +1,30 @@
+tests/auth/test_auth.py
+  s_fb0dd578d22496::t_e1dc519c03f861 159
+  s_fb0dd578d22496::t_3dbb390b6e146f 3,5-6,12,23,157-158,160-167,172-251
+  s_fb0dd578d22496::t_d4a36988074967 252-253
+src/noteforge/auth/store.py
+  s_fb0dd578d22496::t_db65ac77d71bb4 42-43,51-53,55-61,63,88,91,99,101-102,106,111,117,122,125-138,142-145,147-148,153,155,157,161-163,165,167,171,174,182,186,191,197,201-204,206
+  s_fb0dd578d22496::t_51a20edcac72c9 172-173,175-181,185
+  s_fb0dd578d22496::t_3587ca1ba9d968 5-6,18,44,75,78-82,89-90,92-98,100,103-105,146,154,159-160,164,166,168-170,183-184,187-189,192-196,198-200,212-218,222-236,263-265,267,272
+  s_fb0dd578d22496::t_13bf637f7db705 205
+src/noteforge/auth/errors.py
+  s_fb0dd578d22496::t_3587ca1ba9d968 26-29
+src/noteforge/auth/__init__.py
+  s_fb0dd578d22496::t_3587ca1ba9d968 9,35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.2",
+  "base_commit_sha": "2b0c66171444c43ad29af2d29612cd879ecfdb95",
+  "prompts": {},
+  "sessions": {
+    "s_fb0dd578d22496": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a06f54-6bd2-73d2-b917-975f89abd676",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
