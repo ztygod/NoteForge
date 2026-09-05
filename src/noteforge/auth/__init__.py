@@ -6,6 +6,7 @@ from noteforge.auth.errors import (
     CookieExpiredError,
     CookieImportError,
     CookieValidationError,
+    CredentialStoreError,
     InteractiveLoginError,
 )
 from noteforge.auth.manager import AuthManager
@@ -31,6 +32,7 @@ __all__ = [
     "CookieSource",
     "CookieStore",
     "CookieValidationError",
+    "CredentialStoreError",
     "EncryptedCookieStore",
     "InteractiveLoginError",
     "JsonCookieProvider",

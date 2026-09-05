@@ -1,11 +1,15 @@
 """统一认证生命周期的单元测试。"""
 
+import base64
 import http.cookiejar
+import json
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
 import pytest
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from noteforge.auth import (
     AuthManager,
@@ -16,6 +20,7 @@ from noteforge.auth import (
     CookieExpiredError,
     CookieImportError,
     CookieSource,
+    CredentialStoreError,
     EncryptedCookieStore,
     JsonCookieProvider,
     PlaywrightCookieProvider,
@@ -149,9 +154,101 @@ def test_encrypted_cookie_store_round_trip(tmp_path: Path, monkeypatch) -> None:
         "bili_jct",
     }
     assert store.exists(AuthPlatform.BILIBILI)
-    assert "session-secret" not in (tmp_path / "bilibili/metadata.json").read_text()
+    credential = tmp_path / "bilibili/credential.v3.enc"
+    assert credential.exists()
+    assert list(credential.parent.iterdir()) == [credential]
+    assert b"session-secret" not in credential.read_bytes()
+    assert credential.stat().st_mode & 0o777 == 0o600
+    assert credential.parent.stat().st_mode & 0o777 == 0o700
+    metadata = store.metadata(AuthPlatform.BILIBILI)
+    assert metadata["version"] == 3
+    assert metadata["source"] == "browser"
+    assert metadata["browser"] == "chrome"
+    assert metadata["cookie_count"] == 3
     store.clear(AuthPlatform.BILIBILI)
     assert not store.exists(AuthPlatform.BILIBILI)
+
+
+def test_v3_atomic_replace_failure_preserves_previous_value(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.setenv("NOTEFORGE_COOKIE_VAULT_KEY", "ab" * 32)
+    store = EncryptedCookieStore(tmp_path)
+    original = _cookies(AuthPlatform.BILIBILI)
+    store.save(AuthPlatform.BILIBILI, original, CookieSource("raw"))
+    original_blob = (tmp_path / "bilibili/credential.v3.enc").read_bytes()
+
+    def fail_replace(source, destination):
+        del source, destination
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+    with pytest.raises(CredentialStoreError):
+        store.save(
+            AuthPlatform.BILIBILI,
+            _cookies(AuthPlatform.BILIBILI),
+            CookieSource("browser", "chrome"),
+        )
+
+    assert (tmp_path / "bilibili/credential.v3.enc").read_bytes() == original_blob
+    assert store.load(AuthPlatform.BILIBILI) is not None
+
+
+@pytest.mark.parametrize("mutation", ["truncate", "tamper"])
+def test_v3_rejects_damaged_ciphertext(
+    tmp_path: Path, monkeypatch, mutation: str
+) -> None:
+    monkeypatch.setenv("NOTEFORGE_COOKIE_VAULT_KEY", "ab" * 32)
+    store = EncryptedCookieStore(tmp_path)
+    store.save(
+        AuthPlatform.BILIBILI,
+        _cookies(AuthPlatform.BILIBILI),
+        CookieSource("raw"),
+    )
+    path = tmp_path / "bilibili/credential.v3.enc"
+    payload = path.read_bytes()
+    path.write_bytes(payload[:8] if mutation == "truncate" else payload[:-1] + b"x")
+
+    with pytest.raises(CredentialStoreError):
+        store.load(AuthPlatform.BILIBILI)
+
+
+def test_v3_rejects_wrong_key_and_platform_payload(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("NOTEFORGE_COOKIE_VAULT_KEY", "ab" * 32)
+    store = EncryptedCookieStore(tmp_path)
+    store.save(
+        AuthPlatform.BILIBILI,
+        _cookies(AuthPlatform.BILIBILI),
+        CookieSource("raw"),
+    )
+    monkeypatch.setenv("NOTEFORGE_COOKIE_VAULT_KEY", "cd" * 32)
+    with pytest.raises(CredentialStoreError):
+        store.load(AuthPlatform.BILIBILI)
+
+    monkeypatch.setenv("NOTEFORGE_COOKIE_VAULT_KEY", "ab" * 32)
+    target = tmp_path / "youtube"
+    target.mkdir()
+    envelope = {
+        "version": 3,
+        "platform": "bilibili",
+        "source": "raw",
+        "browser": None,
+        "refreshed_at": "2026-01-01T00:00:00+00:00",
+        "cookie_count": 1,
+        "cookies": base64.b64encode(
+            store._jar_bytes(_cookies(AuthPlatform.YOUTUBE))
+        ).decode("ascii"),
+    }
+    nonce = b"3" * 12
+    plain = json.dumps(envelope).encode()
+    (target / "credential.v3.enc").write_bytes(
+        nonce
+        + AESGCM(bytes.fromhex("ab" * 32)).encrypt(
+            nonce, plain, b"noteforge:youtube:v3"
+        )
+    )
+    with pytest.raises(CredentialStoreError):
+        store.load(AuthPlatform.YOUTUBE)
 
 
 def test_raw_and_json_providers_filter_domains(tmp_path: Path) -> None:

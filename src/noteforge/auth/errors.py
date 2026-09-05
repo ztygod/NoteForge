@@ -23,5 +23,9 @@ class CookieValidationError(AuthError):
     """Cookie 验证请求失败或返回了无效数据。"""
 
 
+class CredentialStoreError(AuthError):
+    """凭据存储无法读取、写入或通过完整性校验。"""
+
+
 class InteractiveLoginError(AuthError):
     """交互式登录失败、取消或超时。"""
