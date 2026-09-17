@@ -1,0 +1,21 @@
+packages/course-contract/tests/public-api.test.js
+  s_107b90840ec013::t_15bf39cea7d252 1-24
+packages/course-contract/src/index.ts
+  s_107b90840ec013::t_15bf39cea7d252 1-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ecae038806557687c693b754c83248f60e5a51fb",
+  "prompts": {},
+  "sessions": {
+    "s_107b90840ec013": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ad44-9ea3-7e92-894a-b78162533a16",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
