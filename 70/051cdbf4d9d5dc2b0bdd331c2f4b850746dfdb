@@ -1,0 +1,38 @@
+packages/course-contract/src/validation/internal.ts
+  s_107b90840ec013::t_5c291c90fb1fd2 1-47
+packages/course-contract/src/validation/scene-types/validate-slide.ts
+  s_107b90840ec013::t_5c291c90fb1fd2 1-42
+AGENTS.md
+  s_107b90840ec013::t_c3360fcf5876b5 1-20
+packages/course-contract/src/validation/validate-action.ts
+  s_107b90840ec013::t_5c291c90fb1fd2 1-80
+packages/course-contract/src/validation/index.ts
+  s_107b90840ec013::t_51ffe402784d35 7
+  s_107b90840ec013::t_388a283ddc6e03 1-6
+packages/course-contract/src/validation/scene-types/validate-interactive.ts
+  s_107b90840ec013::t_5c291c90fb1fd2 1-61
+packages/course-contract/src/validation/scene-types/validate-quiz.ts
+  s_107b90840ec013::t_5c291c90fb1fd2 1-46
+packages/course-contract/src/validation/validate-course.ts
+  s_107b90840ec013::t_51ffe402784d35 1-8,10,12-19,21-25,27,29,31-33,37,39-48,50,52-55,57-61,63-67,69-73,75,77-96,98-99,101-118,121-148,151-158,160-163,165,169-172,175-177,179-184,186-196,198
+packages/course-contract/src/validation/validate-references.ts
+  s_107b90840ec013::t_5c291c90fb1fd2 1-71
+packages/course-contract/tests/course-validator.test.js
+  s_107b90840ec013::t_de6fea998264af 1-6,15-18,20,26,34,40-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "70051cdbf4d9d5dc2b0bdd331c2f4b850746dfdb",
+  "prompts": {},
+  "sessions": {
+    "s_107b90840ec013": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ad44-9ea3-7e92-894a-b78162533a16",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
