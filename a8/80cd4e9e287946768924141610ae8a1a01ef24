@@ -1,0 +1,87 @@
+packages/course-contract/src/scene-types/interactive.ts
+  s_107b90840ec013::t_298460a135d45a 1-11
+packages/course-contract/package.json
+  s_107b90840ec013::t_298460a135d45a 1-28
+packages/course-contract/src/version.ts
+  s_107b90840ec013::t_298460a135d45a 1-8
+packages/course-contract/schemas/scene-types/slide.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-31
+packages/course-contract/src/action.ts
+  s_107b90840ec013::t_298460a135d45a 1-38
+packages/course-contract/src/validation/validation-result.ts
+  s_107b90840ec013::t_298460a135d45a 1-34
+packages/course-contract/schemas/scene-types/interactive.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-25
+packages/course-contract/tsconfig.json
+  s_107b90840ec013::t_298460a135d45a 1-17
+packages/course-contract/src/source.ts
+  s_107b90840ec013::t_298460a135d45a 1-26
+packages/course-contract/schemas/course.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-40
+packages/course-contract/schemas/scene-base.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-41
+packages/course-contract/schemas/chapter.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-18
+packages/course-contract/schemas/scene.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-10
+packages/course-contract/src/validation/index.ts
+  s_107b90840ec013::t_298460a135d45a 1-2
+packages/course-contract/src/validation/course-validator.ts
+  s_107b90840ec013::t_77527cc0f67833 139-142
+  s_107b90840ec013::t_298460a135d45a 1-138,143-167
+packages/course-contract/examples/minimal-course.json
+  s_107b90840ec013::t_9a580312418be8 1-53
+packages/course-contract/schemas/source-reference.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-15
+packages/course-contract/src/metadata.ts
+  s_107b90840ec013::t_298460a135d45a 1-25
+packages/course-contract/src/scene.ts
+  s_107b90840ec013::t_77527cc0f67833 55,58-59
+  s_107b90840ec013::t_298460a135d45a 1-54,56-57
+packages/course-contract/src/scene-types/quiz.ts
+  s_107b90840ec013::t_298460a135d45a 1-19
+packages/course-contract/schemas/scene-types/quiz-single-choice.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-25
+packages/course-contract/tests/course-validator.test.js
+  s_107b90840ec013::t_9a580312418be8 1-29
+packages/course-contract/src/scene-types/slide.ts
+  s_107b90840ec013::t_298460a135d45a 1-41
+.gitignore
+  s_107b90840ec013::t_77527cc0f67833 16
+packages/course-contract/src/scene-types/index.ts
+  s_107b90840ec013::t_298460a135d45a 1-3
+packages/course-contract/schemas/source.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-13
+packages/course-contract/src/index.ts
+  s_107b90840ec013::t_298460a135d45a 1-10
+packages/course-contract/src/chapter.ts
+  s_107b90840ec013::t_298460a135d45a 1-13
+packages/course-contract/schemas/action.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-41
+packages/course-contract/src/asset.ts
+  s_107b90840ec013::t_298460a135d45a 1-16
+packages/course-contract/README.md
+  s_107b90840ec013::t_9a580312418be8 1-16
+packages/course-contract/schemas/asset.schema.json
+  s_107b90840ec013::t_9a580312418be8 1-15
+packages/course-contract/src/course.ts
+  s_107b90840ec013::t_298460a135d45a 1-21
+packages/course-contract/package-lock.json
+  s_107b90840ec013::t_7fa3d23637d511 1-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a880cd4e9e287946768924141610ae8a1a01ef24",
+  "prompts": {},
+  "sessions": {
+    "s_107b90840ec013": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0ad44-9ea3-7e92-894a-b78162533a16",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "ztygod <2739022972@qq.com>"
+    }
+  }
+}
