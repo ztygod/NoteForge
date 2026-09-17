@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/scene-base.schema.json",
+  "title": "SceneBase",
+  "type": "object",
+  "required": ["id", "kind", "kindVersion", "payload"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "description": "场景唯一 ID。" },
+    "kind": { "type": "string", "minLength": 1, "description": "场景内容类型。" },
+    "kindVersion": { "type": "string", "minLength": 1, "description": "场景类型协议版本。" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "description": "场景标题。" },
+        "description": { "type": "string", "description": "场景简介。" },
+        "estimatedDurationSeconds": { "type": "number", "minimum": 0, "description": "预计学习时长（秒）。" }
+      }
+    },
+    "sourceRefs": {
+      "type": "array",
+      "description": "场景对应的原始材料位置。",
+      "items": { "$ref": "./source-reference.schema.json" }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "theme": { "type": "string", "description": "渲染主题标识。" },
+        "navigation": { "enum": ["manual", "auto"], "description": "场景切换方式。" },
+        "skippable": { "type": "boolean", "description": "是否允许跳过场景。" }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "description": "场景播放动作。",
+      "items": { "$ref": "./action.schema.json" }
+    },
+    "payload": { "type": "object", "description": "场景专属内容。" }
+  }
+}

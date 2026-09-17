@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/course.schema.json",
+  "title": "NoteForge CourseDocument",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "metadata", "chapters", "assets", "sources"],
+  "properties": {
+    "schemaVersion": { "const": "1.0", "description": "课程文档协议版本。" },
+    "id": { "type": "string", "minLength": 1, "description": "课程唯一 ID。" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "language", "createdAt"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "description": "课程标题。" },
+        "description": { "type": "string", "description": "课程简介。" },
+        "language": { "type": "string", "minLength": 1, "description": "课程主要语言。" },
+        "coverAssetId": { "type": "string", "minLength": 1, "description": "课程封面资源 ID。" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "课程创建时间。" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "课程更新时间。" }
+      }
+    },
+    "chapters": {
+      "type": "array",
+      "description": "按学习顺序排列的章节。",
+      "items": { "$ref": "./chapter.schema.json" }
+    },
+    "assets": {
+      "type": "object",
+      "description": "以资源 ID 为键的媒体资源表。",
+      "additionalProperties": { "$ref": "./asset.schema.json" }
+    },
+    "sources": {
+      "type": "object",
+      "description": "以来源 ID 为键的原始材料表。",
+      "additionalProperties": { "$ref": "./source.schema.json" }
+    }
+  }
+}

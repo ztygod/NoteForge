@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/scene-types/slide.schema.json",
+  "allOf": [
+    { "$ref": "../scene-base.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "slide" },
+        "kindVersion": { "const": "1.0" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["elements"],
+          "properties": {
+            "elements": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  { "type": "object", "additionalProperties": false, "required": ["type", "text"], "properties": { "type": { "const": "heading" }, "text": { "type": "string" }, "level": { "enum": [1, 2, 3] } } },
+                  { "type": "object", "additionalProperties": false, "required": ["type", "text"], "properties": { "type": { "const": "paragraph" }, "text": { "type": "string" } } },
+                  { "type": "object", "additionalProperties": false, "required": ["type", "assetId"], "properties": { "type": { "const": "image" }, "assetId": { "type": "string", "minLength": 1 }, "alt": { "type": "string" }, "caption": { "type": "string" } } }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

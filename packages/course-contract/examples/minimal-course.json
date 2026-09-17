@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "1.0",
+  "id": "course-machine-learning",
+  "metadata": {
+    "title": "机器学习入门",
+    "description": "从公开视频生成的交互式课程",
+    "language": "zh-CN",
+    "createdAt": "2026-09-17T10:00:00Z"
+  },
+  "chapters": [
+    {
+      "id": "chapter-basics",
+      "title": "基础概念",
+      "scenes": [
+        {
+          "id": "scene-introduction",
+          "kind": "slide",
+          "kindVersion": "1.0",
+          "metadata": { "title": "什么是机器学习" },
+          "sourceRefs": [{ "sourceId": "video-main", "startSeconds": 35.5, "endSeconds": 92 }],
+          "payload": {
+            "elements": [
+              { "type": "heading", "text": "什么是机器学习", "level": 1 },
+              { "type": "paragraph", "text": "机器学习让计算机从数据中发现规律。" }
+            ]
+          }
+        },
+        {
+          "id": "scene-check",
+          "kind": "quiz.single-choice",
+          "kindVersion": "1.0",
+          "payload": {
+            "question": "机器学习主要从什么内容中发现规律？",
+            "options": [
+              { "id": "a", "text": "数据" },
+              { "id": "b", "text": "显示器" }
+            ],
+            "correctOptionId": "a",
+            "explanation": "机器学习通过分析数据发现规律。"
+          }
+        }
+      ]
+    }
+  ],
+  "assets": {},
+  "sources": {
+    "video-main": {
+      "type": "video",
+      "title": "机器学习公开课",
+      "uri": "https://example.com/video"
+    }
+  }
+}

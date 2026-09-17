@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/source.schema.json",
+  "title": "CourseSource",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "uri"],
+  "properties": {
+    "type": { "enum": ["video", "audio", "document", "webpage"], "description": "来源类别。" },
+    "title": { "type": "string", "description": "来源名称。" },
+    "uri": { "type": "string", "minLength": 1, "description": "来源地址。" }
+  }
+}

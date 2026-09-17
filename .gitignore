@@ -13,6 +13,7 @@ wheels/
 config.yaml
 .noteforge
 output/
+node_modules/
 
 # Virtual environments
 .venv
