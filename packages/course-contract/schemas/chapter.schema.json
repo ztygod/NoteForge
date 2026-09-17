@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/chapter.schema.json",
+  "title": "Chapter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "scenes"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1, "description": "章节唯一 ID。" },
+    "title": { "type": "string", "minLength": 1, "description": "章节标题。" },
+    "description": { "type": "string", "description": "章节简介。" },
+    "scenes": {
+      "type": "array",
+      "description": "按学习顺序排列的场景。",
+      "items": { "$ref": "./scene.schema.json" }
+    }
+  }
+}

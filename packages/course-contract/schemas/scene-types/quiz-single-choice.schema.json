@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/scene-types/quiz-single-choice.schema.json",
+  "allOf": [
+    { "$ref": "../scene-base.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "quiz.single-choice" },
+        "kindVersion": { "const": "1.0" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["question", "options", "correctOptionId"],
+          "properties": {
+            "question": { "type": "string", "minLength": 1 },
+            "options": { "type": "array", "minItems": 2, "items": { "type": "object", "additionalProperties": false, "required": ["id", "text"], "properties": { "id": { "type": "string", "minLength": 1 }, "text": { "type": "string", "minLength": 1 } } } },
+            "correctOptionId": { "type": "string", "minLength": 1 },
+            "explanation": { "type": "string" }
+          }
+        }
+      }
+    }
+  ]
+}

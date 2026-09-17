@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/scene-types/interactive.schema.json",
+  "allOf": [
+    { "$ref": "../scene-base.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "interactive" },
+        "kindVersion": { "const": "1.0" },
+        "payload": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "enum": ["url", "html"] },
+            "url": { "type": "string", "minLength": 1 },
+            "html": { "type": "string", "minLength": 1 },
+            "instructions": { "type": "string" }
+          }
+        }
+      }
+    }
+  ]
+}

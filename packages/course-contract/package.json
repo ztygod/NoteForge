@@ -1,0 +1,28 @@
+{
+  "name": "@noteforge/course-contract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NoteForge 课程文档的数据契约、类型与验证器",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "examples"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test tests/*.test.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0"
+  }
+}

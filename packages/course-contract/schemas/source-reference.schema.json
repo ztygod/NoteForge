@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/source-reference.schema.json",
+  "title": "SourceReference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceId"],
+  "properties": {
+    "sourceId": { "type": "string", "minLength": 1, "description": "被引用来源 ID。" },
+    "startSeconds": { "type": "number", "minimum": 0, "description": "片段开始时间（秒）。" },
+    "endSeconds": { "type": "number", "minimum": 0, "description": "片段结束时间（秒）。" },
+    "page": { "type": "integer", "minimum": 1, "description": "引用文档页码。" },
+    "note": { "type": "string", "description": "引用说明。" }
+  }
+}

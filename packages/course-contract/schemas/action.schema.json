@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/action.schema.json",
+  "title": "Action",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "durationSeconds"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "const": "pause" },
+        "atSeconds": { "type": "number", "minimum": 0 },
+        "durationSeconds": { "type": "number", "minimum": 0 }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "text"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "const": "narration" },
+        "atSeconds": { "type": "number", "minimum": 0 },
+        "text": { "type": "string", "minLength": 1 },
+        "audioAssetId": { "type": "string", "minLength": 1 }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "targetSceneId"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "const": "go-to-scene" },
+        "atSeconds": { "type": "number", "minimum": 0 },
+        "targetSceneId": { "type": "string", "minLength": 1 }
+      }
+    }
+  ]
+}

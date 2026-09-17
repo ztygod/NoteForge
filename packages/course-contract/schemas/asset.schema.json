@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://noteforge.dev/schemas/course/v1.0/asset.schema.json",
+  "title": "Asset",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "uri", "mimeType"],
+  "properties": {
+    "type": { "enum": ["image", "audio", "video", "file"], "description": "资源类别。" },
+    "uri": { "type": "string", "minLength": 1, "description": "资源访问地址。" },
+    "mimeType": { "type": "string", "minLength": 1, "description": "资源 MIME 类型。" },
+    "alt": { "type": "string", "description": "资源替代文本。" },
+    "sizeBytes": { "type": "integer", "minimum": 0, "description": "资源字节数。" }
+  }
+}
